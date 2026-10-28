@@ -1,0 +1,762 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Rejection System – InternPilih</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .ai-panel {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--card);
+      overflow: hidden;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .ai-panel-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      background: #f7fafb;
+    }
+
+    .ai-panel-header .ai-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 5px;
+      background: #e3f7f5;
+      color: var(--uitm-blue-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .ai-panel-header h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .ai-panel-header span {
+      font-size: 11px;
+      color: var(--text2);
+    }
+
+    .ai-badge {
+      margin-left: auto;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      background: #e3f7f5;
+      color: var(--uitm-blue-2);
+      letter-spacing: .2px;
+    }
+
+    .ai-panel-body {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .ai-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .ai-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .ai-select,
+    .ai-textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      box-sizing: border-box;
+      transition: border .2s;
+    }
+
+    .ai-select:focus,
+    .ai-textarea:focus {
+      border-color: var(--uitm-purple);
+      box-shadow: 0 0 0 3px rgba(9,169,163,.12);
+    }
+
+    .ai-textarea {
+      resize: none;
+      min-height: 70px;
+    }
+
+    .btn-ai-generate {
+      width: 100%;
+      justify-content: center;
+      background: var(--uitm-purple);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 11px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background .2s;
+    }
+
+    .btn-ai-generate:hover {
+      background: var(--uitm-purple-2);
+    }
+
+    .btn-ai-generate:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .ai-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, .3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+
+    .btn-ai-generate.loading .ai-spinner {
+      display: block;
+    }
+
+    .btn-ai-generate.loading .btn-label {
+      opacity: .7;
+    }
+
+    .ai-result-box {
+      display: none;
+      margin-top: 2px;
+      padding: 12px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(16, 185, 129, .3);
+      background: #ecfdf3;
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.6;
+      position: relative;
+    }
+
+    .ai-result-box.visible {
+      display: block;
+    }
+
+    .ai-result-box .ai-result-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .ai-use-btn {
+      margin-top: 10px;
+      padding: 7px 14px;
+      border-radius: 5px;
+      background: #ecfdf3;
+      border: 1px solid #b8e6c8;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s;
+    }
+
+    .ai-use-btn:hover {
+      background: #dff8e9;
+    }
+
+    @keyframes shimmer {
+      0% {
+        opacity: .4
+      }
+
+      50% {
+        opacity: 1
+      }
+
+      100% {
+        opacity: .4
+      }
+    }
+
+    .ai-typing {
+      animation: shimmer 1s ease-in-out infinite;
+    }
+
+    .tone-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .tone-chip {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      background: transparent;
+      transition: all .15s;
+      user-select: none;
+    }
+
+    .tone-chip:hover {
+      border-color: var(--uitm-purple);
+      color: var(--text);
+    }
+
+    .tone-chip.active {
+      background: #e3f7f5;
+      border-color: #b7e4e0;
+      color: var(--uitm-blue-2);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">
+        <div class="icon"><i class="fas fa-graduation-cap"></i></div>
+        <div>
+          <div class="strong-meta">InternPilih</div>
+          <div class="meta-text">Student Portal</div>
+        </div>
+      </div>
+    </div>
+    <nav>
+      <div class="nav-section">Main</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
+      <a class="nav-item" href="offers.html"><span class="nav-icon"><i class="fas fa-briefcase"></i></span>My Offers</a>
+      <a class="nav-item" href="record-offer.html"><span class="nav-icon"><i
+            class="fas fa-plus-circle"></i></span>Record Offer</a>
+      <div class="nav-section">Communication</div>
+      <a class="nav-item" href="acceptance.html"><span class="nav-icon"><i
+            class="fas fa-circle-check"></i></span>Acceptance System</a>
+      <a class="nav-item active" href="communication.html"><span class="nav-icon"><i
+            class="fas fa-comments"></i></span>Rejection System</a>
+      <div class="nav-section">Documents</div>
+      <a class="nav-item" href="documents.html"><span class="nav-icon"><i class="fas fa-file-upload"></i></span>Upload
+        Docs</a>
+      <a class="nav-item" href="companies.html"><span class="nav-icon"><i
+            class="fas fa-building"></i></span>Companies</a>
+      <div class="nav-section">Account</div>
+      <a class="nav-item" href="notifications.html"><span class="nav-icon"><i
+            class="fas fa-bell"></i></span>Notifications</a>
+      <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">AM</div>
+        <div class="user-info">
+          <p class="user-name">Alif Mukhlis bin Ahmad</p><span class="user-matric">2025161705</span>
+        </div>
+      </div>
+      <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+      <div>
+        <h1>Professional Rejection System</h1>
+        <p style="font-size:12px;color:var(--text2);">Create clear, professional responses for declined offers</p>
+      </div>
+      <div class="topbar-right">
+        <a href="notifications.html" class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></a>
+      </div>
+    </div>
+
+    <div class="content fade-in">
+      <div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;">
+
+        <div>
+          <div class="alert alert-info"><i class="fas fa-info-circle"></i>Let
+            Use the writing assistant to draft a professional response for the offer you select.
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>🎯 Select Offer to Reject</h3>
+            </div>
+            <div class="panel-body">
+              <div id="offerList" style="display:grid;gap:10px;">
+                <div style="text-align:center;color:var(--text2);padding:20px;font-size:13px;"><i
+                    class="fas fa-spinner fa-spin"></i> Loading your pending offers…</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ai-panel">
+            <div class="ai-panel-header">
+              <div class="ai-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+              <div>
+                <h3>Writing Assistant</h3>
+                <span>Prepare a personalised response, then review it before sending</span>
+              </div>
+              <span class="ai-badge">DRAFTING TOOL</span>
+            </div>
+            <div class="ai-panel-body">
+              <div class="ai-row">
+                <div>
+                  <div class="ai-label">Main Reason</div>
+                  <select class="ai-select" id="aiReason">
+                    <option value="accepted another offer that better aligns with my goals">Accepted a better-fit offer
+                    </option>
+                    <option value="location and relocation constraints that make it unfeasible">Location / Relocation
+                      issue</option>
+                    <option value="pursuing a different career direction">Change in career direction</option>
+                    <option value="personal and family commitments that have recently arisen">Personal / Family
+                      commitments</option>
+                    <option value="a timing conflict with my academic schedule">Timing conflict with studies</option>
+                    <option value="the compensation package not meeting my expectations">Compensation mismatch</option>
+                  </select>
+                </div>
+                <div>
+                  <div class="ai-label">Language</div>
+                  <select class="ai-select" id="aiLanguage">
+                    <option value="English">English</option>
+                    <option value="Malay (Bahasa Malaysia)">Bahasa Malaysia</option>
+                    <option value="formal English with a Malay opening greeting">English + Malay Greeting</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <div class="ai-label">Tone</div>
+                <div class="tone-chips" id="toneChips">
+                  <button class="tone-chip active" data-tone="Professional & Formal">Professional</button>
+                  <button class="tone-chip" data-tone="Warm & Grateful">Warm & Grateful</button>
+                  <button class="tone-chip" data-tone="Concise & Direct">Concise</button>
+                  <button class="tone-chip" data-tone="Apologetic & Polite">Apologetic</button>
+                </div>
+              </div>
+
+              <div>
+                <div class="ai-label">Extra context <span style="font-weight:400;text-transform:none;">(optional)</span>
+                </div>
+                <textarea class="ai-textarea" id="aiContext"
+                  placeholder="e.g. Mention I'm grateful for the two-round interview process, or that I hope to reconnect in future…"></textarea>
+              </div>
+
+              <button class="btn-ai-generate" id="generateBtn" onclick="generateWithGemini()">
+                <div class="ai-spinner"></div>
+                <i class="fas fa-magic btn-label" id="generateIcon"></i>
+                <span class="btn-label" id="generateLabel">Generate draft</span>
+              </button>
+
+              <div class="ai-result-box" id="aiResultBox">
+                <div class="ai-result-label"><i class="fas fa-check-circle"></i> AI Generated Message</div>
+                <div id="aiResultText" style="white-space:pre-wrap;font-size:12px;line-height:1.7;color:var(--text2);">
+                </div>
+                <button class="ai-use-btn" onclick="useAiMessage()">
+                  <i class="fas fa-arrow-down"></i> Use this message
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3><i class="fas fa-envelope-open-text"></i> Rejection Message</h3>
+              <div style="margin-left:auto;">
+                <select class="form-control" id="templateSelect" onchange="useTemplate()"
+                  style="font-size:12px;padding:6px 10px;">
+                  <option value="">Use a template...</option>
+                  <option value="1">Accepted a Better-Fit Offer</option>
+                  <option value="2">Location / Relocation</option>
+                  <option value="3">Career Direction Change</option>
+                  <option value="4">Personal Commitments</option>
+                  <option value="5">Timing Conflict</option>
+                </select>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="form-group">
+                <label class="form-label" for="toEmail">To (Company Email)</label>
+                <input type="email" class="form-control" id="toEmail" placeholder="Select an offer above…" aria-describedby="toEmailHelp">
+                <p class="password-requirement" id="toEmailHelp">You can change this address for the current message. The company record will not be updated.</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Subject</label>
+                <input type="text" class="form-control" id="emailSubject"
+                  value="Internship Offer Decline – Alif Mukhlis bin Ahmad (2025161705)">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="display:flex;align-items:center;gap:8px;">
+                  Message (Editable)
+                  <span id="aiTagBadge" class="badge badge-verified" style="display:none;"><i class="fas fa-wand-magic-sparkles"></i>
+                    Draft generated</span>
+                </label>
+                <textarea class="form-control" id="emailBody" style="min-height:220px;"></textarea>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn btn-outline" onclick="previewEmail()"><i class="fas fa-eye"></i> Preview</button>
+                <button class="btn btn-danger" style="flex:1;justify-content:center;" onclick="sendRejection()"><i
+                    class="fas fa-paper-plane"></i> Send Rejection Notice</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel" style="margin-bottom:20px;">
+            <div class="panel-header">
+              <h3><i class="fas fa-chart-bar"></i> Communication Stats</h3>
+            </div>
+            <div class="panel-body">
+              <div class="mini-stats">
+                <div class="mini-stat">
+                  <div style="font-size:24px;font-weight:800;color:var(--red);" id="statRejected">–</div>
+                  <div style="font-size:11px;color:var(--text2);">Rejections Sent</div>
+                </div>
+                <div class="mini-stat">
+                  <div style="font-size:24px;font-weight:800;color:var(--green);" id="statAccepted">–</div>
+                  <div style="font-size:11px;color:var(--text2);">Acceptances</div>
+                </div>
+                <div class="mini-stat">
+                  <div style="font-size:24px;font-weight:800;color:var(--blue3);">100%</div>
+                  <div style="font-size:11px;color:var(--text2);">Response Rate</div>
+                </div>
+                <div class="mini-stat">
+                  <div style="font-size:22px;color:var(--green);"><i class="fas fa-circle-check"></i></div>
+                  <div style="font-size:11px;color:var(--text2);">Good Standing</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ai-panel" style="margin-bottom:20px;">
+            <div class="ai-panel-header" style="padding:12px 16px;">
+              <div class="ai-icon" style="width:28px;height:28px;font-size:14px;"><i class="fas fa-lightbulb"></i></div>
+              <div>
+                <h3 style="font-size:13px;">Writing Tips</h3>
+              </div>
+            </div>
+            <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
+              <div style="font-size:12px;color:var(--text2);display:flex;gap:8px;"><span
+                  style="color:var(--uitm-purple);">-</span>Select an offer first so the draft can personalise the company name.</div>
+              <div style="font-size:12px;color:var(--text2);display:flex;gap:8px;"><span
+                  style="color:var(--uitm-purple);">-</span>Add extra context to make the message specific and sincere.</div>
+              <div style="font-size:12px;color:var(--text2);display:flex;gap:8px;"><span
+                  style="color:var(--uitm-purple);">-</span>Review and edit every generated draft before sending.</div>
+              <div style="font-size:12px;color:var(--text2);display:flex;gap:8px;"><span
+                  style="color:var(--uitm-purple);">-</span>Try the <strong>Warm & Grateful</strong> tone to
+                leave a great impression.</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3><i class="fas fa-paper-plane"></i> Communication History</h3>
+            </div>
+            <div id="historyList" style="padding:0 20px;">
+              <div style="text-align:center;color:var(--text2);padding:20px;font-size:13px;"><i
+                  class="fas fa-spinner fa-spin"></i> Loading…</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="previewModal">
+    <div class="modal" style="max-width:600px;">
+      <div class="modal-header">
+        <h3><i class="fas fa-envelope"></i> Email Preview</h3><button class="modal-close" aria-label="Close"
+          onclick="document.getElementById('previewModal').classList.remove('open')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="surface-box" style="padding:20px;font-size:13px;">
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px;">
+            <p><strong>To:</strong> <span id="prevTo"></span></p>
+            <p><strong>Subject:</strong> <span id="prevSubject"></span></p>
+          </div>
+          <pre id="prevBody" style="white-space:pre-wrap;font-family:inherit;color:var(--text3);line-height:1.6;"></pre>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline"
+          onclick="document.getElementById('previewModal').classList.remove('open')">Edit</button>
+        <button class="btn btn-danger" onclick="sendRejection()"><i class="fas fa-paper-plane"></i> Send Now</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="sentModal">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-body" style="text-align:center;padding:40px;">
+        <div style="width:52px;height:52px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:#edf9f5;color:var(--green);font-size:21px;"><i class="fas fa-check"></i></div>
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Notice Sent!</h3>
+        <p id="sentMessage" style="font-size:13px;color:var(--text2);margin-bottom:24px;">Your professional rejection notice was emailed and logged in your communication history.</p>
+        <a href="offers.html" class="btn btn-primary">Back to Offers</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedOffer = null;
+    let selectedTone = 'Professional & Formal';
+
+    const templates = {
+      1: 'Dear Hiring Manager,\n\nThank you sincerely for offering me the internship position at your esteemed organization. After careful consideration, I have decided to accept another offer that more closely aligns with my current academic focus and career goals.\n\nI truly appreciate the time and effort your team invested in the selection process. I hold your company in high regard and hope our paths may cross again in the future.\n\nThank you once again for this opportunity.\n\nYours sincerely,\nAlif Mukhlis bin Ahmad\nStudent ID: 2025161705\nUniversiti Teknologi MARA (UiTM)',
+      2: 'Dear Hiring Manager,\n\nThank you for extending an internship offer to me. After careful deliberation, I must respectfully decline due to location and relocation constraints that make it unfeasible for me to commit to this position at this time.\n\nI appreciate your understanding and hope to remain connected for potential future opportunities.\n\nYours sincerely,\nAlif Mukhlis bin Ahmad\nStudent ID: 2025161705\nUniversiti Teknologi MARA (UiTM)',
+      3: 'Dear Hiring Manager,\n\nThank you for offering me the internship opportunity at your organization. After reflection, I have decided to pursue a different career direction that better aligns with my evolving academic interests.\n\nThis was not an easy decision, and I genuinely appreciate the opportunity you extended to me. I wish your team continued success.\n\nYours sincerely,\nAlif Mukhlis bin Ahmad\nStudent ID: 2025161705\nUniversiti Teknologi MARA (UiTM)',
+      4: 'Dear Hiring Manager,\n\nThank you for the internship offer. Due to personal and family commitments that have recently arisen, I am unable to accept this position at this time.\n\nI sincerely regret any inconvenience this may cause and appreciate your understanding.\n\nYours sincerely,\nAlif Mukhlis bin Ahmad\nStudent ID: 2025161705\nUniversiti Teknologi MARA (UiTM)',
+      5: 'Dear Hiring Manager,\n\nThank you for the internship offer. Unfortunately, due to a scheduling conflict with my academic commitments, I am unable to begin at the proposed start date.\n\nI hope you will consider me for future opportunities and I apologize for any inconvenience caused.\n\nYours sincerely,\nAlif Mukhlis bin Ahmad\nStudent ID: 2025161705\nUniversiti Teknologi MARA (UiTM)'
+    };
+
+    document.querySelectorAll('.tone-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        document.querySelectorAll('.tone-chip').forEach(function (c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        selectedTone = chip.dataset.tone;
+      });
+    });
+
+    function buildOfferCard(o) {
+      var card = document.createElement('div');
+      card.className = 'offer-select-card';
+      card.id = 'offerCard' + o.id;
+      card.style.cssText = 'padding:14px;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:.2s;';
+      card.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;"><div><p style="font-weight:600;font-size:13px;">' + o.company_name + '</p><p style="font-size:12px;color:var(--text2);">' + o.position + ' \u00b7 ' + (o.hr_email || 'No email') + '</p></div><span class="badge badge-pending">Pending</span></div>';
+      card.addEventListener('click', function () { selectOffer(o); });
+      return card;
+    }
+
+    function selectOffer(o) {
+      document.querySelectorAll('.offer-select-card').forEach(function (c) {
+        c.style.borderColor = 'var(--border)'; c.style.background = 'transparent';
+      });
+      var el = document.getElementById('offerCard' + o.id);
+      if (el) { el.style.borderColor = 'var(--blue3)'; el.style.background = 'rgba(59,130,246,.05)'; }
+      selectedOffer = o;
+      document.getElementById('toEmail').value = o.hr_email || '';
+      document.getElementById('aiResultBox').classList.remove('visible');
+    }
+
+    function useTemplate() {
+      var val = document.getElementById('templateSelect').value;
+      if (!val) return;
+      document.getElementById('emailBody').value = templates[val];
+      document.getElementById('aiTagBadge').style.display = 'none';
+      document.getElementById('templateSelect').value = '';
+    }
+
+    function showGeneratedMessage(text, sourceLabel) {
+      var box = document.getElementById('aiResultBox');
+      var textEl = document.getElementById('aiResultText');
+      var label = box.querySelector('.ai-result-label');
+      if (label) label.innerHTML = '<i class="fas fa-check-circle"></i> ' + sourceLabel;
+      box.classList.add('visible');
+      box.dataset.message = text;
+      textEl.textContent = text;
+      textEl.classList.remove('ai-typing');
+    }
+
+    async function generateWithGemini() {
+      var btn = document.getElementById('generateBtn');
+      var label = document.getElementById('generateLabel');
+      var icon = document.getElementById('generateIcon');
+      var reason = document.getElementById('aiReason').value;
+      var language = document.getElementById('aiLanguage').value;
+      var context = document.getElementById('aiContext').value.trim();
+      if (!selectedOffer) {
+        alert('Please select an offer first so the message includes the correct company and position.');
+        return;
+      }
+      var company = selectedOffer.company_name || 'the company';
+      var position = selectedOffer.position || '';
+
+      btn.disabled = true;
+      btn.classList.add('loading');
+      label.textContent = 'Generating\u2026';
+      icon.style.display = 'none';
+      document.getElementById('aiResultBox').classList.remove('visible');
+
+      try {
+        var res = await fetch('../api/gemini.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            company: company,
+            position: position,
+            reason: reason,
+            tone: selectedTone,
+            language: language,
+            context: context
+          })
+        });
+
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok || data.error) throw new Error(data.error || 'Gemini request failed.');
+        var text = data.text || '';
+        if (!text) throw new Error('Gemini returned an empty response.');
+        showGeneratedMessage(text, 'Gemini Generated Message');
+
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('loading');
+        label.textContent = 'Generate draft';
+        icon.style.display = '';
+      }
+    }
+
+    function useAiMessage() {
+      var msg = document.getElementById('aiResultBox').dataset.message || '';
+      if (!msg) return;
+      document.getElementById('emailBody').value = msg;
+      document.getElementById('aiTagBadge').style.display = 'inline-flex';
+      document.getElementById('emailBody').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function previewEmail() {
+      document.getElementById('prevTo').textContent = document.getElementById('toEmail').value || '(No email selected)';
+      document.getElementById('prevSubject').textContent = document.getElementById('emailSubject').value;
+      document.getElementById('prevBody').textContent = document.getElementById('emailBody').value;
+      document.getElementById('previewModal').classList.add('open');
+    }
+
+    async function sendRejection() {
+      var message = document.getElementById('emailBody').value.trim();
+      var subject = document.getElementById('emailSubject').value.trim();
+      var recipientEmail = document.getElementById('toEmail').value.trim();
+      if (!selectedOffer) { alert('Please select an offer first.'); return; }
+      if (!recipientEmail) { alert('Enter the receiver email address.'); return; }
+      if (!document.getElementById('toEmail').checkValidity()) { alert('Enter a valid receiver email address.'); return; }
+      if (!message) { alert('Please write a message first.'); return; }
+
+      var registeredEmail = (selectedOffer.hr_email || '').trim();
+      var confirmedRecipient = '';
+      if (recipientEmail.toLowerCase() !== registeredEmail.toLowerCase()) {
+        var confirmed = window.confirm('Send this rejection email to ' + recipientEmail + '?\n\nThis is different from the company’s registered HR email.');
+        if (!confirmed) return;
+        confirmedRecipient = recipientEmail;
+      }
+
+      var sendButtons = Array.from(document.querySelectorAll('[onclick="sendRejection()"]'));
+      sendButtons.forEach(function (button) { button.disabled = true; });
+
+      try {
+        var res = await fetch('../api/offers.php?id=' + encodeURIComponent(selectedOffer.id), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'rejected',
+            reject_reason: message,
+            email_subject: subject,
+            recipient_email: recipientEmail,
+            confirmed_recipient_email: confirmedRecipient
+          })
+        });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok || data.error) throw new Error(data.error || 'Failed to send rejection notice.');
+
+        var sentMessage = document.getElementById('sentMessage');
+        if (sentMessage && data.email_to) {
+          sentMessage.textContent = 'Email delivered to ' + data.email_to + ' and logged in your communication history.';
+        }
+        selectedOffer = null;
+        document.getElementById('previewModal').classList.remove('open');
+        document.getElementById('sentModal').classList.add('open');
+        loadOffers();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        sendButtons.forEach(function (button) { button.disabled = false; });
+      }
+    }
+
+    async function loadOffers() {
+      var offers = [];
+      try { var res = await fetch('../api/offers.php'); offers = res.ok ? await res.json() : []; } catch (e) { offers = []; }
+
+      var pending = offers.filter(function (o) { return o.status === 'pending'; });
+      var accepted = offers.filter(function (o) { return o.status === 'accepted'; });
+      var rejected = offers.filter(function (o) { return o.status === 'rejected'; });
+
+      document.getElementById('statRejected').textContent = rejected.length;
+      document.getElementById('statAccepted').textContent = accepted.length;
+
+      var list = document.getElementById('offerList');
+      if (pending.length === 0) {
+        list.innerHTML = '<div style="text-align:center;color:var(--text2);padding:20px;font-size:13px;">No pending offers to reject.</div>';
+      } else {
+        list.innerHTML = '';
+        pending.forEach(function (o) { list.appendChild(buildOfferCard(o)); });
+      }
+
+      var hist = document.getElementById('historyList');
+      var histItems = accepted.concat(rejected).sort(function (a, b) {
+        return new Date(b.response_date || b.offer_date) - new Date(a.response_date || a.offer_date);
+      });
+
+      if (histItems.length === 0) {
+        hist.innerHTML = '<div style="text-align:center;color:var(--text2);padding:20px;font-size:13px;">No communication history yet.</div>';
+      } else {
+        hist.innerHTML = histItems.map(function (o) {
+          var isAcc = o.status === 'accepted';
+          var date = o.response_date || o.offer_date || '';
+          var fmtDate = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+          return '<div class="notif-item"><div class="notif-dot-icon" style="background:rgba(' + (isAcc ? '16,185,129' : '239,68,68') + ',.1);color:var(--' + (isAcc ? 'green' : 'red') + ');font-size:14px;"><i class="fas fa-' + (isAcc ? 'check' : 'times') + '"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;">' + (isAcc ? 'Acceptance Sent' : 'Rejection Sent') + '</p><p style="font-size:12px;color:var(--text2);">' + o.company_name + ' \u2013 ' + o.position + '</p><p style="font-size:11px;color:var(--text2);margin-top:2px;">' + fmtDate + '</p></div></div>';
+        }).join('');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadOffers);
+  </script>
+  <script src="../assets/js/app.js?v=20261028-1"></script>
+</body>
+
+</html>

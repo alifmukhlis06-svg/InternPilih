@@ -1,0 +1,265 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Announcements – InternPilih</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-shield-alt"></i></div><div><div style="font-size:14px;font-weight:800;color:var(--text);">InternPilih</div><div style="font-size:10px;color:var(--text2);">Coordinator Panel</div></div></div></div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>Dashboard</a>
+    <a class="nav-item" href="monitoring.html"><span class="nav-icon"><i class="fas fa-chart-bar"></i></span>Monitoring<span class="nav-badge">3</span></a>
+    <div class="nav-section">Management</div>
+    <a class="nav-item" href="verification.html"><span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>Verification<span class="nav-badge">5</span></a>
+    <a class="nav-item" href="companies.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Companies</a>
+    <div class="nav-section">Reports</div>
+    <a class="nav-item" href="reports.html"><span class="nav-icon"><i class="fas fa-file-alt"></i></span>Reports</a>
+    <a class="nav-item active" href="notifications.html"><span class="nav-icon"><i class="fas fa-bullhorn"></i></span>Announcements</a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user-shield"></i></span>Profile</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card"><div class="user-avatar avatar-admin">SN</div><div class="user-info"><p>Dr. Siti Norzahra binti Mahmud</p><span>Coordinator</span></div></div>
+    <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div><h1>Announcements & Reminders</h1><p style="font-size:12px;color:var(--text2);">Send notifications and reminders to students</p></div>
+  </div>
+
+  <div class="content fade-in">
+    <div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;">
+
+      <!-- COMPOSE -->
+      <div>
+        <div class="panel">
+          <div class="panel-header"><h3><i class="fas fa-edit" style="color:var(--blue3);margin-right:8px;"></i>Compose Announcement</h3></div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label class="form-label">Announcement Type</label>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+                <div class="role-btn active" id="typeGeneral" onclick="setType('general')"><i class="fas fa-bullhorn"></i><span>General</span></div>
+                <div class="role-btn" id="typeReminder" onclick="setType('reminder')"><i class="fas fa-bell"></i><span>Reminder</span></div>
+                <div class="role-btn" id="typeUrgent" onclick="setType('urgent')"><i class="fas fa-exclamation-triangle"></i><span>Urgent</span></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Send To</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <span class="chip active" id="toAll" onclick="setRecipient('all')"><i class="fas fa-users"></i> All Students (48)</span>
+                <span class="chip" id="toPending" onclick="setRecipient('pending')"><i class="fas fa-hourglass-half"></i> Pending Only (12)</span>
+                <span class="chip" id="toRisk" onclick="setRecipient('risk')"><i class="fas fa-exclamation-triangle"></i> Flagged Students (3)</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Subject *</label>
+              <input type="text" class="form-control" id="annSubject" placeholder="e.g. URGENT: Document Submission Deadline">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Message *</label>
+              <textarea class="form-control" id="annMessage" style="min-height:160px;" placeholder="Type your announcement here..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="scheduleToggle" onchange="toggleSchedule()" style="width:16px;height:16px;">
+                Schedule announcement
+              </label>
+              <div class="form-row" id="scheduleFields" style="display:none;margin-top:10px;">
+                <input type="date" class="form-control" id="schedDate">
+                <input type="time" class="form-control" id="schedTime" value="09:00">
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+              <button class="btn btn-outline" onclick="saveDraft()"><i class="fas fa-save"></i> Save Draft</button>
+              <button class="btn btn-primary" onclick="sendAnn()"><i class="fas fa-paper-plane"></i> Send Now</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORY & QUICK TEMPLATES -->
+      <div>
+        <div class="panel" style="margin-bottom:20px;">
+          <div class="panel-header"><h3><i class="fas fa-clipboard-list"></i> Quick Templates</h3></div>
+          <div class="panel-body" style="display:grid;gap:8px;">
+            <button class="btn btn-outline" style="justify-content:flex-start;font-size:12px;" onclick="loadTemplate('deadline')"><i class="fas fa-clock" style="color:var(--gold);"></i> Document submission deadline reminder</button>
+            <button class="btn btn-outline" style="justify-content:flex-start;font-size:12px;" onclick="loadTemplate('response')"><i class="fas fa-reply" style="color:var(--blue3);"></i> Respond to pending offers urgently</button>
+            <button class="btn btn-outline" style="justify-content:flex-start;font-size:12px;" onclick="loadTemplate('hoarding')"><i class="fas fa-exclamation-triangle" style="color:var(--red);"></i> Pending offer flag notice</button>
+            <button class="btn btn-outline" style="justify-content:flex-start;font-size:12px;" onclick="loadTemplate('orientation')"><i class="fas fa-info-circle" style="color:var(--green);"></i> Internship orientation briefing</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h3><i class="fas fa-paper-plane"></i> Sent History</h3></div>
+          <div style="padding:0 20px;">
+            <div class="notif-item">
+              <div class="notif-dot-icon" style="background:rgba(239,68,68,.15);color:var(--red);">🚨</div>
+              <div style="flex:1;">
+                <p style="font-size:13px;font-weight:600;">Urgent: Document Deadline</p>
+                <p style="font-size:12px;color:var(--text2);">Sent to All Students · 48 recipients</p>
+                <p style="font-size:11px;color:var(--text2);">13-May-2026, 09:00 AM</p>
+              </div>
+              <span class="badge badge-accepted" style="font-size:10px;">Sent</span>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot-icon" style="background:rgba(245,158,11,.15);color:var(--gold);">🔔</div>
+              <div style="flex:1;">
+                <p style="font-size:13px;font-weight:600;">Offer Response Reminder</p>
+                <p style="font-size:12px;color:var(--text2);">Sent to Pending Students · 12 recipients</p>
+                <p style="font-size:11px;color:var(--text2);">10-May-2026, 02:00 PM</p>
+              </div>
+              <span class="badge badge-accepted" style="font-size:10px;">Sent</span>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot-icon" style="background:rgba(59,130,246,.15);color:var(--blue3);">📢</div>
+              <div style="flex:1;">
+                <p style="font-size:13px;font-weight:600;">Internship Orientation Briefing</p>
+                <p style="font-size:12px;color:var(--text2);">Sent to All Students · 48 recipients</p>
+                <p style="font-size:11px;color:var(--text2);">05-Jan-2026, 10:00 AM</p>
+              </div>
+              <span class="badge badge-accepted" style="font-size:10px;">Sent</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="sentModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-body" style="text-align:center;padding:40px;">
+      <div style="font-size:52px;margin-bottom:16px;">📢</div>
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Announcement Sent!</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:24px;" id="sentDesc"></p>
+      <button class="btn btn-primary" onclick="document.getElementById('sentModal').classList.remove('open')">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const templates={
+  deadline:{subject:'REMINDER: Internship Document Submission Deadline – 28 Feb 2026',msg:'Dear Students,\n\nThis is a reminder that all internship-related documents (Acceptance Confirmation Letter, Internship Agreement Form) must be submitted through the InternPilih system by 28 February 2026.\n\nFailure to submit on time may result in placement cancellation.\n\nPlease log in and upload your documents immediately.\n\nThank you.\n\nDr. Siti Norzahra binti Mahmud\nInternship Coordinator, Faculty of Computer and Mathematical Sciences'},
+  response:{subject:'ACTION REQUIRED: Respond to Your Pending Internship Offers',msg:'Dear Students,\n\nOur records show that you currently have one or more pending internship offers that have not been responded to. Please log in to InternPilih and either accept or formally reject all pending offers as soon as possible.\n\nDelaying your response affects other students and damages our university\'s professional reputation with employers.\n\nDr. Siti Norzahra binti Mahmud'},
+  hoarding:{subject:'ACTION REQUIRED: Pending Internship Offer Flag',msg:'Dear Student,\n\nOur system has flagged your account because you have more than one active pending internship offer, or an offer has remained pending beyond the configured response period.\n\nPlease log in and accept or formally reject your pending offers as soon as possible. Contact the Internship Coordinator if you require assistance.\n\nDr. Siti Norzahra binti Mahmud'},
+  orientation:{subject:'Internship Orientation Briefing – Jan 2026 Semester',msg:'Dear Students,\n\nYou are invited to attend the Internship Orientation Briefing for the Jan–Jun 2026 semester. This session will cover placement procedures, documentation requirements, and your responsibilities during the internship period.\n\nPlease check your university email for the meeting link.\n\nDr. Siti Norzahra binti Mahmud'}
+};
+let currentType='general',currentRecipient='all',recipientCounts={all:0,pending:0,risk:0};
+function escText(value){
+  return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+}
+
+function setType(t){
+  currentType=t;
+  ['general','reminder','urgent'].forEach(x=>document.getElementById('type'+x.charAt(0).toUpperCase()+x.slice(1)).classList.remove('active'));
+  document.getElementById('type'+t.charAt(0).toUpperCase()+t.slice(1)).classList.add('active');
+}
+function setRecipient(r){
+  currentRecipient=r;
+  ['all','pending','risk'].forEach(x=>{
+    const el=document.getElementById('to'+x.charAt(0).toUpperCase()+x.slice(1));
+    el.classList.remove('active');
+  });
+  document.getElementById('to'+r.charAt(0).toUpperCase()+r.slice(1)).classList.add('active');
+}
+function loadTemplate(key){
+  const t=templates[key];
+  document.getElementById('annSubject').value=t.subject;
+  document.getElementById('annMessage').value=t.msg;
+}
+function toggleSchedule(){
+  const fields=document.getElementById('scheduleFields');
+  const toggle=document.getElementById('scheduleToggle');
+  if(fields&&toggle) fields.style.display=toggle.checked?'flex':'none';
+}
+async function sendAnn(){
+  const subj=document.getElementById('annSubject').value.trim();
+  const msg=document.getElementById('annMessage').value.trim();
+  if(!subj||!msg){alert('Please fill in Subject and Message.');return;}
+  try{
+    const res=await fetch('../api/notifications.php',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({type:currentType,recipient_group:currentRecipient,title:subj,body:msg,link_url:'notifications.html'})
+    });
+    const data=await res.json();
+    if(!res.ok||data.error) throw new Error(data.error||'Unable to send announcement.');
+    document.getElementById('sentDesc').textContent=`Saved for ${data.recipient_count} students. Email sent: ${data.email_sent_count}; failed: ${data.email_failed_count}. Telegram: ${data.telegram_sent?'posted':'failed'}.`;
+    document.getElementById('sentModal').classList.add('open');
+    document.getElementById('annSubject').value='';
+    document.getElementById('annMessage').value='';
+    loadSentHistory();
+    loadNotificationMeta();
+  }catch(err){
+    alert(err.message);
+  }
+}
+function saveDraft(){alert('Draft saved!');}
+function statusForStudent(student,offers){
+  const mine=offers.filter(o=>Number(o.student_id)===Number(student.id));
+  const pending=mine.filter(o=>o.status==='pending').length;
+  const accepted=mine.filter(o=>o.status==='accepted').length;
+  return {pending,accepted,risk:Boolean(student.is_flagged)};
+}
+async function loadNotificationMeta(){
+  try{
+    const res=await fetch('../api/summary.php');
+    const data=await res.json();
+    const students=data.students||[];
+    const offers=data.offers||[];
+    recipientCounts.all=students.length;
+    recipientCounts.pending=students.filter(s=>statusForStudent(s,offers).pending>0).length;
+    recipientCounts.risk=students.filter(s=>statusForStudent(s,offers).risk).length;
+    document.getElementById('toAll').innerHTML=`<i class="fas fa-users"></i> All Students (${recipientCounts.all})`;
+    document.getElementById('toPending').innerHTML=`<i class="fas fa-hourglass-half"></i> Pending Only (${recipientCounts.pending})`;
+    document.getElementById('toRisk').innerHTML=`<i class="fas fa-exclamation-triangle"></i> Flagged Students (${recipientCounts.risk})`;
+  }catch(err){}
+}
+function notificationIcon(type){
+  if(type==='urgent') return ['fa-exclamation-triangle','var(--red)'];
+  if(type==='reminder') return ['fa-bell','var(--gold)'];
+  return ['fa-bullhorn','var(--blue3)'];
+}
+async function loadSentHistory(){
+  const panels=Array.from(document.querySelectorAll('.panel'));
+  const panel=panels.find(p=>p.querySelector('.panel-header h3')?.textContent.includes('Sent History'));
+  const body=panel?.querySelector('.panel-header')?.nextElementSibling;
+  if(!body) return;
+  try{
+    const res=await fetch('../api/notifications.php');
+    const data=await res.json();
+    const rows=data.notifications||[];
+    body.innerHTML=rows.map(n=>{
+      const icon=notificationIcon(n.type);
+      const group=(n.recipient_group||'all').replace(/^./,c=>c.toUpperCase());
+      return `<div class="notif-item">
+        <div class="notif-dot-icon" style="background:rgba(59,130,246,.15);color:${icon[1]};"><i class="fas ${icon[0]}"></i></div>
+        <div style="flex:1;">
+          <p style="font-size:13px;font-weight:600;">${escText(n.title)}</p>
+          <p style="font-size:12px;color:var(--text2);">Sent to ${group} Students · ${n.recipient_count} recipients · ${n.email_sent_count||0} emailed · ${n.telegram_sent_at?'Telegram posted':'Telegram not posted'}</p>
+          ${n.telegram_error?`<p style="font-size:11px;color:var(--red);margin-top:3px;">Telegram: ${escText(n.telegram_error)}</p>`:''}
+          <p style="font-size:11px;color:var(--text2);">${escText(String(n.created_at||'').replace(' ',' · '))}</p>
+        </div>
+        <span class="badge badge-accepted" style="font-size:10px;">Sent</span>
+      </div>`;
+    }).join('')||'<div style="padding:24px 0;text-align:center;color:var(--text2);font-size:13px;">No announcements sent yet.</div>';
+  }catch(err){
+    body.innerHTML='<div style="padding:24px 0;text-align:center;color:var(--red);font-size:13px;">Unable to load sent history.</div>';
+  }
+}
+document.getElementById('schedDate').valueAsDate=new Date();
+toggleSchedule();
+loadNotificationMeta();
+loadSentHistory();
+</script>
+  <script src="../assets/js/app.js?v=20260918-1"></script>
+</body>
+</html>
+

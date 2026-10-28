@@ -1,0 +1,215 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Company Database - InternPilih</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div></div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
+    <a class="nav-item" href="offers.html"><span class="nav-icon"><i class="fas fa-briefcase"></i></span>My Offers<span class="nav-badge">2</span></a>
+    <a class="nav-item" href="record-offer.html"><span class="nav-icon"><i class="fas fa-plus-circle"></i></span>Record Offer</a>
+    <div class="nav-section">Communication</div>
+    <a class="nav-item" href="acceptance.html"><span class="nav-icon"><i class="fas fa-circle-check"></i></span>Acceptance System</a>
+    <a class="nav-item" href="communication.html"><span class="nav-icon"><i class="fas fa-comments"></i></span>Rejection System</a>
+    <div class="nav-section">Documents</div>
+    <a class="nav-item" href="documents.html"><span class="nav-icon"><i class="fas fa-file-upload"></i></span>Upload Docs</a>
+    <a class="nav-item active" href="companies.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Companies</a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bell"></i></span>Notifications<span class="nav-badge">3</span></a>
+    <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p class="user-name">Alif Mukhlis bin Ahmad</p><span class="user-matric">2025161705</span></div></div>
+    <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div><h1>Company Database</h1><p class="topbar-sub">Browse internship companies and opportunities</p></div>
+    <div class="topbar-right">
+      <a href="record-offer.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Record Offer</a>
+      <a href="notifications.html" class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></a>
+    </div>
+  </div>
+
+  <div class="content fade-in">
+    <!-- FILTER & SEARCH -->
+    <div class="search-bar" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+      <div class="search-input-wrap" style="max-width:400px;">
+        <i class="fas fa-search"></i>
+        <input class="search-input" placeholder="Search company, location or industry..." id="compSearch" oninput="searchCompanies()">
+      </div>
+      <div id="industry-chips" style="display:flex;gap:8px;">
+        <span class="chip active" onclick="filterChip('all', this)">All</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;" id="compGrid">
+      <!-- Dynamically populated -->
+    </div>
+  </div>
+</div>
+
+<!-- COMPANY MODAL -->
+<div class="modal-overlay" id="compModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header"><h3 id="modalCompName">Company Details</h3><button class="modal-close" onclick="document.getElementById('compModal').classList.remove('open')">x</button></div>
+    <div class="modal-body" id="modalCompBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('compModal').classList.remove('open')">Close</button>
+      <a href="record-offer.html" class="btn btn-primary"><i class="fas fa-plus"></i> Record Offer from This Company</a>
+    </div>
+  </div>
+</div>
+
+<script>
+let companiesList = [];
+let currentIndustryFilter = 'all';
+
+async function loadCompanies() {
+  try {
+    const res = await fetch('../api/companies.php');
+    if (!res.ok) throw new Error('Unauthenticated');
+    companiesList = await res.json();
+
+    // Generate unique industries for chips
+    const industries = new Set();
+    companiesList.forEach(c => {
+      if (c.industry) {
+        // clean up industry text for simpler chips (e.g. GLC / Oil & Gas -> GLC)
+        const parts = c.industry.split(' / ');
+        industries.add(parts[0].split(' & ')[0].trim());
+      }
+    });
+
+    const chipsContainer = document.getElementById('industry-chips');
+    chipsContainer.innerHTML = '<span class="chip active" onclick="filterChip(\'all\', this)">All</span>';
+    industries.forEach(ind => {
+      const span = document.createElement('span');
+      span.className = 'chip';
+      span.textContent = ind;
+      span.onclick = function() { filterChip(ind, this); };
+      chipsContainer.appendChild(span);
+    });
+
+    renderCompanies();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderCompanies() {
+  const grid = document.getElementById('compGrid');
+  grid.innerHTML = '';
+
+  const q = document.getElementById('compSearch').value.toLowerCase();
+
+  const filtered = companiesList.filter(c => {
+    // Filter by industry chip
+    if (currentIndustryFilter !== 'all') {
+      if (!c.industry.toLowerCase().includes(currentIndustryFilter.toLowerCase())) return false;
+    }
+    // Filter by search query
+    if (q) {
+      const match = c.name.toLowerCase().includes(q) ||
+                    c.industry.toLowerCase().includes(q) ||
+                    c.location.toLowerCase().includes(q);
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--text2);">No companies match your filters.</div>';
+    return;
+  }
+
+  filtered.forEach(c => {
+    let icon = '<i class="fas fa-briefcase"></i>';
+    const ind = c.industry.toLowerCase();
+    if (ind.includes('oil') || ind.includes('gas')) icon = '<i class="fas fa-industry"></i>';
+    else if (ind.includes('it') || ind.includes('software') || ind.includes('computer')) icon = '<i class="fas fa-laptop-code"></i>';
+    else if (ind.includes('telecom') || ind.includes('axiata')) icon = '<i class="fas fa-signal"></i>';
+    else if (ind.includes('finance') || ind.includes('bank')) icon = '<i class="fas fa-building-columns"></i>';
+    else if (ind.includes('health') || ind.includes('kpj')) icon = '<i class="fas fa-hospital"></i>';
+
+    const card = document.createElement('div');
+    card.className = 'panel comp-card';
+    card.style.marginBottom = '0';
+    card.style.cursor = 'pointer';
+    card.onclick = function() { viewCompany(c.id); };
+
+    card.innerHTML = `
+      <div class="entity-card-body">
+        <div class="entity-leading" style="margin-bottom:14px;">
+          <div class="entity-icon">${icon}</div>
+          <div><p class="entity-title">${c.name}</p><p class="entity-subtitle">${c.industry}</p></div>
+        </div>
+        <div class="entity-facts">
+          <div><i class="fas fa-map-marker-alt" style="width:14px;"></i> ${c.location}</div>
+          <div><i class="fas fa-money-bill-wave" style="width:14px;"></i> Allowance: RM ${c.allowance || '0'}/month</div>
+          <div><i class="fas fa-laptop" style="width:14px;"></i> ${c.work_mode || 'On-site'}</div>
+          <div><i class="fas fa-briefcase" style="width:14px;"></i> ${formatPositions(c.positions)}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+          <span class="badge badge-verified" style="font-size:10px;">Verified Partner</span>
+        </div>
+        <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;">View Details</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function filterChip(ind, btn) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  currentIndustryFilter = ind;
+  renderCompanies();
+}
+
+function searchCompanies() {
+  renderCompanies();
+}
+
+function viewCompany(id) {
+  const c = companiesList.find(item => item.id === id);
+  if (!c) return;
+
+  document.getElementById('modalCompName').textContent = c.name;
+  document.getElementById('modalCompBody').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;">
+      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Industry</span><strong>${c.industry}</strong></div>
+      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Work Mode</span><strong>${c.work_mode || 'On-site'}</strong></div>
+      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Location</span><strong>${c.location}</strong></div>
+      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Allowance</span><strong>RM ${c.allowance || '0'}/month</strong></div>
+      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Recorded Positions</span><strong>${formatPositions(c.positions, 'No positions recorded yet')}</strong></div>
+      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Contact Email</span><strong>${c.hr_email || 'N/A'}</strong></div>
+    </div>
+    <div class="profile-about">
+      <strong style="color:var(--text);">About:</strong> Partnered company registered under InternPilih providing internship placements for UiTM students.
+    </div>
+  `;
+  document.getElementById('compModal').classList.add('open');
+}
+
+function formatPositions(value, emptyLabel = 'Positions added with each offer') {
+  const positions = String(value || '').split('||').filter(Boolean);
+  return positions.length ? positions.join(', ') : emptyLabel;
+}
+
+document.addEventListener('DOMContentLoaded', loadCompanies);
+</script>
+  <script src="../assets/js/app.js?v=20261028-1"></script>
+</body>
+</html>
+
+

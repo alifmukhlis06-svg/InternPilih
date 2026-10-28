@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Acceptance System - InternPilih</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .acceptance-layout { display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start; }
+    .offer-choice { width:100%;padding:14px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;text-align:left;transition:.2s; }
+    .offer-choice:hover { border-color:var(--green);transform:translateY(-1px); }
+    .offer-choice.selected { border-color:var(--green);box-shadow:0 0 0 3px rgba(16,185,129,.1);background:rgba(16,185,129,.03); }
+    .offer-choice:disabled { cursor:not-allowed;opacity:.65;transform:none; }
+    .offer-choice-head { display:flex;align-items:flex-start;justify-content:space-between;gap:12px; }
+    .offer-company { display:flex;align-items:center;gap:12px;min-width:0; }
+    .offer-icon { width:42px;height:42px;border-radius:8px;background:rgba(16,185,129,.12);color:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+    .offer-meta { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 16px;margin-top:12px;color:var(--text2);font-size:12px; }
+    .upload-box { border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:.2s;background:var(--bg3); }
+    .upload-box:hover,.upload-box.dragging { border-color:var(--green);background:rgba(16,185,129,.04); }
+    .upload-box.has-file { border-style:solid;border-color:var(--green);background:rgba(16,185,129,.05); }
+    .summary-row { display:flex;justify-content:space-between;gap:18px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px; }
+    .summary-row:last-child { border-bottom:0; }
+    .summary-row span { color:var(--text2); }
+    .summary-row strong { text-align:right;word-break:break-word; }
+    .check-row { display:flex;align-items:flex-start;gap:10px;padding:13px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);font-size:12px;line-height:1.55;cursor:pointer; }
+    .check-row input { margin-top:3px;accent-color:var(--green); }
+    .empty-box { text-align:center;color:var(--text2);padding:34px 20px;font-size:13px; }
+    @media (max-width:980px) { .acceptance-layout { grid-template-columns:1fr; } }
+    @media (max-width:560px) { .offer-meta { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div>
+    </div>
+    <nav>
+      <div class="nav-section">Main</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
+      <a class="nav-item" href="offers.html"><span class="nav-icon"><i class="fas fa-briefcase"></i></span>My Offers</a>
+      <a class="nav-item" href="record-offer.html"><span class="nav-icon"><i class="fas fa-plus-circle"></i></span>Record Offer</a>
+      <div class="nav-section">Communication</div>
+      <a class="nav-item active" href="acceptance.html"><span class="nav-icon"><i class="fas fa-circle-check"></i></span>Acceptance System</a>
+      <a class="nav-item" href="communication.html"><span class="nav-icon"><i class="fas fa-comments"></i></span>Rejection System</a>
+      <div class="nav-section">Documents</div>
+      <a class="nav-item" href="documents.html"><span class="nav-icon"><i class="fas fa-file-upload"></i></span>Upload Docs</a>
+      <a class="nav-item" href="companies.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Companies</a>
+      <div class="nav-section">Account</div>
+      <a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bell"></i></span>Notifications</a>
+      <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p class="user-name">Alif Mukhlis bin Ahmad</p><span class="user-matric">2025161705</span></div></div>
+      <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+      <div><h1>Offer Acceptance</h1><p class="topbar-sub">Confirm your placement and optionally submit the company's agreement form</p></div>
+      <div class="topbar-right"><a href="notifications.html" class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></a></div>
+    </div>
+
+    <div class="content fade-in">
+      <div class="alert alert-info"><i class="fas fa-info-circle"></i><div>Select one pending offer to accept. Uploading an agreement form here is optional; you can submit it later from Upload Docs.</div></div>
+      <div id="existingPlacementAlert" class="alert alert-warning" style="display:none;"><i class="fas fa-triangle-exclamation"></i><div id="existingPlacementText"></div></div>
+
+      <div class="acceptance-layout">
+        <div>
+          <div class="panel">
+            <div class="panel-header"><h3><i class="fas fa-briefcase" style="color:var(--green);margin-right:8px;"></i>Select Offer to Accept</h3></div>
+            <div class="panel-body"><div id="offerList" style="display:grid;gap:10px;"><div class="empty-box"><i class="fas fa-spinner fa-spin"></i> Loading offers...</div></div></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><div><h3><i class="fas fa-file-signature" style="color:var(--green);margin-right:8px;"></i>Company Agreement Form <span class="badge badge-pending" style="margin-left:6px;">Optional</span></h3><p style="font-size:11px;color:var(--text2);margin-top:3px;">Attach the agreement supplied by the company, if available.</p></div></div>
+            <div class="panel-body">
+              <div class="upload-box" id="uploadBox" role="button" tabindex="0" aria-label="Upload optional agreement form">
+                <input type="file" id="agreementFile" accept=".pdf,.jpg,.jpeg,.png" hidden>
+                <div id="uploadPrompt"><i class="fas fa-cloud-arrow-up" style="font-size:30px;color:var(--green);margin-bottom:10px;"></i><p style="font-size:13px;font-weight:700;">Click or drag a file here</p><p style="font-size:11px;color:var(--text2);margin-top:5px;">PDF, JPG or PNG - maximum 5 MB</p></div>
+                <div id="fileDetails" style="display:none;"><i class="fas fa-file-circle-check" style="font-size:30px;color:var(--green);margin-bottom:10px;"></i><p id="fileName" style="font-size:13px;font-weight:700;word-break:break-all;"></p><p id="fileSize" style="font-size:11px;color:var(--text2);margin-top:5px;"></p><button type="button" class="btn btn-outline btn-sm" id="removeFile" style="margin-top:12px;"><i class="fas fa-times"></i> Remove</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel" style="position:sticky;top:88px;">
+            <div class="panel-header"><h3>Acceptance Summary</h3></div>
+            <div class="panel-body">
+              <div id="noSelection" class="empty-box" style="padding:18px 8px;"><i class="fas fa-hand-pointer" style="font-size:25px;margin-bottom:9px;"></i><p>Select an offer to review its details.</p></div>
+              <div id="acceptanceSummary" style="display:none;">
+                <div class="summary-row"><span>Company</span><strong id="summaryCompany"></strong></div>
+                <div class="summary-row"><span>Position</span><strong id="summaryPosition"></strong></div>
+                <div class="summary-row"><span>Location</span><strong id="summaryLocation"></strong></div>
+                <div class="summary-row"><span>Allowance</span><strong id="summaryAllowance"></strong></div>
+                <div class="summary-row"><span>Work mode</span><strong id="summaryMode"></strong></div>
+                <div class="summary-row"><span>Agreement</span><strong id="summaryAgreement">Not attached</strong></div>
+                <label class="check-row" style="margin-top:16px;"><input type="checkbox" id="confirmCheck"><span>I confirm that I have reviewed this offer and intend to accept this internship placement.</span></label>
+                <div class="info-note success" style="margin-top:14px;"><strong>Important</strong><br>Once accepted, changing to another company requires coordinator approval.</div>
+                <button type="button" class="btn btn-success" id="acceptButton" style="width:100%;justify-content:center;margin-top:16px;" disabled><i class="fas fa-check"></i> Confirm Acceptance</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="successModal">
+    <div class="modal">
+      <div class="modal-header"><h3>Placement Accepted</h3><button class="modal-close" onclick="goToOffers()">x</button></div>
+      <div class="modal-body" style="text-align:center;padding:30px;">
+        <div style="width:64px;height:64px;border-radius:50%;background:rgba(16,185,129,.12);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;"><i class="fas fa-check"></i></div>
+        <h3 style="margin-bottom:8px;">Acceptance recorded successfully</h3>
+        <p id="successMessage" style="font-size:13px;color:var(--text2);line-height:1.6;"></p>
+      </div>
+      <div class="modal-footer"><a href="documents.html" class="btn btn-outline"><i class="fas fa-file-upload"></i> Manage Documents</a><button class="btn btn-success" onclick="goToOffers()">View My Offers</button></div>
+    </div>
+  </div>
+
+  <script>
+    let offers = [];
+    let selectedOffer = null;
+    let selectedFile = null;
+    let existingPlacement = null;
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];
+      });
+    }
+
+    function formatMoney(value) {
+      const amount = Number(value || 0);
+      return 'RM ' + amount.toLocaleString('en-MY', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + '/month';
+    }
+
+    function renderOffers() {
+      const list = document.getElementById('offerList');
+      const pending = offers.filter(function (offer) { return offer.status === 'pending'; });
+      if (!pending.length) {
+        list.innerHTML = '<div class="empty-box"><i class="fas fa-inbox" style="font-size:28px;margin-bottom:10px;"></i><p>No pending offers are available for acceptance.</p><a href="record-offer.html" class="btn btn-primary btn-sm" style="margin-top:14px;"><i class="fas fa-plus"></i> Record an Offer</a></div>';
+        return;
+      }
+
+      list.innerHTML = pending.map(function (offer) {
+        const disabled = Boolean(existingPlacement);
+        return '<button type="button" class="offer-choice' + (selectedOffer && Number(selectedOffer.id) === Number(offer.id) ? ' selected' : '') + '" data-offer-id="' + Number(offer.id) + '"' + (disabled ? ' disabled' : '') + '>' +
+          '<div class="offer-choice-head"><div class="offer-company"><div class="offer-icon"><i class="fas fa-building"></i></div><div style="min-width:0;"><p style="font-size:14px;font-weight:700;">' + escapeHtml(offer.company_name) + '</p><p style="font-size:12px;color:var(--text2);margin-top:2px;">' + escapeHtml(offer.position) + '</p></div></div><span class="badge badge-pending">Pending</span></div>' +
+          '<div class="offer-meta"><span><i class="fas fa-location-dot"></i> ' + escapeHtml(offer.location || 'Not specified') + '</span><span><i class="fas fa-money-bill-wave"></i> ' + escapeHtml(formatMoney(offer.allowance)) + '</span><span><i class="fas fa-calendar"></i> Offered ' + escapeHtml(offer.offer_date || '-') + '</span><span><i class="fas fa-clock"></i> Due ' + escapeHtml(offer.deadline || '-') + '</span></div></button>';
+      }).join('');
+
+      list.querySelectorAll('[data-offer-id]').forEach(function (button) {
+        button.addEventListener('click', function () { selectOffer(Number(button.dataset.offerId)); });
+      });
+    }
+
+    function selectOffer(id) {
+      if (existingPlacement) return;
+      selectedOffer = offers.find(function (offer) { return Number(offer.id) === Number(id) && offer.status === 'pending'; }) || null;
+      renderOffers();
+      document.getElementById('noSelection').style.display = selectedOffer ? 'none' : 'block';
+      document.getElementById('acceptanceSummary').style.display = selectedOffer ? 'block' : 'none';
+      if (!selectedOffer) return;
+      document.getElementById('summaryCompany').textContent = selectedOffer.company_name;
+      document.getElementById('summaryPosition').textContent = selectedOffer.position;
+      document.getElementById('summaryLocation').textContent = selectedOffer.location || 'Not specified';
+      document.getElementById('summaryAllowance').textContent = formatMoney(selectedOffer.allowance);
+      document.getElementById('summaryMode').textContent = selectedOffer.work_mode || 'Not specified';
+      document.getElementById('confirmCheck').checked = false;
+      updateAcceptButton();
+    }
+
+    function updateAcceptButton() {
+      document.getElementById('acceptButton').disabled = !selectedOffer || !document.getElementById('confirmCheck').checked || Boolean(existingPlacement);
+    }
+
+    function setFile(file) {
+      if (!file) return;
+      const allowed = ['application/pdf', 'image/jpeg', 'image/png'];
+      const extensionOk = /\.(pdf|jpe?g|png)$/i.test(file.name);
+      if (!allowed.includes(file.type) && !extensionOk) {
+        alert('Please select a PDF, JPG, or PNG file.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('The agreement form must be 5 MB or smaller.');
+        return;
+      }
+      selectedFile = file;
+      document.getElementById('uploadBox').classList.add('has-file');
+      document.getElementById('uploadPrompt').style.display = 'none';
+      document.getElementById('fileDetails').style.display = 'block';
+      document.getElementById('fileName').textContent = file.name;
+      document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+      document.getElementById('summaryAgreement').textContent = file.name;
+    }
+
+    function clearFile() {
+      selectedFile = null;
+      document.getElementById('agreementFile').value = '';
+      document.getElementById('uploadBox').classList.remove('has-file');
+      document.getElementById('uploadPrompt').style.display = 'block';
+      document.getElementById('fileDetails').style.display = 'none';
+      document.getElementById('summaryAgreement').textContent = 'Not attached';
+    }
+
+    async function confirmAcceptance() {
+      if (!selectedOffer || !document.getElementById('confirmCheck').checked) return;
+      const button = document.getElementById('acceptButton');
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Recording Acceptance...';
+      let agreementUploaded = false;
+      let agreementError = '';
+
+      try {
+        const acceptResponse = await fetch('../api/offers.php?id=' + encodeURIComponent(selectedOffer.id), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'accepted' })
+        });
+        const acceptData = await acceptResponse.json().catch(function () { return {}; });
+        if (!acceptResponse.ok || acceptData.error) throw new Error(acceptData.error || 'The offer could not be accepted.');
+
+        if (selectedFile) {
+          button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading Agreement...';
+          const formData = new FormData();
+          formData.append('file', selectedFile);
+          formData.append('doc_type', 'agreement');
+          formData.append('offer_id', selectedOffer.id);
+          try {
+            const uploadResponse = await fetch('../api/documents.php', { method: 'POST', body: formData });
+            const uploadData = await uploadResponse.json().catch(function () { return {}; });
+            if (!uploadResponse.ok || uploadData.error) throw new Error(uploadData.error || 'Agreement upload failed.');
+            agreementUploaded = true;
+          } catch (error) {
+            agreementError = error.message;
+          }
+        }
+
+        const message = agreementUploaded
+          ? 'Your placement with ' + selectedOffer.company_name + ' is confirmed, and the agreement form was submitted for coordinator verification.'
+          : selectedFile && agreementError
+            ? 'Your placement with ' + selectedOffer.company_name + ' is confirmed. The agreement could not be uploaded (' + agreementError + '); please submit it from Upload Docs.'
+            : 'Your placement with ' + selectedOffer.company_name + ' is confirmed. You can upload the company agreement later from Upload Docs.';
+        document.getElementById('successMessage').textContent = message;
+        document.getElementById('successModal').classList.add('open');
+      } catch (error) {
+        alert(error.message);
+        button.disabled = false;
+      } finally {
+        button.innerHTML = '<i class="fas fa-check"></i> Confirm Acceptance';
+        updateAcceptButton();
+      }
+    }
+
+    async function loadOffers() {
+      const list = document.getElementById('offerList');
+      try {
+        const response = await fetch('../api/offers.php');
+        const data = await response.json().catch(function () { return []; });
+        if (!response.ok || !Array.isArray(data)) throw new Error(data.error || 'Unable to load offers.');
+        offers = data;
+        existingPlacement = offers.find(function (offer) { return offer.status === 'accepted'; }) || null;
+        if (existingPlacement) {
+          document.getElementById('existingPlacementAlert').style.display = 'flex';
+          document.getElementById('existingPlacementText').innerHTML = '<strong>Placement already accepted:</strong> ' + escapeHtml(existingPlacement.company_name) + ' - ' + escapeHtml(existingPlacement.position) + '. Use <a href="offers.html" style="font-weight:700;color:inherit;text-decoration:underline;">My Offers</a> to request a coordinator-approved change.';
+        }
+        renderOffers();
+        const requestedId = Number(new URLSearchParams(window.location.search).get('offer'));
+        if (requestedId && !existingPlacement) selectOffer(requestedId);
+      } catch (error) {
+        list.innerHTML = '<div class="empty-box" style="color:var(--red);"><i class="fas fa-triangle-exclamation"></i> ' + escapeHtml(error.message) + '</div>';
+      }
+    }
+
+    function goToOffers() { window.location.href = 'offers.html'; }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const uploadBox = document.getElementById('uploadBox');
+      const input = document.getElementById('agreementFile');
+      uploadBox.addEventListener('click', function (event) { if (!event.target.closest('#removeFile')) input.click(); });
+      uploadBox.addEventListener('keydown', function (event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); input.click(); } });
+      input.addEventListener('change', function () { if (input.files[0]) setFile(input.files[0]); });
+      ['dragenter','dragover'].forEach(function (type) { uploadBox.addEventListener(type, function (event) { event.preventDefault(); uploadBox.classList.add('dragging'); }); });
+      ['dragleave','drop'].forEach(function (type) { uploadBox.addEventListener(type, function (event) { event.preventDefault(); uploadBox.classList.remove('dragging'); }); });
+      uploadBox.addEventListener('drop', function (event) { if (event.dataTransfer.files[0]) setFile(event.dataTransfer.files[0]); });
+      document.getElementById('removeFile').addEventListener('click', function (event) { event.stopPropagation(); clearFile(); });
+      document.getElementById('confirmCheck').addEventListener('change', updateAcceptButton);
+      document.getElementById('acceptButton').addEventListener('click', confirmAcceptance);
+      loadOffers();
+    });
+  </script>
+  <script src="../assets/js/app.js?v=20261028-1"></script>
+</body>
+</html>

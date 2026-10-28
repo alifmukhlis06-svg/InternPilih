@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Placements - InternPilih Employer</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-building"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Employer Portal</div></div></div></div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
+    <a class="nav-item" href="offers.html"><span class="nav-icon"><i class="fas fa-file-signature"></i></span>Offer Responses</a>
+    <a class="nav-item active" href="placements.html"><span class="nav-icon"><i class="fas fa-user-check"></i></span>Placements</a>
+    <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Company Profile</a>
+  </nav>
+  <div class="readonly-note">
+    <i class="fas fa-eye"></i> <strong>Read-Only Access</strong>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card"><div class="user-avatar" style="background:#dcfce7;color:var(--green);">TS</div><div class="user-info"><p>Tech Solutions</p><span>Employer Account</span></div></div>
+    <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div><h1>Confirmed Placements</h1><p class="topbar-sub">View verified internship placements at your company</p></div>
+    <div class="topbar-right">
+      <div class="badge badge-pending"><i class="fas fa-eye"></i> View Only</div>
+    </div>
+  </div>
+
+  <div class="content fade-in">
+    <div class="summary-grid">
+      <div class="summary-card green">
+        <div class="summary-value">3</div>
+        <div class="summary-label">Confirmed Interns</div>
+        <div class="summary-note">Accepted placements</div>
+      </div>
+      <div class="summary-card blue">
+        <div class="summary-value">2</div>
+        <div class="summary-label">Docs Verified</div>
+        <div class="summary-note">1 pending review</div>
+      </div>
+      <div class="summary-card purple">
+        <div class="summary-value">01 Mar</div>
+        <div class="summary-label">Internship Start Date</div>
+        <div class="summary-note">All 3 interns</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h3 class="icon-heading"><i class="fas fa-user-check"></i>Confirmed Interns</h3>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Intern Name</th><th>Matric ID</th><th>Position</th><th>University</th><th>Start Date</th><th>Duration</th><th>Docs</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="avatar-initial">AZ</div>
+                  <div><strong>Ahmad Zulkifli</strong></div>
+                </div>
+              </td>
+              <td style="color:var(--text2);">2025161730</td>
+              <td>Back-end Developer</td>
+              <td>UiTM Shah Alam</td>
+              <td>01-Mar-2026</td>
+              <td>6 Months</td>
+              <td><span class="badge badge-verified">Verified</span></td>
+              <td><span class="badge badge-accepted">Active</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="avatar-initial purple">SH</div>
+                  <div><strong>Siti Hajar</strong></div>
+                </div>
+              </td>
+              <td style="color:var(--text2);">2025161720</td>
+              <td>UI/UX Designer</td>
+              <td>UiTM Shah Alam</td>
+              <td>01-Mar-2026</td>
+              <td>6 Months</td>
+              <td><span class="badge badge-pending">Pending</span></td>
+              <td><span class="badge badge-accepted">Active</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="avatar-initial green">KA</div>
+                  <div><strong>Khairul Anwar</strong></div>
+                </div>
+              </td>
+              <td style="color:var(--text2);">2025161769</td>
+              <td>System Analyst</td>
+              <td>UiTM Shah Alam</td>
+              <td>01-Mar-2026</td>
+              <td>6 Months</td>
+              <td><span class="badge badge-verified">Verified</span></td>
+              <td><span class="badge badge-accepted">Active</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="profile-card">
+        <div class="profile-card-head">
+          <div class="avatar-initial">AZ</div>
+          <div>
+            <h3>Ahmad Zulkifli</h3>
+            <p class="meta-text">2025161730 - UiTM Shah Alam</p>
+            <p class="role">Back-end Developer</p>
+          </div>
+        </div>
+          <div class="actions-row">
+            <span class="badge badge-verified">Docs Verified</span>
+            <span class="badge badge-accepted">Active</span>
+          </div>
+        <div class="profile-meta">
+          <div><strong>CGPA:</strong> 3.72</div>
+          <div><strong>Programme:</strong> Bachelor of Computer Science with Honours</div>
+          <div><strong>Supervisor:</strong> Dr. Siti Norzahra binti Mahmud</div>
+          <div><strong>Start:</strong> 01-Mar-2026</div>
+        </div>
+      </div>
+
+      <div class="profile-card">
+        <div class="profile-card-head">
+          <div class="avatar-initial purple">SH</div>
+          <div>
+            <h3>Siti Hajar</h3>
+            <p class="meta-text">2025161720 - UiTM Shah Alam</p>
+            <p class="role">UI/UX Designer</p>
+          </div>
+        </div>
+          <div class="actions-row">
+            <span class="badge badge-pending">Docs Pending</span>
+            <span class="badge badge-accepted">Active</span>
+          </div>
+        <div class="profile-meta">
+          <div><strong>CGPA:</strong> 3.55</div>
+          <div><strong>Programme:</strong> Bachelor of Computer Science with Honours</div>
+          <div><strong>Supervisor:</strong> Dr. Siti Norzahra binti Mahmud</div>
+          <div><strong>Start:</strong> 01-Mar-2026</div>
+        </div>
+      </div>
+
+      <div class="profile-card">
+        <div class="profile-card-head">
+          <div class="avatar-initial green">KA</div>
+          <div>
+            <h3>Khairul Anwar</h3>
+            <p class="meta-text">2025161769 - UiTM Shah Alam</p>
+            <p class="role">System Analyst</p>
+          </div>
+        </div>
+          <div class="actions-row">
+            <span class="badge badge-verified">Docs Verified</span>
+            <span class="badge badge-accepted">Active</span>
+          </div>
+        <div class="profile-meta">
+          <div><strong>CGPA:</strong> 3.61</div>
+          <div><strong>Programme:</strong> Bachelor of Computer Science with Honours</div>
+          <div><strong>Supervisor:</strong> Dr. Siti Norzahra binti Mahmud</div>
+          <div><strong>Start:</strong> 01-Mar-2026</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  <script src="../assets/js/app.js?v=20261020-2"></script>
+</body>
+</html>
+

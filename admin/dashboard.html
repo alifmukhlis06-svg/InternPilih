@@ -1,0 +1,208 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Dashboard - InternPilih</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-shield-alt"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Coordinator Panel</div></div></div></div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a class="nav-item active" href="dashboard.html"><span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>Dashboard</a>
+    <a class="nav-item" href="monitoring.html"><span class="nav-icon"><i class="fas fa-chart-bar"></i></span>Monitoring<span class="nav-badge">3</span></a>
+    <div class="nav-section">Management</div>
+    <a class="nav-item" href="verification.html"><span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>Verification<span class="nav-badge">5</span></a>
+    <a class="nav-item" href="companies.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Companies</a>
+    <div class="nav-section">Reports</div>
+    <a class="nav-item" href="reports.html"><span class="nav-icon"><i class="fas fa-file-alt"></i></span>Reports</a>
+    <a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bullhorn"></i></span>Announcements<span class="nav-badge">2</span></a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user-shield"></i></span>Profile</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card"><div class="user-avatar" style="background:#fff4d6;color:var(--gold);">SN</div><div class="user-info"><p>Dr. Siti Norzahra binti Mahmud</p><span>Coordinator</span></div></div>
+    <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div><h1>Coordinator Dashboard</h1><p class="topbar-sub">Semester Jan-Jun 2026 - Faculty of Computer Sciences</p></div>
+    <div class="topbar-right">
+      <a href="notifications.html" class="btn btn-primary btn-sm"><i class="fas fa-bullhorn"></i> Send Announcement</a>
+      <a href="notifications.html" class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></a>
+    </div>
+  </div>
+
+  <div class="content fade-in">
+    <section class="dashboard-brief" aria-labelledby="coordinator-brief-title">
+      <div class="dashboard-brief-copy">
+        <span class="dashboard-brief-kicker">January-June 2026</span>
+        <h2 id="coordinator-brief-title">Focus attention where students need it.</h2>
+        <p>Review confirmed placements, pending documents, and students automatically flagged for unresolved offers.</p>
+        <a class="dashboard-brief-link" href="verification.html">Review pending documents <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </section>
+
+    <div class="stats-grid five">
+      <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+        <div><div class="stat-val">48</div><div class="stat-label">Total Students</div><div class="stat-change up">Registered</div></div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon green"><i class="fas fa-check-double"></i></div>
+        <div><div class="stat-val">31</div><div class="stat-label">Placements Confirmed</div><div class="stat-change up">64.6%</div></div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-icon gold"><i class="fas fa-hourglass-half"></i></div>
+        <div><div class="stat-val">12</div><div class="stat-label">Pending Decisions</div><div class="stat-change down">Needs action</div></div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon red"><i class="fas fa-exclamation-triangle"></i></div>
+        <div><div class="stat-val">3</div><div class="stat-label">Offer Flags</div><div class="stat-change down">Needs review</div></div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-icon purple"><i class="fas fa-file-check"></i></div>
+        <div><div class="stat-val">5</div><div class="stat-label">Docs Pending</div><div class="stat-change">Review needed</div></div>
+      </div>
+    </div>
+
+    <div class="page-grid">
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <h3 class="icon-heading"><i class="fas fa-clock"></i>Recent Student Activity</h3>
+            <a href="monitoring.html" class="btn btn-outline btn-sm">View All</a>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Student</th><th>Action</th><th>Company</th><th>Status</th><th>Time</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><strong>Alif Mukhlis bin Ahmad</strong><br><small style="color:var(--text2);">2025161705</small></td>
+                  <td><span class="badge badge-accepted">Accepted</span></td>
+                  <td>Petronas ICT</td>
+                  <td><span class="badge badge-verified">Verified</span></td>
+                  <td style="color:var(--text2);">2h ago</td>
+                </tr>
+                <tr>
+                  <td><strong>Nurul Aisyah binti Hassan</strong><br><small style="color:var(--text2);">2025161708</small></td>
+                  <td><span class="badge badge-pending">Pending</span></td>
+                  <td>Tech Solutions</td>
+                  <td><span class="badge badge-risk">3 Offers</span></td>
+                  <td style="color:var(--text2);">5h ago</td>
+                </tr>
+                <tr>
+                  <td><strong>Muhammad Faris bin Abdullah</strong><br><small style="color:var(--text2);">2025161712</small></td>
+                  <td><span class="badge badge-rejected">Rejected</span></td>
+                  <td>Maybank IT</td>
+                  <td><span class="badge badge-accepted">Notice Sent</span></td>
+                  <td style="color:var(--text2);">Yesterday</td>
+                </tr>
+                <tr>
+                  <td><strong>Siti Hajar</strong><br><small style="color:var(--text2);">2025161720</small></td>
+                  <td><i class="fas fa-upload" style="color:var(--purple);"></i> Docs Upload</td>
+                  <td>Axiata Digital</td>
+                  <td><span class="badge" style="background:rgba(139,92,246,.1);color:var(--purple);">Awaiting Review</span></td>
+                  <td style="color:var(--text2);">Yesterday</td>
+                </tr>
+                <tr>
+                  <td><strong>Ahmad Zulkifli</strong><br><small style="color:var(--text2);">2025161730</small></td>
+                  <td><span class="badge badge-pending">Pending</span></td>
+                  <td>Microsoft MY</td>
+                  <td><span class="badge badge-risk">2 Offers</span></td>
+                  <td style="color:var(--text2);">2 days ago</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h3 class="icon-heading"><i class="fas fa-chart-pie"></i>Placement Progress</h3><a href="reports.html" class="btn btn-outline btn-sm">Full Report</a></div>
+          <div class="panel-body">
+            <div class="split-grid">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span>Confirmed Placements</span><span style="font-weight:700;">31 / 48</span></div>
+                <div class="progress-bar"><div class="progress-fill green" style="width:64%"></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;margin-top:14px;"><span>Offer Received</span><span style="font-weight:700;">43 / 48</span></div>
+                <div class="progress-bar"><div class="progress-fill blue" style="width:90%"></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;margin-top:14px;"><span>Docs Submitted</span><span style="font-weight:700;">26 / 31</span></div>
+                <div class="progress-bar"><div class="progress-fill gold" style="width:84%"></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;margin-top:14px;"><span>Docs Verified</span><span style="font-weight:700;">21 / 26</span></div>
+                <div class="progress-bar"><div class="progress-fill purple" style="width:81%"></div></div>
+              </div>
+              <div>
+                <!-- DONUT PLACEHOLDER -->
+                <div style="width:160px;height:160px;border-radius:50%;background:conic-gradient(var(--green) 0% 64%,var(--gold) 64% 90%,var(--red) 90% 100%);display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;">
+                  <div style="width:100px;height:100px;background:var(--card);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                    <span style="font-size:22px;font-weight:800;">64%</span>
+                    <span style="font-size:10px;color:var(--text2);">Placed</span>
+                  </div>
+                </div>
+                <div style="margin-top:16px;display:grid;gap:8px;font-size:12px;">
+                  <div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;background:var(--green);border-radius:2px;"></div>Confirmed (31)</div>
+                  <div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;background:var(--gold);border-radius:2px;"></div>Pending (12)</div>
+                  <div style="display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;background:var(--red);border-radius:2px;"></div>No Offer (5)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="panel-header"><h3>Quick Actions</h3></div>
+          <div class="panel-body" style="display:grid;gap:10px;">
+            <a href="verification.html" class="btn btn-primary" style="justify-content:flex-start;"><i class="fas fa-clipboard-check"></i> Review Pending Docs (5)</a>
+            <a href="monitoring.html" class="btn btn-outline" style="justify-content:flex-start;"><i class="fas fa-exclamation-triangle" style="color:var(--red);"></i> View Offer Flags (3)</a>
+            <a href="notifications.html" class="btn btn-outline" style="justify-content:flex-start;"><i class="fas fa-bullhorn" style="color:var(--gold);"></i> Send Reminder</a>
+            <a href="companies.html" class="btn btn-outline" style="justify-content:flex-start;"><i class="fas fa-plus" style="color:var(--green);"></i> Add Company</a>
+            <a href="reports.html" class="btn btn-outline" style="justify-content:flex-start;"><i class="fas fa-download" style="color:var(--blue3);"></i> Export Report</a>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h3>Offer Flags</h3><a href="monitoring.html" class="panel-link" style="color:var(--red);">Monitor</a></div>
+          <div class="panel-section">
+            <div class="notif-item">
+              <div class="notif-dot-icon" style="background:rgba(239,68,68,.15);color:var(--red);font-size:13px;font-weight:800;">3</div>
+              <div><p style="font-size:13px;font-weight:600;">Nurul Aisyah binti Hassan</p><p class="meta-text">3 offers held - 2025161708</p></div>
+              <a href="monitoring.html" class="btn btn-danger btn-sm">Review</a>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot-icon" style="background:rgba(245,158,11,.15);color:var(--gold);font-size:13px;font-weight:800;">2</div>
+              <div><p style="font-size:13px;font-weight:600;">Ahmad Zulkifli</p><p class="meta-text">2 offers held - 2025161730</p></div>
+              <a href="monitoring.html" class="btn btn-danger btn-sm">Review</a>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot-icon" style="background:rgba(245,158,11,.15);color:var(--gold);font-size:13px;font-weight:800;">2</div>
+              <div><p style="font-size:13px;font-weight:600;">Farah Liyana</p><p class="meta-text">2 offers held - 2025161741</p></div>
+              <a href="monitoring.html" class="btn btn-danger btn-sm">Review</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- INDUSTRY BREAKDOWN -->
+        <div class="panel">
+          <div class="panel-header"><h3>Industry Breakdown</h3></div>
+          <div class="panel-body" style="display:grid;gap:10px;">
+            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>IT / Software</span><span>18 students</span></div><div class="progress-bar"><div class="progress-fill blue" style="width:75%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Finance / Banking</span><span>7 students</span></div><div class="progress-bar"><div class="progress-fill gold" style="width:29%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Telco</span><span>4 students</span></div><div class="progress-bar"><div class="progress-fill purple" style="width:17%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>GLC / Government</span><span>2 students</span></div><div class="progress-bar"><div class="progress-fill green" style="width:8%"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  <script src="../assets/js/app.js?v=20260918-1"></script>
+</body>
+</html>
+

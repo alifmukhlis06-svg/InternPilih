@@ -1,0 +1,164 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Company Database – InternPilih Admin</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-shield-alt"></i></div><div><div style="font-size:14px;font-weight:800;color:var(--text);">InternPilih</div><div style="font-size:10px;color:var(--text2);">Coordinator Panel</div></div></div></div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>Dashboard</a>
+    <a class="nav-item" href="monitoring.html"><span class="nav-icon"><i class="fas fa-chart-bar"></i></span>Monitoring<span class="nav-badge">3</span></a>
+    <div class="nav-section">Management</div>
+    <a class="nav-item" href="verification.html"><span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>Verification<span class="nav-badge">5</span></a>
+    <a class="nav-item active" href="companies.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Companies</a>
+    <div class="nav-section">Reports</div>
+    <a class="nav-item" href="reports.html"><span class="nav-icon"><i class="fas fa-file-alt"></i></span>Reports</a>
+    <a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bullhorn"></i></span>Announcements<span class="nav-badge">2</span></a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user-shield"></i></span>Profile</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card"><div class="user-avatar avatar-admin">SN</div><div class="user-info"><p>Dr. Siti Norzahra binti Mahmud</p><span>Coordinator</span></div></div>
+    <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div><h1>Company Database</h1><p style="font-size:12px;color:var(--text2);">Manage registered internship companies and opportunities</p></div>
+    <div class="topbar-right">
+      <button class="btn btn-primary" onclick="openAddCompany()"><i class="fas fa-plus"></i> Add Company</button>
+      <a href="notifications.html" class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></a>
+    </div>
+  </div>
+
+  <div class="content fade-in">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <i class="fas fa-search"></i>
+        <input class="search-input" placeholder="Search company name, location or industry..." id="compSearch" oninput="searchCompanies()">
+      </div>
+      <select class="form-control" style="width:180px;">
+        <option>All Industries</option>
+        <option>IT / Software</option>
+        <option>Finance</option>
+        <option>Telco</option>
+        <option>GLC</option>
+        <option>Healthcare</option>
+      </select>
+      <button class="btn btn-outline btn-sm"><i class="fas fa-download"></i> Export</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h3><i class="fas fa-building" style="color:var(--blue3);margin-right:8px;"></i>Registered Companies <span style="font-weight:400;color:var(--text2);font-size:13px;">· 6 total</span></h3>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="compTable">
+          <thead>
+            <tr><th>Company</th><th>Industry</th><th>Location</th><th>Contact</th><th>Allowance</th><th>Positions</th><th>Confirmed</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="compBody"><tr><td colspan="9" style="text-align:center;color:var(--text2);padding:24px;">Loading companies...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="compModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header"><h3 id="compModalTitle">Add New Company</h3><button class="modal-close" aria-label="Close" onclick="closeCompModal()"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Company Name *</label><input type="text" class="form-control" id="cName" placeholder="Sdn Bhd"></div>
+        <div class="form-group"><label class="form-label">Industry *</label>
+          <select class="form-control" id="cIndustry">
+            <option>IT / Software</option><option>Finance & Banking</option>
+            <option>Telecommunications</option><option>GLC</option>
+            <option>Healthcare</option><option>Engineering</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Location *</label><input type="text" class="form-control" id="cLocation" placeholder="City, State"></div>
+        <div class="form-group"><label class="form-label">Monthly Allowance (RM)</label><input type="number" class="form-control" id="cAllowance" placeholder="1200"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">HR Email</label><input type="email" class="form-control" id="cEmail" placeholder="hr@company.com"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input type="text" class="form-control" id="cPhone" placeholder="+603-XXXX XXXX"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Work Mode</label>
+          <select class="form-control" id="cWorkMode"><option>On-site</option><option>Hybrid</option><option>Remote</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeCompModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCompany()"><i class="fas fa-save"></i> Save Company</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-body" style="text-align:center;padding:36px;">
+      <div style="font-size:48px;margin-bottom:12px;">🗑️</div>
+      <h3 style="font-size:17px;font-weight:700;margin-bottom:8px;">Delete Company?</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:24px;">This action cannot be undone. All related placement records will remain.</p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn btn-outline" onclick="document.getElementById('deleteModal').classList.remove('open')">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDelete()"><i class="fas fa-trash"></i> Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"><i class="fas fa-check"></i> <span id="toastMsg"></span></div>
+
+<script>
+let deleteRow=null;
+function searchCompanies(){
+  const q=document.getElementById('compSearch').value.toLowerCase();
+  document.querySelectorAll('#compBody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';});
+}
+function openAddCompany(){
+  document.getElementById('compModalTitle').textContent='Add New Company';
+  ['cName','cLocation','cAllowance','cEmail','cPhone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('compModal').classList.add('open');
+}
+function editCompany(name){
+  document.getElementById('compModalTitle').textContent='Edit – '+name;
+  document.getElementById('cName').value=name;
+  document.getElementById('compModal').classList.add('open');
+}
+function closeCompModal(){document.getElementById('compModal').classList.remove('open');}
+function saveCompany(){
+  closeCompModal();
+  showToast('Company saved successfully!');
+}
+function deleteCompany(btn){deleteRow=btn.closest('tr');document.getElementById('deleteModal').classList.add('open');}
+function confirmDelete(){
+  if(deleteRow)deleteRow.remove();
+  document.getElementById('deleteModal').classList.remove('open');
+  showToast('Company deleted.');
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.style.opacity='1';
+  setTimeout(()=>t.style.opacity='0',3000);
+}
+</script>
+  <script src="../assets/js/app.js?v=20260918-1"></script>
+</body>
+</html>
+

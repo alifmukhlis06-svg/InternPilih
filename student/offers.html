@@ -1,0 +1,389 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Offers - InternPilih</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div></div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
+    <a class="nav-item active" href="offers.html"><span class="nav-icon"><i class="fas fa-briefcase"></i></span>My Offers<span class="nav-badge">2</span></a>
+    <a class="nav-item" href="record-offer.html"><span class="nav-icon"><i class="fas fa-plus-circle"></i></span>Record Offer</a>
+    <div class="nav-section">Communication</div>
+    <a class="nav-item" href="acceptance.html"><span class="nav-icon"><i class="fas fa-circle-check"></i></span>Acceptance System</a>
+    <a class="nav-item" href="communication.html"><span class="nav-icon"><i class="fas fa-comments"></i></span>Rejection System</a>
+    <div class="nav-section">Documents</div>
+    <a class="nav-item" href="documents.html"><span class="nav-icon"><i class="fas fa-file-upload"></i></span>Upload Docs</a>
+    <a class="nav-item" href="companies.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Companies</a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bell"></i></span>Notifications<span class="nav-badge">3</span></a>
+    <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p class="user-name">Alif Mukhlis bin Ahmad</p><span class="user-matric">2025161705</span></div></div>
+    <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div><h1>My Internship Offers</h1><p class="topbar-sub">Track and manage all received offers</p></div>
+    <div class="topbar-right">
+      <a href="record-offer.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Record New Offer</a>
+      <a href="notifications.html" class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></a>
+    </div>
+  </div>
+
+  <div class="content fade-in">
+    <div class="alert alert-danger" id="offerFlagAlert" style="display:none;margin-bottom:20px;">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div id="offerFlagText"></div>
+    </div>
+    <!-- FILTER TABS -->
+    <div class="tab-nav" style="max-width:500px;">
+      <button class="tab-btn active" id="tab-all" onclick="filterOffers('all',this)">All (0)</button>
+      <button class="tab-btn" id="tab-pending" onclick="filterOffers('pending',this)">Pending (0)</button>
+      <button class="tab-btn" id="tab-accepted" onclick="filterOffers('accepted',this)">Accepted (0)</button>
+      <button class="tab-btn" id="tab-rejected" onclick="filterOffers('rejected',this)">Rejected (0)</button>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <i class="fas fa-search"></i>
+        <input class="search-input" placeholder="Search company or position..." id="searchInput" oninput="filterSearch()">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <span class="chip active" onclick="toggleChip(this,'all')"><i class="fas fa-list"></i> All</span>
+      </div>
+    </div>
+
+    <!-- OFFERS GRID -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;" id="offersGrid">
+      <!-- Dynamically populated -->
+    </div>
+  </div>
+</div>
+
+<!-- VIEW OFFER MODAL -->
+<div class="modal-overlay" id="viewModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="modalTitle">Offer Details</h3><button class="modal-close" onclick="document.getElementById('viewModal').classList.remove('open')">x</button></div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:13px;">
+        <div><span style="color:var(--text2);display:block;margin-bottom:4px;">Company</span><strong id="mCompany"></strong></div>
+        <div><span style="color:var(--text2);display:block;margin-bottom:4px;">Status</span><span id="mStatus" class="badge"></span></div>
+        <div><span style="color:var(--text2);display:block;margin-bottom:4px;">Position</span><strong id="mPosition"></strong></div>
+        <div><span style="color:var(--text2);display:block;margin-bottom:4px;">Allowance</span><strong id="mAllowance"></strong></div>
+        <div><span style="color:var(--text2);display:block;margin-bottom:4px;">Location</span><strong id="mLocation"></strong></div>
+        <div><span style="color:var(--text2);display:block;margin-bottom:4px;">Mode</span><strong id="mMode"></strong></div>
+        <div><span style="color:var(--text2);display:block;margin-bottom:4px;">Start Date</span><strong id="mStartDate"></strong></div>
+        <div><span style="color:var(--text2);display:block;margin-bottom:4px;">Duration</span><strong id="mDuration"></strong></div>
+      </div>
+    </div>
+    <div class="modal-footer" id="mFooter">
+      <!-- Dynamic buttons -->
+    </div>
+  </div>
+</div>
+
+<!-- REQUEST PLACEMENT CHANGE MODAL -->
+<div class="modal-overlay" id="changeModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Request Placement Change</h3><button class="modal-close" onclick="document.getElementById('changeModal').classList.remove('open')">x</button></div>
+    <div class="modal-body">
+      <div class="alert alert-warning">
+        <i class="fas fa-triangle-exclamation"></i>
+        <div>Your current accepted placement stays active until the coordinator approves this request.</div>
+      </div>
+      <div style="display:grid;gap:12px;font-size:13px;margin-bottom:14px;">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:12px;">
+          <span style="color:var(--text2);display:block;margin-bottom:4px;">Current placement</span>
+          <strong id="changeCurrent"></strong>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:12px;">
+          <span style="color:var(--text2);display:block;margin-bottom:4px;">Requested placement</span>
+          <strong id="changeRequested"></strong>
+        </div>
+      </div>
+      <label class="form-label" for="changeReason">Reason</label>
+      <textarea class="form-control" id="changeReason" rows="5" placeholder="Explain why this new offer is a better fit..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('changeModal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitPlacementChange()"><i class="fas fa-paper-plane"></i> Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allOffers = [];
+let placementRequests = [];
+let currentFilter = 'all';
+let selectedChangeOfferId = null;
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
+}
+
+function statusLabel(status) {
+  return {
+    pending: 'Pending',
+    accepted: 'Accepted',
+    rejected: 'Rejected',
+    withdrawn: 'Withdrawn'
+  }[status] || status;
+}
+
+function pendingChangeForOffer(offerId) {
+  return placementRequests.find(r => Number(r.requested_offer_id) === Number(offerId) && r.status === 'pending');
+}
+
+function anyPendingChange() {
+  return placementRequests.find(r => r.status === 'pending');
+}
+
+async function loadOffers() {
+  try {
+    const [res, changeRes] = await Promise.all([
+      fetch('../api/offers.php'),
+      fetch('../api/placement-changes.php')
+    ]);
+    if (!res.ok) throw new Error('Unauthenticated');
+    allOffers = await res.json();
+    placementRequests = changeRes.ok ? await changeRes.json() : [];
+
+    const pending = allOffers.filter(o => o.status === 'pending');
+    const accepted = allOffers.filter(o => o.status === 'accepted');
+    const rejected = allOffers.filter(o => o.status === 'rejected');
+    const overdue = pending.filter(o => Number(o.response_period_exceeded) > 0);
+    const flagAlert = document.getElementById('offerFlagAlert');
+    const reasons = [];
+    if (pending.length > 1) reasons.push(`you have ${pending.length} active pending offers`);
+    if (overdue.length > 0) reasons.push(`${overdue.length} ${overdue.length === 1 ? 'offer has' : 'offers have'} exceeded the Coordinator's response period`);
+    if (flagAlert) {
+      flagAlert.style.display = reasons.length ? 'flex' : 'none';
+      document.getElementById('offerFlagText').innerHTML = reasons.length
+        ? `<strong>Action required:</strong> The system has flagged your account because ${reasons.join(' and ')}. Please accept or reject your pending offers.`
+        : '';
+    }
+
+    // Update Tab Labels
+    document.getElementById('tab-all').textContent = `All (${allOffers.length})`;
+    document.getElementById('tab-pending').textContent = `Pending (${pending.length})`;
+    document.getElementById('tab-accepted').textContent = `Accepted (${accepted.length})`;
+    document.getElementById('tab-rejected').textContent = `Rejected (${rejected.length})`;
+
+    renderOffers();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderOffers() {
+  const grid = document.getElementById('offersGrid');
+  grid.innerHTML = '';
+
+  const filtered = allOffers.filter(o => {
+    if (currentFilter !== 'all' && o.status !== currentFilter) return false;
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    if (q && !o.company_name.toLowerCase().includes(q) && !o.position.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--text2);">No offers match the filters.</div>';
+    return;
+  }
+
+  const icons = { IT: 'fa-laptop-code', Finance: 'fa-building-columns', Engineering: 'fa-gears', Healthcare: 'fa-hospital', GLC: 'fa-industry', other: 'fa-briefcase' };
+  const acceptedOffer = allOffers.find(item => item.status === 'accepted');
+  const openChange = anyPendingChange();
+
+  filtered.forEach(o => {
+    const card = document.createElement('div');
+    card.className = 'offer-card panel';
+    card.style.marginBottom = '0';
+    if (o.status === 'accepted') card.style.borderColor = 'rgba(16,185,129,.3)';
+
+    let buttonsHtml = '';
+    if (o.status === 'pending') {
+      const changeForThisOffer = pendingChangeForOffer(o.id);
+      if (acceptedOffer) {
+        if (changeForThisOffer) {
+          buttonsHtml = `
+            <button class="btn btn-outline btn-sm" disabled style="flex:1;justify-content:center;"><i class="fas fa-clock"></i> Request Pending</button>
+            <a href="communication.html" class="btn btn-danger btn-sm" style="flex:1;justify-content:center;"><i class="fas fa-times"></i> Reject</a>
+          `;
+        } else if (openChange) {
+          buttonsHtml = `
+            <button class="btn btn-outline btn-sm" disabled style="flex:1;justify-content:center;"><i class="fas fa-clock"></i> Change Pending</button>
+            <a href="communication.html" class="btn btn-danger btn-sm" style="flex:1;justify-content:center;"><i class="fas fa-times"></i> Reject</a>
+          `;
+        } else {
+          buttonsHtml = `
+            <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center;" onclick="openPlacementChange(${o.id})"><i class="fas fa-right-left"></i> Request Change</button>
+            <a href="communication.html" class="btn btn-danger btn-sm" style="flex:1;justify-content:center;"><i class="fas fa-times"></i> Reject</a>
+          `;
+        }
+      } else {
+        buttonsHtml = `
+          <a href="acceptance.html?offer=${o.id}" class="btn btn-success btn-sm" style="flex:1;justify-content:center;"><i class="fas fa-check"></i> Accept</a>
+          <a href="communication.html" class="btn btn-danger btn-sm" style="flex:1;justify-content:center;"><i class="fas fa-times"></i> Reject</a>
+        `;
+      }
+    } else if (o.status === 'accepted') {
+      buttonsHtml = `
+        <a href="documents.html" class="btn btn-primary btn-sm" style="flex:1;justify-content:center;"><i class="fas fa-upload"></i> Upload Docs</a>
+      `;
+    }
+
+    const badgeClasses = {
+      pending: 'badge-pending',
+      accepted: 'badge-accepted',
+      rejected: 'badge-rejected',
+      withdrawn: 'badge-withdrawn'
+    };
+
+    const companyIcon = o.industry && o.industry.includes('Oil') ? 'fa-industry' : (o.industry && o.industry.includes('IT') ? 'fa-laptop-code' : 'fa-briefcase');
+
+    card.innerHTML = `
+      <div class="entity-card-body">
+        <div class="entity-card-head">
+          <div class="entity-leading">
+            <div class="entity-icon"><i class="fas ${companyIcon}"></i></div>
+            <div><p class="entity-title">${escapeHtml(o.company_name)}</p><p class="entity-subtitle"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(o.location || '')}</p></div>
+          </div>
+          <span class="badge ${badgeClasses[o.status] || ''}">${statusLabel(o.status)}</span>
+        </div>
+        <p style="font-size:14px;font-weight:600;margin-bottom:8px;">${escapeHtml(o.position)}</p>
+        <div class="entity-meta-grid">
+          <div><i class="fas fa-calendar" style="margin-right:4px;"></i>Received: ${escapeHtml(o.offer_date || 'N/A')}</div>
+          <div style="${o.status === 'pending' ? 'color:var(--red);font-weight:600;' : ''}"><i class="fas fa-clock" style="margin-right:4px;"></i>Deadline: ${escapeHtml(o.deadline || 'N/A')}</div>
+          <div><i class="fas fa-money-bill-wave" style="margin-right:4px;"></i>RM ${escapeHtml(o.allowance || '0')}/month</div>
+          <div><i class="fas fa-laptop" style="margin-right:4px;"></i>${escapeHtml(o.work_mode || 'N/A')}</div>
+        </div>
+        <div class="entity-actions">
+          ${buttonsHtml}
+          <button class="btn btn-outline btn-sm" onclick="viewOffer(${o.id})"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function filterOffers(status, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = status;
+  renderOffers();
+}
+
+function filterSearch() {
+  renderOffers();
+}
+
+function toggleChip(el) {
+  // Simple view all reset
+  document.getElementById('searchInput').value = '';
+  renderOffers();
+}
+
+function viewOffer(id) {
+  const o = allOffers.find(item => item.id === id);
+  if (!o) return;
+
+  document.getElementById('mCompany').textContent = o.company_name;
+  const statusEl = document.getElementById('mStatus');
+  statusEl.className = 'badge ' + (o.status === 'pending' ? 'badge-pending' : (o.status === 'accepted' ? 'badge-accepted' : (o.status === 'withdrawn' ? 'badge-withdrawn' : 'badge-rejected')));
+  statusEl.textContent = statusLabel(o.status).toUpperCase();
+
+  document.getElementById('mPosition').textContent = o.position;
+  document.getElementById('mAllowance').textContent = `RM ${o.allowance || '0'}/month`;
+  document.getElementById('mLocation').textContent = o.location || 'N/A';
+  document.getElementById('mMode').textContent = o.work_mode || 'N/A';
+  document.getElementById('mStartDate').textContent = o.offer_date || 'N/A';
+  document.getElementById('mDuration').textContent = o.duration || '6 Months';
+
+  const footer = document.getElementById('mFooter');
+  footer.innerHTML = `<button class="btn btn-outline" onclick="document.getElementById('viewModal').classList.remove('open')">Close</button>`;
+
+  if (o.status === 'pending') {
+    const acceptedOffer = allOffers.find(item => item.status === 'accepted');
+    const changeForThisOffer = pendingChangeForOffer(o.id);
+    if (acceptedOffer && changeForThisOffer) {
+      footer.innerHTML += `<button class="btn btn-outline" disabled><i class="fas fa-clock"></i> Request Pending</button>`;
+    } else if (acceptedOffer && anyPendingChange()) {
+      footer.innerHTML += `<button class="btn btn-outline" disabled><i class="fas fa-clock"></i> Change Pending</button>`;
+    } else if (acceptedOffer) {
+      footer.innerHTML += `<button class="btn btn-primary" onclick="openPlacementChange(${o.id})"><i class="fas fa-right-left"></i> Request Placement Change</button>`;
+    } else {
+      footer.innerHTML += `<a href="acceptance.html?offer=${o.id}" class="btn btn-success"><i class="fas fa-check"></i> Accept</a>`;
+    }
+    footer.innerHTML += `<a href="communication.html" class="btn btn-danger"><i class="fas fa-times"></i> Reject</a>`;
+  }
+
+  document.getElementById('viewModal').classList.add('open');
+}
+
+window.openPlacementChange = function(offerId) {
+  const acceptedOffer = allOffers.find(o => o.status === 'accepted');
+  const requestedOffer = allOffers.find(o => Number(o.id) === Number(offerId));
+  if (!acceptedOffer || !requestedOffer) return;
+  if (anyPendingChange()) {
+    alert('You already have a pending placement change request.');
+    return;
+  }
+  selectedChangeOfferId = offerId;
+  document.getElementById('changeCurrent').textContent = `${acceptedOffer.company_name} - ${acceptedOffer.position}`;
+  document.getElementById('changeRequested').textContent = `${requestedOffer.company_name} - ${requestedOffer.position}`;
+  document.getElementById('changeReason').value = '';
+  document.getElementById('viewModal').classList.remove('open');
+  document.getElementById('changeModal').classList.add('open');
+}
+
+window.submitPlacementChange = async function() {
+  const reason = document.getElementById('changeReason').value.trim();
+  if (!reason) {
+    alert('Please write a short reason for the coordinator.');
+    return;
+  }
+  try {
+    const res = await fetch('../api/placement-changes.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        requested_offer_id: selectedChangeOfferId,
+        reason
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error) throw new Error(data.error || 'Failed to submit request');
+    document.getElementById('changeModal').classList.remove('open');
+    alert('Placement change request submitted. Your current placement stays active until coordinator approval.');
+    await loadOffers();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadOffers);
+</script>
+<script src="../assets/js/app.js?v=20261028-1"></script>
+</body>
+</html>
+
+

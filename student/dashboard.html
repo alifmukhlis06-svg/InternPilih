@@ -1,0 +1,271 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Dashboard - InternPilih</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <a class="nav-item active" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
+    <a class="nav-item" href="offers.html"><span class="nav-icon"><i class="fas fa-briefcase"></i></span>My Offers<span class="nav-badge">2</span></a>
+    <a class="nav-item" href="record-offer.html"><span class="nav-icon"><i class="fas fa-plus-circle"></i></span>Record Offer</a>
+    <div class="nav-section">Communication</div>
+    <a class="nav-item" href="acceptance.html"><span class="nav-icon"><i class="fas fa-circle-check"></i></span>Acceptance System</a>
+    <a class="nav-item" href="communication.html"><span class="nav-icon"><i class="fas fa-comments"></i></span>Rejection System</a>
+    <div class="nav-section">Documents</div>
+    <a class="nav-item" href="documents.html"><span class="nav-icon"><i class="fas fa-file-upload"></i></span>Upload Docs</a>
+    <a class="nav-item" href="companies.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Companies</a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bell"></i></span>Notifications<span class="nav-badge">3</span></a>
+    <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">AM</div>
+      <div class="user-info"><p class="user-name">Alif Mukhlis bin Ahmad</p><span class="user-matric">2025161705</span></div>
+    </div>
+    <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div><h1>Dashboard</h1><p class="topbar-sub">Welcome back, <span class="user-name">Alif</span>! Here's your internship overview.</p></div>
+    <div class="topbar-right">
+      <a href="notifications.html" class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></a>
+      <a href="profile.html" class="user-avatar">AM</a>
+    </div>
+  </div>
+
+  <div class="content fade-in">
+    <section class="dashboard-brief" aria-labelledby="student-brief-title">
+      <div class="dashboard-brief-copy">
+        <span class="dashboard-brief-kicker">Current semester</span>
+        <h2 id="student-brief-title">Keep your internship decisions moving.</h2>
+        <p>Review new offers, record each response, and keep your placement documents ready for coordinator verification.</p>
+        <a class="dashboard-brief-link" href="record-offer.html">Record a new offer <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </section>
+
+    <!-- ALERT -->
+    <div class="alert alert-warning" id="alert-bar" style="display:none;"><i class="fas fa-exclamation-triangle"></i><div id="alert-text"></div></div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card gold">
+        <div class="stat-icon gold"><i class="fas fa-hourglass-half"></i></div>
+        <div><div class="stat-val" id="stat-pending">0</div><div class="stat-label">Pending Offers</div><div class="stat-change down">Action needed</div></div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+        <div><div class="stat-val" id="stat-accepted">0</div><div class="stat-label">Accepted</div><div class="stat-change up">Confirmed</div></div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="fas fa-paper-plane"></i></div>
+        <div><div class="stat-val" id="stat-sent">0</div><div class="stat-label">Applications Sent</div><div class="stat-change">Total logged</div></div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon red"><i class="fas fa-times-circle"></i></div>
+        <div><div class="stat-val" id="stat-rejected">0</div><div class="stat-label">Rejected</div><div class="stat-change">Replies sent</div></div>
+      </div>
+    </div>
+
+    <div class="page-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <h3 class="icon-heading"><i class="fas fa-briefcase"></i>Current Internship Offers</h3>
+          <a href="record-offer.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add Offer</a>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Company</th><th>Position</th><th>Deadline</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="offers-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="panel-header"><h3>Placement Status</h3></div>
+          <div class="panel-body">
+            <div style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Applications Sent</span><strong id="placement-sent">0</strong></div>
+              <div class="progress-bar"><div class="progress-fill blue" style="width:100%"></div></div>
+            </div>
+            <div style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Offers Received</span><strong id="placement-received">0</strong></div>
+              <div class="progress-bar"><div class="progress-fill gold" id="progress-received" style="width:0%"></div></div>
+            </div>
+            <div style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Accepted</span><strong id="placement-accepted">0</strong></div>
+              <div class="progress-bar"><div class="progress-fill green" id="progress-accepted" style="width:0%"></div></div>
+            </div>
+            <div id="accepted-block" class="info-note success" style="display:none;margin-top:16px;">
+              <strong>Accepted Placement</strong><br>
+              <span id="accepted-details"></span>
+            </div>
+            <div id="no-accepted-block" class="info-note warning" style="margin-top:16px;">
+              <strong>No Placement Confirmed</strong><br>
+              <span>Please accept an offer or record a new one to proceed with verification documents.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h3>Notifications</h3><a href="notifications.html" class="panel-link">View all</a></div>
+          <div class="panel-section" id="dashboardNotifications"><div class="empty-state" style="padding:24px;"><i class="fas fa-spinner fa-spin"></i><p>Loading notifications...</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadDashboard() {
+  try {
+    const res = await fetch('../api/offers.php');
+    if (!res.ok) throw new Error('Unauthenticated');
+    const offers = await res.json();
+
+    const pending = offers.filter(o => o.status === 'pending');
+    const accepted = offers.filter(o => o.status === 'accepted');
+    const rejected = offers.filter(o => o.status === 'rejected');
+
+    // Update alert
+    const alertBar = document.getElementById('alert-bar');
+    if (pending.length > 0) {
+      alertBar.style.display = 'flex';
+      document.getElementById('alert-text').innerHTML = `<strong>Action Required:</strong> You have ${pending.length} pending internship offer(s) awaiting your decision. Please respond before the deadline.`;
+    } else {
+      alertBar.style.display = 'none';
+    }
+
+    // Update stats
+    document.getElementById('stat-pending').textContent = pending.length;
+    document.getElementById('stat-accepted').textContent = accepted.length;
+    document.getElementById('stat-sent').textContent = offers.length;
+    document.getElementById('stat-rejected').textContent = rejected.length;
+
+    // Update placement status panel
+    document.getElementById('placement-sent').textContent = offers.length;
+    document.getElementById('placement-received').textContent = offers.length;
+    document.getElementById('progress-received').style.width = offers.length > 0 ? '100%' : '0%';
+    document.getElementById('placement-accepted').textContent = accepted.length > 0 ? '1 / 1' : '0 / 1';
+    document.getElementById('progress-accepted').style.width = accepted.length > 0 ? '100%' : '0%';
+
+    const acceptedBlock = document.getElementById('accepted-block');
+    const noAcceptedBlock = document.getElementById('no-accepted-block');
+    if (accepted.length > 0) {
+      acceptedBlock.style.display = 'block';
+      noAcceptedBlock.style.display = 'none';
+      document.getElementById('accepted-details').innerHTML = `<strong>${accepted[0].company_name}</strong><br>${accepted[0].position} - ${accepted[0].location || ''}`;
+    } else {
+      acceptedBlock.style.display = 'none';
+      noAcceptedBlock.style.display = 'block';
+    }
+
+    // Populate table
+    const tbody = document.getElementById('offers-tbody');
+    tbody.innerHTML = '';
+    if (offers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text2);padding:20px;">No offers logged yet.</td></tr>';
+      return;
+    }
+
+    offers.forEach(o => {
+      const tr = document.createElement('tr');
+      let actionHtml = '';
+      if (o.status === 'pending') {
+        actionHtml = accepted.length > 0 ? `
+          <a href="offers.html" class="btn btn-primary btn-sm"><i class="fas fa-right-left"></i> Request Change</a>
+          <a href="communication.html" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</a>
+        ` : `
+          <a href="acceptance.html?offer=${o.id}" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Accept</a>
+          <a href="communication.html" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</a>
+        `;
+      } else if (o.status === 'accepted') {
+        actionHtml = `<a href="documents.html" class="btn btn-outline btn-sm"><i class="fas fa-upload"></i> Docs</a>`;
+      } else if (o.status === 'withdrawn') {
+        actionHtml = `<span style="color:var(--text3);font-size:12px;">Changed placement</span>`;
+      } else {
+        actionHtml = `<span style="color:var(--text3);font-size:12px;">Notice sent</span>`;
+      }
+
+      const statusBadges = {
+        pending: '<span class="badge badge-pending">Pending</span>',
+        accepted: '<span class="badge badge-accepted">Accepted</span>',
+        rejected: '<span class="badge badge-rejected">Rejected</span>',
+        withdrawn: '<span class="badge badge-withdrawn">Withdrawn</span>'
+      };
+
+      tr.innerHTML = `
+        <td><strong>${o.company_name}</strong><br><small style="color:var(--text2);">${o.location || ''}</small></td>
+        <td>${o.position}</td>
+        <td><span style="${o.status === 'pending' ? 'color:var(--red);font-weight:600;' : ''}">${o.deadline || 'N/A'}</span></td>
+        <td>${statusBadges[o.status] || o.status}</td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap;padding-top:14px;">${actionHtml}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function loadDashboardNotifications() {
+  const list = document.getElementById('dashboardNotifications');
+  if (!list) return;
+  try {
+    const res = await fetch('../api/notifications.php?fresh=' + Date.now(), { cache: 'no-store' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error) throw new Error(data.error || 'Unable to load notifications');
+    const notes = (data.notifications || []).slice(0, 4);
+    const icons = { urgent: 'fa-triangle-exclamation', reminder: 'fa-bell', general: 'fa-bullhorn', system: 'fa-circle-info' };
+    list.innerHTML = notes.map(note => {
+      const unread = Number(note.is_read) === 0;
+      const sender = note.sender_name || 'System';
+      return `<a class="notif-item" href="notifications.html" style="color:inherit;text-decoration:none;${unread ? '' : 'opacity:.72;'}">
+        <div class="notif-dot-icon" style="background:rgba(59,130,246,.12);color:var(--blue3);"><i class="fas ${icons[note.type] || icons.system}"></i></div>
+        <div style="min-width:0;flex:1;"><p style="font-size:13px;font-weight:600;">${escapeDashboardHtml(note.title)}</p><p class="notif-meta">${escapeDashboardHtml(sender)} - ${formatDashboardDate(note.created_at)}</p></div>
+        ${unread ? '<div class="unread-marker"></div>' : ''}
+      </a>`;
+    }).join('') || '<div class="empty-state" style="padding:24px;"><i class="fas fa-inbox"></i><p>No notifications yet.</p></div>';
+  } catch (error) {
+    list.innerHTML = '<div class="empty-state" style="padding:24px;"><i class="fas fa-triangle-exclamation"></i><p>Notifications could not be loaded.</p></div>';
+  }
+}
+
+function escapeDashboardHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+
+function formatDashboardDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('en-MY', { day:'numeric', month:'short', year:'numeric' });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  loadDashboard();
+  loadDashboardNotifications();
+  window.setInterval(loadDashboardNotifications, 30000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') loadDashboardNotifications();
+  });
+});
+</script>
+  <script src="../assets/js/app.js?v=20261028-1"></script>
+</body>
+</html>
+
+

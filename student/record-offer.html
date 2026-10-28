@@ -1,0 +1,433 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Record Offer - InternPilih</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div></div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
+    <a class="nav-item" href="offers.html"><span class="nav-icon"><i class="fas fa-briefcase"></i></span>My Offers<span class="nav-badge">2</span></a>
+    <a class="nav-item active" href="record-offer.html"><span class="nav-icon"><i class="fas fa-plus-circle"></i></span>Record Offer</a>
+    <div class="nav-section">Communication</div>
+    <a class="nav-item" href="acceptance.html"><span class="nav-icon"><i class="fas fa-circle-check"></i></span>Acceptance System</a>
+    <a class="nav-item" href="communication.html"><span class="nav-icon"><i class="fas fa-comments"></i></span>Rejection System</a>
+    <div class="nav-section">Documents</div>
+    <a class="nav-item" href="documents.html"><span class="nav-icon"><i class="fas fa-file-upload"></i></span>Upload Docs</a>
+    <a class="nav-item" href="companies.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Companies</a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bell"></i></span>Notifications<span class="nav-badge">3</span></a>
+    <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p>Alif Mukhlis bin Ahmad</p><span>2025161705</span></div></div>
+    <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div><h1>Record Internship Offer</h1><p class="topbar-sub">Log a new offer you have received</p></div>
+    <div class="topbar-right">
+      <a href="notifications.html" class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></a>
+    </div>
+  </div>
+
+  <div class="content fade-in">
+    <div style="max-width:760px;">
+      <div class="alert alert-info"><i class="fas fa-info-circle"></i>Record every internship offer you receive. The system will notify the coordinator and monitor your decision timeline.</div>
+
+      <div class="panel">
+        <div class="panel-header"><h3><i class="fas fa-building" style="color:var(--blue3);margin-right:8px;"></i>Company Information</h3></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Company Name *</label>
+              <select class="form-control" id="companyId" onchange="autoFillCompany()">
+                <option value="">Select company...</option>
+                <option value="1">Petronas ICT Sdn Bhd</option>
+                <option value="2">Tech Solutions Sdn Bhd</option>
+                <option value="3">Axiata Digital Sdn Bhd</option>
+                <option value="4">Maybank IT Division</option>
+                <option value="5">Microsoft Malaysia</option>
+                <option value="6">KPJ Healthcare IT</option>
+                <option value="__manual__">Company not listed - enter manually</option>
+              </select>
+              <input type="text" class="form-control" id="manualCompanyName" placeholder="Enter company name" style="display:none;margin-top:10px;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Industry *</label>
+              <input type="text" class="form-control" id="industry" readonly>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Company Email *</label>
+              <input type="email" class="form-control" id="companyEmail" readonly>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Company Phone</label>
+              <input type="text" class="form-control" id="companyPhone" readonly>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Location / Address *</label>
+            <input type="text" class="form-control" id="companyLocation" readonly>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h3><i class="fas fa-briefcase" style="color:var(--gold);margin-right:8px;"></i>Offer Details</h3></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Position / Role *</label>
+              <input type="text" class="form-control" placeholder="e.g. Cybersecurity Intern" id="position" list="positionSuggestions" maxlength="150" autocomplete="off">
+              <datalist id="positionSuggestions">
+                <option value="Cybersecurity Intern">
+                <option value="Network Engineering Intern">
+                <option value="Software Development Intern">
+                <option value="Data Analytics Intern">
+                <option value="Cloud Computing Intern">
+                <option value="IT Support Intern">
+                <option value="UI/UX Design Intern">
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Monthly Allowance (RM)</label>
+              <input type="number" class="form-control" id="allowance" readonly>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Offer Date Received *</label>
+              <input type="date" class="form-control" id="offerDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Response Deadline *</label>
+              <input type="date" class="form-control" id="deadline">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Internship Start Date</label>
+              <input type="date" class="form-control" id="startDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Duration</label>
+              <input type="text" class="form-control" id="duration" readonly>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Work Mode</label>
+              <input type="text" class="form-control" id="workMode" readonly>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Offer Source</label>
+              <select class="form-control" id="offerSource">
+                <option>Direct Application</option>
+                <option>University Portal</option>
+                <option>LinkedIn</option>
+                <option>Referral</option>
+                <option>Career Fair</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Offer Description / Notes</label>
+            <textarea class="form-control" id="notes" placeholder="Additional details about this offer..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h3><i class="fas fa-paperclip" style="color:var(--purple);margin-right:8px;"></i>Attachment (Optional)</h3></div>
+        <div class="panel-body">
+          <div class="upload-area" onclick="document.getElementById('offerFile').click()">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Click to upload offer letter or related document</p>
+            <p><span>Browse files</span> or drag and drop here</p>
+            <p style="font-size:11px;margin-top:8px;">PDF, DOC, JPG - Max 5MB</p>
+            <input type="file" id="offerFile" style="display:none" onchange="showFile(this)">
+          </div>
+          <div id="filePreview" class="surface-box" style="display:none;margin-top:12px;align-items:center;gap:10px;font-size:13px;">
+            <i class="fas fa-file-pdf" style="color:var(--red);font-size:20px;"></i>
+            <span id="fileName"></span>
+            <button onclick="clearFile()" style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:flex-end;">
+        <a href="offers.html" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Cancel</a>
+        <button class="btn btn-outline" onclick="saveDraft()"><i class="fas fa-save"></i> Save Draft</button>
+        <button class="btn btn-primary" onclick="submitOffer()"><i class="fas fa-paper-plane"></i> Submit Offer Record</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-body" style="text-align:center;padding:40px;">
+      <div class="success-mark"><i class="fas fa-check"></i></div>
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Offer Recorded!</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:24px;">Your internship offer has been successfully recorded and submitted to your coordinator for review.</p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <a href="offers.html" class="btn btn-primary">View My Offers</a>
+        <button class="btn btn-outline" onclick="document.getElementById('successModal').classList.remove('open')">Add Another</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showFile(input){
+  if(input.files.length>0){
+    document.getElementById('fileName').textContent=input.files[0].name;
+    document.getElementById('filePreview').style.display='flex';
+  }
+}
+function clearFile(){
+  document.getElementById('offerFile').value='';
+  document.getElementById('filePreview').style.display='none';
+}
+let companiesList = [];
+
+async function loadCompanies() {
+  try {
+    const res = await fetch('../api/companies.php');
+    if (!res.ok) throw new Error('Unauthenticated');
+    companiesList = await res.json();
+
+    const select = document.getElementById('companyId');
+    select.innerHTML = '<option value="">Select company...</option>';
+    companiesList.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.name;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function autoFillCompany() {
+  const select = document.getElementById('companyId');
+  const cid = parseInt(select.value);
+  if (!cid) {
+    document.getElementById('industry').value = '';
+    document.getElementById('companyEmail').value = '';
+    document.getElementById('companyPhone').value = '';
+    document.getElementById('companyLocation').value = '';
+    document.getElementById('allowance').value = '';
+    document.getElementById('workMode').value = '';
+    document.getElementById('duration').value = '';
+    return;
+  }
+
+  const c = companiesList.find(item => item.id === cid);
+  if (c) {
+    document.getElementById('industry').value = c.industry || '';
+    document.getElementById('companyEmail').value = c.hr_email || '';
+    document.getElementById('companyPhone').value = ''; // Phone not in schema
+    document.getElementById('companyLocation').value = c.location || '';
+    document.getElementById('allowance').value = c.allowance || '';
+    document.getElementById('workMode').value = c.work_mode || '';
+    document.getElementById('duration').value = '6 Months'; // Default duration
+  }
+}
+
+async function submitOffer() {
+  const cid = document.getElementById('companyId').value;
+  const position = document.getElementById('position').value.trim();
+  const offerDate = document.getElementById('offerDate').value;
+  const deadline = document.getElementById('deadline').value;
+
+  if (!cid || !position || !offerDate || !deadline) {
+    alert('Please fill in Company Name, Position, Offer Date, and Response Deadline.');
+    return;
+  }
+
+  try {
+    const res = await fetch('../api/offers.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        company_id: parseInt(cid),
+        position: position,
+        offer_date: offerDate,
+        deadline: deadline
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'Failed to submit offer record.');
+
+    document.getElementById('successModal').classList.add('open');
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function saveDraft() {
+  const btn = event.target;
+  btn.innerHTML = '<i class="fas fa-check"></i> Draft Saved!';
+  btn.classList.add('btn-success');
+  setTimeout(() => {
+    btn.innerHTML = '<i class="fas fa-save"></i> Save Draft';
+    btn.classList.remove('btn-success');
+  }, 2000);
+}
+
+// Initialise defaults
+document.getElementById('offerDate').valueAsDate = new Date();
+const deadlineDate = new Date();
+deadlineDate.setDate(deadlineDate.getDate() + 14);
+document.getElementById('deadline').valueAsDate = deadlineDate;
+
+// The final loader below keeps the manual option and fallback companies intact.
+</script>
+<script src="../assets/js/app.js?v=20261028-1"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+  try {
+    const res = await fetch('../api/companies.php');
+    companiesList = res.ok ? await res.json() : [];
+  } catch (err) {
+    companiesList = [];
+  }
+  const select = document.getElementById('companyId');
+  select.innerHTML = '<option value="">Select company...</option><option value="__manual__">Company not listed - enter manually</option>';
+  companiesList.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    select.appendChild(opt);
+  });
+});
+
+function setCompanyFieldsEditable(editable) {
+  ['industry', 'companyEmail', 'companyLocation', 'allowance', 'workMode'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.readOnly = !editable;
+  });
+}
+
+window.autoFillCompany = function () {
+  const select = document.getElementById('companyId');
+  const manual = select.value === '__manual__';
+  document.getElementById('manualCompanyName').style.display = manual ? 'block' : 'none';
+  setCompanyFieldsEditable(manual);
+
+  if (manual) {
+    document.getElementById('manualCompanyName').focus();
+    document.getElementById('industry').value = '';
+    document.getElementById('companyEmail').value = '';
+    document.getElementById('companyPhone').value = '';
+    document.getElementById('companyLocation').value = '';
+    document.getElementById('allowance').value = '';
+    document.getElementById('workMode').value = 'On-site';
+    document.getElementById('duration').value = '6 Months';
+    return;
+  }
+
+  const cid = Number(select.value);
+  const c = companiesList.find(item => Number(item.id) === cid);
+  document.getElementById('manualCompanyName').value = '';
+
+  if (!c) {
+    document.getElementById('industry').value = '';
+    document.getElementById('companyEmail').value = '';
+    document.getElementById('companyPhone').value = '';
+    document.getElementById('companyLocation').value = '';
+    document.getElementById('allowance').value = '';
+    document.getElementById('workMode').value = '';
+    document.getElementById('duration').value = '';
+    return;
+  }
+
+  document.getElementById('industry').value = c.industry || '';
+  document.getElementById('companyEmail').value = c.hr_email || '';
+  document.getElementById('companyPhone').value = '';
+  document.getElementById('companyLocation').value = c.location || '';
+  document.getElementById('allowance').value = c.allowance || '';
+  document.getElementById('workMode').value = c.work_mode || '';
+  document.getElementById('duration').value = '6 Months';
+};
+
+async function ensureCompanyId() {
+  const selected = document.getElementById('companyId').value;
+  if (selected && selected !== '__manual__') return Number(selected);
+
+  const allowedModes = ['On-site', 'Hybrid', 'Remote'];
+  const mode = document.getElementById('workMode').value.trim();
+  const payload = {
+    name: document.getElementById('manualCompanyName').value.trim(),
+    industry: document.getElementById('industry').value.trim(),
+    location: document.getElementById('companyLocation').value.trim(),
+    allowance: Number(document.getElementById('allowance').value || 0),
+    work_mode: allowedModes.includes(mode) ? mode : 'On-site',
+    hr_email: document.getElementById('companyEmail').value.trim()
+  };
+
+  if (!payload.name || !payload.industry || !payload.location) {
+    throw new Error('Please enter Company Name, Industry, and Location for the new company.');
+  }
+
+  const res = await fetch('../api/companies.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.error) throw new Error(data.error || 'Could not save company');
+  return Number(data.id);
+}
+
+window.submitOffer = async function () {
+  const position = document.getElementById('position').value.trim();
+  const offerDate = document.getElementById('offerDate').value;
+  const deadline = document.getElementById('deadline').value;
+
+  if (!document.getElementById('companyId').value || !position || !offerDate || !deadline) {
+    alert('Please fill in Company Name, Position, Offer Date, and Response Deadline.');
+    return;
+  }
+
+  let cid;
+  try {
+    cid = await ensureCompanyId();
+    const res = await fetch('../api/offers.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        company_id: parseInt(cid),
+        position: position,
+        offer_date: offerDate,
+        deadline: deadline
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error) throw new Error(data.error || 'Database unavailable');
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
+  document.getElementById('successModal').classList.add('open');
+};
+</script>
+</body>
+</html>
+
+

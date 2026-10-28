@@ -1,0 +1,172 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Profile – InternPilih</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div style="font-size:14px;font-weight:800;color:var(--text);">InternPilih</div><div style="font-size:10px;color:var(--text2);">Student Portal</div></div></div></div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
+    <a class="nav-item" href="offers.html"><span class="nav-icon"><i class="fas fa-briefcase"></i></span>My Offers<span class="nav-badge">2</span></a>
+    <a class="nav-item" href="record-offer.html"><span class="nav-icon"><i class="fas fa-plus-circle"></i></span>Record Offer</a>
+    <div class="nav-section">Communication</div>
+    <a class="nav-item" href="acceptance.html"><span class="nav-icon"><i class="fas fa-circle-check"></i></span>Acceptance System</a>
+    <a class="nav-item" href="communication.html"><span class="nav-icon"><i class="fas fa-comments"></i></span>Rejection System</a>
+    <div class="nav-section">Documents</div>
+    <a class="nav-item" href="documents.html"><span class="nav-icon"><i class="fas fa-file-upload"></i></span>Upload Docs</a>
+    <a class="nav-item" href="companies.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Companies</a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bell"></i></span>Notifications<span class="nav-badge">3</span></a>
+    <a class="nav-item active" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p>Alif Mukhlis bin Ahmad</p><span>2025161705</span></div></div>
+    <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div><h1>My Profile</h1><p style="font-size:12px;color:var(--text2);">Manage your personal information and account settings</p></div>
+  </div>
+
+  <div class="content fade-in">
+    <div style="max-width:800px;">
+      <!-- PROFILE HEADER -->
+      <div class="panel" style="margin-bottom:24px;">
+        <div class="panel-body">
+          <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+            <div style="position:relative;">
+              <div class="profile-avatar">AM</div>
+              <button onclick="document.getElementById('photoInput').click()" style="position:absolute;bottom:0;right:0;width:28px;height:28px;background:var(--blue2);border:none;border-radius:50%;cursor:pointer;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-camera"></i>
+              </button>
+              <input type="file" id="photoInput" style="display:none" accept="image/*">
+            </div>
+            <div style="flex:1;">
+              <h2 style="font-size:20px;font-weight:800;">Alif Mukhlis bin Ahmad</h2>
+              <p style="color:var(--text2);font-size:13px;">2025161705 · Faculty of Computer and Mathematical Sciences</p>
+              <p style="color:var(--text2);font-size:13px;">Bachelor of Computer Science with Honours · UiTM Shah Alam</p>
+              <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                <span class="badge badge-accepted">Active Student</span>
+                <span class="badge badge-verified">Placement Verified</span>
+                <span class="badge" style="background:rgba(16,185,129,.1);color:var(--green);">100% Response Rate</span>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="editMode()"><i class="fas fa-edit"></i> Edit Profile</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <!-- PERSONAL INFO -->
+        <div class="panel">
+          <div class="panel-header"><h3><i class="fas fa-user" style="color:var(--blue3);margin-right:8px;"></i>Personal Information</h3></div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-control" value="Alif Mukhlis bin Ahmad" id="fullName">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Student ID / Matric No.</label>
+              <input type="text" class="form-control" value="2025161705" readonly style="opacity:.6;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-control" value="2025161705@student.uitm.edu.my" readonly title="Student email follows the matric number" style="opacity:.7;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="text" class="form-control" value="+601X-XXXX XXXX">
+            </div>
+            <div class="form-group">
+              <label class="form-label">CGPA</label>
+              <input type="text" class="form-control" value="3.67">
+            </div>
+          </div>
+        </div>
+
+        <!-- ACADEMIC INFO -->
+        <div class="panel">
+          <div class="panel-header"><h3><i class="fas fa-graduation-cap" style="color:var(--gold);margin-right:8px;"></i>Academic Information</h3></div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label class="form-label">Programme</label>
+              <input type="text" class="form-control" value="Bachelor of Computer Science with Honours (Netcentric Computing)" readonly style="opacity:.7;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Faculty</label>
+              <input type="text" class="form-control" value="Faculty of Computer and Mathematical Sciences" readonly style="opacity:.7;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Campus</label>
+              <select class="form-control">
+                <option selected>UiTM Shah Alam</option>
+                <option>UiTM Selangor</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Internship Semester</label>
+              <input type="text" class="form-control" value="Semester 7 (Jan–Jun 2026)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Coordinator</label>
+              <input type="text" class="form-control" id="coordinatorName" value="Dr. Siti Norzahra binti Mahmud" readonly style="opacity:.6;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHANGE PASSWORD -->
+      <div class="panel" style="margin-top:0;">
+        <div class="panel-header"><h3><i class="fas fa-lock" style="color:var(--red);margin-right:8px;"></i>Change Password</h3></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Current Password</label>
+              <input type="password" class="form-control" placeholder="••••••••">
+            </div>
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <input type="password" class="form-control" placeholder="••••••••">
+            </div>
+          </div>
+          <div class="form-group" style="max-width:50%;">
+            <label class="form-label">Confirm New Password</label>
+            <input type="password" class="form-control" placeholder="••••••••">
+          </div>
+          <button class="btn btn-outline" onclick="updatePwd()"><i class="fas fa-key"></i> Update Password</button>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:4px;">
+        <button class="btn btn-outline">Cancel</button>
+        <button class="btn btn-primary" onclick="saveProfile()"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function saveProfile(){
+  const btn=event.target;
+  btn.innerHTML='<i class="fas fa-check"></i> Saved!';
+  btn.style.background='var(--green)';
+  setTimeout(()=>{btn.innerHTML='<i class="fas fa-save"></i> Save Changes';btn.style.background='';},2000);
+}
+function updatePwd(){
+  const btn=event.target;
+  btn.innerHTML='<i class="fas fa-check"></i> Password Updated!';
+  setTimeout(()=>{btn.innerHTML='<i class="fas fa-key"></i> Update Password';},2000);
+}
+</script>
+<script src="../assets/js/app.js?v=20261028-1"></script>
+</body>
+</html>
+

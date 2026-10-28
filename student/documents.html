@@ -1,0 +1,335 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Upload Documents - InternPilih</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div></div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
+    <a class="nav-item" href="offers.html"><span class="nav-icon"><i class="fas fa-briefcase"></i></span>My Offers<span class="nav-badge">2</span></a>
+    <a class="nav-item" href="record-offer.html"><span class="nav-icon"><i class="fas fa-plus-circle"></i></span>Record Offer</a>
+    <div class="nav-section">Communication</div>
+    <a class="nav-item" href="acceptance.html"><span class="nav-icon"><i class="fas fa-circle-check"></i></span>Acceptance System</a>
+    <a class="nav-item" href="communication.html"><span class="nav-icon"><i class="fas fa-comments"></i></span>Rejection System</a>
+    <div class="nav-section">Documents</div>
+    <a class="nav-item active" href="documents.html"><span class="nav-icon"><i class="fas fa-file-upload"></i></span>Upload Docs</a>
+    <a class="nav-item" href="companies.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Companies</a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bell"></i></span>Notifications<span class="nav-badge">3</span></a>
+    <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p>Alif Mukhlis bin Ahmad</p><span>2025161705</span></div></div>
+    <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div><h1>Upload Documents</h1><p class="topbar-sub">Submit placement documents for verification</p></div>
+    <div class="topbar-right">
+      <a href="notifications.html" class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></a>
+    </div>
+  </div>
+
+  <div class="content fade-in">
+    <div class="alert alert-warning" id="alert-bar" style="display:none;"><i class="fas fa-exclamation-triangle"></i><span id="alert-text"></span></div>
+
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start;">
+      <div>
+        <!-- DOCUMENT TYPES -->
+        <div class="panel" id="upload-panel" style="display:none;">
+          <div class="panel-header"><h3><i class="fas fa-folder-open" style="color:var(--gold);margin-right:8px;"></i>Required Documents</h3></div>
+          <div class="panel-body">
+            <div style="display:grid;gap:14px;" id="docs-list-container">
+              <!-- Dynamically populated document rows -->
+            </div>
+
+            <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;">
+              <button class="btn btn-primary" onclick="submitDocs()"><i class="fas fa-check"></i> Finish Submission</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="no-placement-panel" style="display:block;padding:30px;text-align:center;">
+          <div style="font-size:48px;margin-bottom:16px;color:var(--gold);"><i class="fas fa-circle-exclamation"></i></div>
+          <h3>No Accepted Placement</h3>
+          <p style="color:var(--text2);margin-top:8px;">You need to accept an internship offer before you can upload placement confirmation documents.</p>
+          <a href="offers.html" class="btn btn-primary" style="margin-top:20px;display:inline-flex;">View My Offers</a>
+        </div>
+      </div>
+
+      <!-- STATUS SIDEBAR -->
+      <div>
+        <div class="panel" style="margin-bottom:16px;display:none;" id="sidebar-placement-panel">
+          <div class="panel-header"><h3>Placement Details</h3></div>
+          <div class="panel-body" style="font-size:13px;">
+            <div class="info-note success" style="margin-bottom:14px;">
+              <p style="font-weight:700;color:var(--green);">Accepted Placement</p>
+              <p style="color:var(--text2);font-size:12px;margin-top:4px;" id="side-company"></p>
+              <p style="color:var(--text2);font-size:12px;" id="side-position"></p>
+            </div>
+            <div style="display:grid;gap:8px;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">Start Date</span><strong id="side-start"></strong></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">Duration</span><strong id="side-duration">6 Months</strong></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">Allowance</span><strong id="side-allowance"></strong></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">Mode</span><strong id="side-mode"></strong></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:var(--text2);">Verification</span><span id="side-verification"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="display:none;" id="sidebar-status-panel">
+          <div class="panel-header"><h3>Document Status</h3></div>
+          <div class="panel-body">
+            <div style="display:grid;gap:10px;" id="side-status-list">
+              <!-- Dynamically populated status badges -->
+            </div>
+            <div style="margin-top:14px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Completion</span><span id="completion-text">0%</span></div>
+              <div class="progress-bar"><div class="progress-fill gold" id="completion-bar" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="submitModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-body" style="text-align:center;padding:40px;">
+      <div style="font-size:48px;margin-bottom:16px;color:var(--blue3);"><i class="fas fa-clipboard-check"></i></div>
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Documents Submitted!</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:24px;">Your documents have been submitted for coordinator verification. You will be notified once reviewed.</p>
+      <button class="btn btn-primary" onclick="document.getElementById('submitModal').classList.remove('open')">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let acceptedOffer = null;
+let uploadedDocs = [];
+
+const docTypes = [
+  { key: 'offer_letter', name: 'Offer Letter / Acceptance Confirmation', required: true, icon: 'fa-file-contract', color: 'var(--blue3)' },
+  { key: 'student_id', name: 'Student ID / Matric Card', required: true, icon: 'fa-id-card', color: 'var(--green)' },
+  { key: 'supervisor_letter', name: 'Supervisor Appointment Letter', required: false, icon: 'fa-user-tie', color: 'var(--purple)' },
+  { key: 'agreement', name: 'Internship Agreement Form', required: true, icon: 'fa-file-signature', color: 'var(--blue3)' }
+];
+
+async function loadPage() {
+  try {
+    const resOffers = await fetch('../api/offers.php');
+    if (!resOffers.ok) throw new Error('Unauthenticated');
+    const offers = await resOffers.json();
+
+    acceptedOffer = offers.find(o => o.status === 'accepted');
+
+    if (!acceptedOffer) {
+      document.getElementById('no-placement-panel').style.display = 'block';
+      document.getElementById('upload-panel').style.display = 'none';
+      document.getElementById('sidebar-placement-panel').style.display = 'none';
+      document.getElementById('sidebar-status-panel').style.display = 'none';
+      return;
+    }
+
+    // Show panels
+    document.getElementById('no-placement-panel').style.display = 'none';
+    document.getElementById('upload-panel').style.display = 'block';
+    document.getElementById('sidebar-placement-panel').style.display = 'block';
+    document.getElementById('sidebar-status-panel').style.display = 'block';
+
+    // Populate sidebar placement details
+    document.getElementById('side-company').textContent = acceptedOffer.company_name;
+    document.getElementById('side-position').textContent = `${acceptedOffer.position} - ${acceptedOffer.location || ''}`;
+    document.getElementById('side-start').textContent = acceptedOffer.offer_date || 'N/A';
+    document.getElementById('side-allowance').textContent = `RM ${acceptedOffer.allowance || '0'}/mo`;
+    document.getElementById('side-mode').textContent = acceptedOffer.work_mode || 'N/A';
+
+    // Fetch documents
+    const resDocs = await fetch('../api/documents.php');
+    uploadedDocs = resDocs.ok ? await resDocs.json() : [];
+
+    renderDocs();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderDocs() {
+  const container = document.getElementById('docs-list-container');
+  const sidebarStatus = document.getElementById('side-status-list');
+  container.innerHTML = '';
+  sidebarStatus.innerHTML = '';
+
+  let requiredCount = 0;
+  let verifiedCount = 0;
+  let uploadedCount = 0;
+  const placementStatus = acceptedOffer?.placement_verification_status || 'not_submitted';
+  const placementLabels = {
+    not_submitted: '<span class="badge badge-pending">Not submitted</span>',
+    pending: '<span class="badge badge-pending">Pending</span>',
+    verified: '<span class="badge badge-verified">Verified</span>',
+    rejected: '<span class="badge badge-rejected">Rejected</span>'
+  };
+  document.getElementById('side-verification').innerHTML = placementLabels[placementStatus] || placementLabels.not_submitted;
+
+  docTypes.forEach(t => {
+    if (t.required) requiredCount++;
+    const doc = uploadedDocs.find(d => d.doc_type === t.key);
+
+    let statusBadge = '<span class="badge" style="background:var(--bg);border:1px solid var(--border);color:var(--text2);">Not Uploaded</span>';
+    let cardBorder = 'var(--border)';
+    let innerHtml = '';
+
+    if (doc) {
+      if (t.required) uploadedCount++;
+      if (doc.status === 'approved') {
+        if (t.required) verifiedCount++;
+        statusBadge = '<span class="badge badge-verified">Verified</span>';
+        cardBorder = 'rgba(59,130,246,.3)';
+        innerHtml = `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.2);border-radius:8px;font-size:12px;margin-top:12px;">
+            <i class="fas fa-file-pdf" style="color:var(--blue3);"></i>
+            <span style="word-break:break-all;">${doc.file_name}</span>
+            <span style="margin-left:auto;font-size:11px;color:var(--text2);">Verified by admin</span>
+          </div>
+        `;
+      } else if (doc.status === 'rejected') {
+        statusBadge = '<span class="badge badge-rejected">Rejected</span>';
+        cardBorder = 'rgba(239,68,68,.3)';
+        innerHtml = `
+          <div style="color:var(--red);font-size:11px;margin:8px 0;">Rejected reason: ${doc.reject_reason || 'Blurry / incorrect file'}</div>
+          <div class="upload-area" style="padding:20px;" onclick="triggerUpload('input-${t.key}')">
+            <i class="fas fa-cloud-upload-alt" style="font-size:24px;"></i>
+            <p style="font-size:12px;"><span>Click to re-upload</span></p>
+            <input type="file" id="input-${t.key}" style="display:none" onchange="uploadFile(this, '${t.key}')">
+          </div>
+        `;
+      } else {
+        // pending
+        statusBadge = '<span class="badge badge-pending">Pending Approval</span>';
+        cardBorder = 'rgba(245,158,11,.3)';
+        innerHtml = `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;margin-top:12px;">
+            <i class="fas fa-file-pdf" style="color:var(--gold);"></i>
+            <span style="word-break:break-all;">${doc.file_name}</span>
+            <button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="triggerUpload('input-${t.key}')"><i class="fas fa-redo"></i> Replace</button>
+            <input type="file" id="input-${t.key}" style="display:none" onchange="uploadFile(this, '${t.key}')">
+          </div>
+        `;
+      }
+    } else {
+      innerHtml = `
+        <div class="upload-area" style="padding:20px;margin-top:12px;" onclick="triggerUpload('input-${t.key}')">
+          <i class="fas fa-cloud-upload-alt" style="font-size:24px;"></i>
+          <p style="font-size:12px;"><span>Click to upload</span></p>
+          <input type="file" id="input-${t.key}" style="display:none" onchange="uploadFile(this, '${t.key}')">
+        </div>
+      `;
+    }
+
+    // Add to container list
+    const div = document.createElement('div');
+    div.className = 'document-card';
+    div.style.borderColor = cardBorder;
+    div.innerHTML = `
+      <div class="document-card-head">
+        <div class="document-card-main">
+          <div class="document-card-icon" style="color:${t.color};"><i class="fas ${t.icon}"></i></div>
+          <div><p style="font-weight:600;font-size:13px;">${t.name}</p><p style="font-size:11px;color:var(--text2);">${t.required ? 'Required' : 'Optional'} - PDF / JPG</p></div>
+        </div>
+        ${statusBadge}
+      </div>
+      ${innerHtml}
+    `;
+    container.appendChild(div);
+
+    // Add to sidebar status list
+    const sideDiv = document.createElement('div');
+    sideDiv.className = 'document-status-row';
+    sideDiv.innerHTML = `<span>${t.name.split(' / ')[0]}</span>${statusBadge}`;
+    sidebarStatus.appendChild(sideDiv);
+  });
+
+  // Calculate completion percentage based on required verified files
+  const pct = requiredCount > 0 ? Math.round((verifiedCount / requiredCount) * 100) : 0;
+  document.getElementById('completion-text').textContent = `${pct}%`;
+  document.getElementById('completion-bar').style.width = `${pct}%`;
+
+  // Update alert bar warnings
+  const alertBar = document.getElementById('alert-bar');
+  const alertText = document.getElementById('alert-text');
+  const pendingDocs = docTypes.filter(t => t.required && !uploadedDocs.find(d => d.doc_type === t.key && d.status === 'approved'));
+
+  if (pendingDocs.length > 0) {
+    alertBar.style.display = 'flex';
+    alertText.innerHTML = `<strong>Action Required:</strong> Please upload the required documents (${pendingDocs.map(p => p.name.split(' / ')[0]).join(', ')}) for verification.`;
+  } else {
+    alertBar.style.display = 'flex';
+    alertBar.className = 'alert alert-success';
+    alertText.innerHTML = placementStatus === 'verified'
+      ? `<strong>Placement Verified:</strong> All required documents were approved by the coordinator.`
+      : `<strong>Documents Approved:</strong> Placement verification is being synchronized.`;
+  }
+}
+
+function triggerUpload(id) {
+  document.getElementById(id).click();
+}
+
+async function uploadFile(input, docType) {
+  if (input.files.length === 0) return;
+  const file = input.files[0];
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('doc_type', docType);
+  if (acceptedOffer) {
+    fd.append('offer_id', acceptedOffer.id);
+  }
+
+  const submitBtn = document.querySelector('.btn-primary');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+  try {
+    const res = await fetch('../api/documents.php', {
+      method: 'POST',
+      body: fd
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'Failed to upload document');
+
+    showToast('Document uploaded successfully!', 'success');
+    loadPage();
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fas fa-check"></i> Finish Submission';
+  }
+}
+
+function submitDocs() {
+  document.getElementById('submitModal').classList.add('open');
+}
+
+document.addEventListener('DOMContentLoaded', loadPage);
+</script>
+<script src="../assets/js/app.js?v=20261028-1"></script>
+</body>
+</html>
+
+

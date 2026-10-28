@@ -1,0 +1,323 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verification – InternPilih</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-shield-alt"></i></div><div><div style="font-size:14px;font-weight:800;color:var(--text);">InternPilih</div><div style="font-size:10px;color:var(--text2);">Coordinator Panel</div></div></div></div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>Dashboard</a>
+    <a class="nav-item" href="monitoring.html"><span class="nav-icon"><i class="fas fa-chart-bar"></i></span>Monitoring<span class="nav-badge">3</span></a>
+    <div class="nav-section">Management</div>
+    <a class="nav-item active" href="verification.html"><span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>Verification<span class="nav-badge">5</span></a>
+    <a class="nav-item" href="companies.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Companies</a>
+    <div class="nav-section">Reports</div>
+    <a class="nav-item" href="reports.html"><span class="nav-icon"><i class="fas fa-file-alt"></i></span>Reports</a>
+    <a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bullhorn"></i></span>Announcements<span class="nav-badge">2</span></a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user-shield"></i></span>Profile</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card"><div class="user-avatar avatar-admin">SN</div><div class="user-info"><p>Dr. Siti Norzahra binti Mahmud</p><span>Coordinator</span></div></div>
+    <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div><h1>Document Verification</h1><p style="font-size:12px;color:var(--text2);">Approve or reject submitted student placement documents</p></div>
+    <div class="topbar-right">
+      <a href="notifications.html" class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></a>
+    </div>
+  </div>
+
+  <div class="content fade-in">
+    <div class="tab-nav" style="max-width:500px;">
+      <button class="tab-btn active" onclick="filterVerif('all',this)">All (8)</button>
+      <button class="tab-btn" onclick="filterVerif('pending',this)">Pending (5)</button>
+      <button class="tab-btn" onclick="filterVerif('approved',this)">Approved (2)</button>
+      <button class="tab-btn" onclick="filterVerif('rejected',this)">Rejected (1)</button>
+    </div>
+
+    <div class="verification-list" id="verifList">
+
+      <!-- PENDING CARD -->
+      <div class="panel verif-card" data-vstatus="pending" style="margin-bottom:0;">
+        <div class="panel-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div style="display:flex;gap:14px;align-items:flex-start;">
+              <div class="record-icon purple"><i class="fas fa-file-lines"></i></div>
+              <div>
+                <p style="font-weight:700;font-size:14px;">Acceptance Confirmation Letter</p>
+                <p style="font-size:12px;color:var(--text2);">Uploaded by: <strong style="color:var(--text);">Siti Hajar (2025161720)</strong> · Axiata Digital</p>
+                <p style="font-size:12px;color:var(--text2);">Submitted: 13-May-2026 · offer_letter_axiata.pdf <span style="color:var(--text3);">(1.2 MB)</span></p>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+              <span class="badge badge-pending">Pending Review</span>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="previewDoc('offer_letter_axiata.pdf')"><i class="fas fa-eye"></i> Preview</button>
+                <button class="btn btn-success btn-sm" onclick="approveDoc(this)"><i class="fas fa-check"></i> Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="openReject(this)"><i class="fas fa-times"></i> Reject</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel verif-card" data-vstatus="pending" style="margin-bottom:0;">
+        <div class="panel-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div style="display:flex;gap:14px;align-items:flex-start;">
+              <div class="record-icon"><i class="fas fa-id-card"></i></div>
+              <div>
+                <p style="font-weight:700;font-size:14px;">Student ID Card</p>
+                <p style="font-size:12px;color:var(--text2);">Uploaded by: <strong style="color:var(--text);">Ahmad Zulkifli (2025161730)</strong> · Microsoft MY</p>
+                <p style="font-size:12px;color:var(--text2);">Submitted: 12-May-2026 · student_id_ahmad.jpg <span style="color:var(--text3);">(0.8 MB)</span></p>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+              <span class="badge badge-pending">Pending Review</span>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="previewDoc('student_id_ahmad.jpg')"><i class="fas fa-eye"></i> Preview</button>
+                <button class="btn btn-success btn-sm" onclick="approveDoc(this)"><i class="fas fa-check"></i> Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="openReject(this)"><i class="fas fa-times"></i> Reject</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel verif-card" data-vstatus="pending" style="margin-bottom:0;">
+        <div class="panel-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div style="display:flex;gap:14px;align-items:flex-start;">
+              <div class="record-icon gold"><i class="fas fa-file-contract"></i></div>
+              <div>
+                <p style="font-weight:700;font-size:14px;">Internship Agreement Form</p>
+                <p style="font-size:12px;color:var(--text2);">Uploaded by: <strong style="color:var(--text);">Muhammad Faris bin Abdullah (2025161712)</strong> · Tech Solutions</p>
+                <p style="font-size:12px;color:var(--text2);">Submitted: 11-May-2026 · agreement_faris.pdf <span style="color:var(--text3);">(2.1 MB)</span></p>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+              <span class="badge badge-pending">Pending Review</span>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="previewDoc('agreement_faris.pdf')"><i class="fas fa-eye"></i> Preview</button>
+                <button class="btn btn-success btn-sm" onclick="approveDoc(this)"><i class="fas fa-check"></i> Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="openReject(this)"><i class="fas fa-times"></i> Reject</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel verif-card" data-vstatus="pending" style="margin-bottom:0;">
+        <div class="panel-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div style="display:flex;gap:14px;align-items:flex-start;">
+              <div class="record-icon green"><i class="fas fa-user-tie"></i></div>
+              <div>
+                <p style="font-weight:700;font-size:14px;">Supervisor Appointment Letter</p>
+                <p style="font-size:12px;color:var(--text2);">Uploaded by: <strong style="color:var(--text);">Nurul Aisyah binti Hassan (2025161708)</strong> · Pending offer</p>
+                <p style="font-size:12px;color:var(--text2);">Submitted: 10-May-2026 · supervisor_nurul.pdf <span style="color:var(--text3);">(0.6 MB)</span></p>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+              <span class="badge badge-pending">Pending Review</span>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="previewDoc('supervisor_nurul.pdf')"><i class="fas fa-eye"></i> Preview</button>
+                <button class="btn btn-success btn-sm" onclick="approveDoc(this)"><i class="fas fa-check"></i> Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="openReject(this)"><i class="fas fa-times"></i> Reject</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel verif-card" data-vstatus="pending" style="margin-bottom:0;">
+        <div class="panel-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div style="display:flex;gap:14px;align-items:flex-start;">
+              <div class="record-icon purple"><i class="fas fa-file-signature"></i></div>
+              <div>
+                <p style="font-weight:700;font-size:14px;">Acceptance Confirmation Letter</p>
+                <p style="font-size:12px;color:var(--text2);">Uploaded by: <strong style="color:var(--text);">Farah Liyana (2025161741)</strong> · Microsoft MY</p>
+                <p style="font-size:12px;color:var(--text2);">Submitted: 09-May-2026 · offer_farah_ms.pdf <span style="color:var(--text3);">(1.5 MB)</span></p>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+              <span class="badge badge-pending">Pending Review</span>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="previewDoc('offer_farah_ms.pdf')"><i class="fas fa-eye"></i> Preview</button>
+                <button class="btn btn-success btn-sm" onclick="approveDoc(this)"><i class="fas fa-check"></i> Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="openReject(this)"><i class="fas fa-times"></i> Reject</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- APPROVED -->
+      <div class="panel verif-card" data-vstatus="approved" style="margin-bottom:0;border-color:rgba(16,185,129,.3);">
+        <div class="panel-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div style="display:flex;gap:14px;align-items:flex-start;">
+              <div class="record-icon green"><i class="fas fa-circle-check"></i></div>
+              <div>
+                <p style="font-weight:700;font-size:14px;">Internship Agreement Form</p>
+                <p style="font-size:12px;color:var(--text2);">Uploaded by: <strong style="color:var(--text);">Alif Mukhlis bin Ahmad (2025161705)</strong> · Petronas ICT</p>
+                <p style="font-size:12px;color:var(--text2);">Approved: 08-May-2026 · By: Dr. Siti Norzahra binti Mahmud</p>
+              </div>
+            </div>
+            <span class="badge badge-accepted"><i class="fas fa-check"></i> Approved</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel verif-card" data-vstatus="approved" style="margin-bottom:0;border-color:rgba(16,185,129,.3);">
+        <div class="panel-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div style="display:flex;gap:14px;align-items:flex-start;">
+              <div class="record-icon green"><i class="fas fa-id-card"></i></div>
+              <div>
+                <p style="font-weight:700;font-size:14px;">Student ID Card</p>
+                <p style="font-size:12px;color:var(--text2);">Uploaded by: <strong style="color:var(--text);">Alif Mukhlis bin Ahmad (2025161705)</strong></p>
+                <p style="font-size:12px;color:var(--text2);">Approved: 07-May-2026 · By: Dr. Siti Norzahra binti Mahmud</p>
+              </div>
+            </div>
+            <span class="badge badge-accepted"><i class="fas fa-check"></i> Approved</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- REJECTED -->
+      <div class="panel verif-card" data-vstatus="rejected" style="margin-bottom:0;border-color:rgba(239,68,68,.3);">
+        <div class="panel-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div style="display:flex;gap:14px;align-items:flex-start;">
+              <div class="record-icon red"><i class="fas fa-circle-xmark"></i></div>
+              <div>
+                <p style="font-weight:700;font-size:14px;">Offer Letter (Blurry/Unreadable)</p>
+                <p style="font-size:12px;color:var(--text2);">Uploaded by: <strong style="color:var(--text);">Izzatul Husna (2025161762)</strong></p>
+                <p style="font-size:12px;color:var(--red);">Rejected: Document quality too low. Please re-upload a clearer scan.</p>
+              </div>
+            </div>
+            <span class="badge badge-rejected"><i class="fas fa-times"></i> Rejected</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- REJECT MODAL -->
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header"><h3>Reject Document</h3><button class="modal-close" aria-label="Close" onclick="document.getElementById('rejectModal').classList.remove('open')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Rejection Reason *</label>
+        <select class="form-control" id="rejectReason">
+          <option>Document quality too low / blurry</option>
+          <option>Wrong document uploaded</option>
+          <option>Document appears invalid or falsified</option>
+          <option>Missing signature or stamp</option>
+          <option>Incomplete information</option>
+          <option>Other (specify below)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Additional Notes</label>
+        <textarea class="form-control" placeholder="Add a note for the student..." id="rejectNote"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('rejectModal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmReject()"><i class="fas fa-times"></i> Confirm Rejection</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOC PREVIEW MODAL -->
+<div class="modal-overlay" id="previewModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header"><h3 id="previewTitle">Document Preview</h3><button class="modal-close" aria-label="Close" onclick="document.getElementById('previewModal').classList.remove('open')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <div style="background:var(--bg3);border-radius:6px;height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border:1px dashed var(--border);">
+        <i class="fas fa-file-pdf" style="font-size:56px;color:var(--red);"></i>
+        <p style="font-size:14px;font-weight:600;" id="previewFileName"></p>
+        <p style="font-size:12px;color:var(--text2);">Document preview is available after opening the uploaded file from storage.</p>
+        <button class="btn btn-primary btn-sm"><i class="fas fa-download"></i> Download File</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('previewModal').classList.remove('open')">Close</button>
+      <button class="btn btn-success" onclick="approveFromPreview()"><i class="fas fa-check"></i> Approve</button>
+      <button class="btn btn-danger" onclick="document.getElementById('previewModal').classList.remove('open');openReject(null)"><i class="fas fa-times"></i> Reject</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast">
+  <i class="fas fa-check"></i> <span id="toastMsg"></span>
+</div>
+
+<script>
+let rejectBtn=null;
+function filterVerif(s,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.verif-card').forEach(c=>{c.style.display=(s==='all'||c.dataset.vstatus===s)?'block':'none';});
+}
+function approveDoc(btn){
+  const card=btn.closest('.panel');
+  card.style.borderColor='rgba(16,185,129,.3)';
+  card.dataset.vstatus='approved';
+  const actions=btn.closest('div[style*="flex-direction:column"]');
+  actions.querySelector('.badge').className='badge badge-accepted';
+  actions.querySelector('.badge').innerHTML='<i class="fas fa-check"></i> Approved';
+  const btns=actions.querySelector('div[style*="gap:6px"]');
+  btns.innerHTML='';
+  showToast('Document approved!');
+}
+function openReject(btn){rejectBtn=btn;document.getElementById('rejectModal').classList.add('open');}
+function confirmReject(){
+  if(rejectBtn){
+    const card=rejectBtn.closest('.panel');
+    card.style.borderColor='rgba(239,68,68,.3)';
+    card.dataset.vstatus='rejected';
+    const actions=rejectBtn.closest('div[style*="flex-direction:column"]');
+    actions.querySelector('.badge').className='badge badge-rejected';
+    actions.querySelector('.badge').innerHTML='<i class="fas fa-times"></i> Rejected';
+    const btns=actions.querySelector('div[style*="gap:6px"]');
+    btns.innerHTML='';
+  }
+  document.getElementById('rejectModal').classList.remove('open');
+  showToast('Document rejected. Student notified.');
+}
+function previewDoc(name){
+  document.getElementById('previewFileName').textContent=name;
+  document.getElementById('previewModal').classList.add('open');
+}
+function approveFromPreview(){
+  document.getElementById('previewModal').classList.remove('open');
+  showToast('Document approved!');
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.style.opacity='1';
+  setTimeout(()=>t.style.opacity='0',3000);
+}
+</script>
+  <script src="../assets/js/app.js?v=20261020-2"></script>
+</body>
+</html>
+

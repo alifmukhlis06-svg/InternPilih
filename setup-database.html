@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InternPilih Database Setup</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body {
+            background: #f4f8fc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border-top: 5px solid var(--uitm-yellow);
+        }
+        .container {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            box-shadow: var(--shadow-md);
+            padding: 36px;
+            max-width: 620px;
+            width: 100%;
+        }
+        h1 {
+            color: var(--uitm-blue);
+            margin-bottom: 10px;
+            font-family: 'Poppins', 'Inter', sans-serif;
+            font-size: 25px;
+        }
+        .subtitle {
+            color: var(--text2);
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .setup-form {
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text2);
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cfd9e4;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--uitm-purple);
+            box-shadow: 0 0 0 3px rgba(9, 169, 163, .12);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s ease;
+        }
+        .btn-primary {
+            background: var(--uitm-purple);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--uitm-purple-2);
+        }
+        .btn-secondary {
+            background: #eef3f8;
+            color: var(--text);
+        }
+        .btn-secondary:hover {
+            background: #e1e8ef;
+        }
+        .output {
+            display: none;
+            background: #f5f5f5;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .output.show {
+            display: block;
+        }
+        .output.success {
+            background: #e8f5e9;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+        .output.error {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #c62828;
+        }
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--uitm-purple);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        .spinner.show {
+            display: inline-block;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .info-box {
+            background: #e9f7f6;
+            border-left: 4px solid var(--uitm-purple);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: var(--uitm-blue);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-database"></i> InternPilih Database Setup</h1>
+        <p class="subtitle">Create database tables and configure your system</p>
+
+        <div class="info-box">
+            <i class="fas fa-circle-info"></i> Enter your MySQL credentials below to set up the database. Default is root with an empty password.
+        </div>
+
+        <form class="setup-form" id="setupForm">
+            <div class="form-group">
+                <label for="host">MySQL Host</label>
+                <input type="text" id="host" name="host" value="localhost" required>
+            </div>
+            <div class="form-group">
+                <label for="username">MySQL Username</label>
+                <input type="text" id="username" name="username" value="root" required>
+            </div>
+            <div class="form-group">
+                <label for="password">MySQL Password (leave empty if no password)</label>
+                <input type="password" id="password" name="password" value="">
+            </div>
+            <div class="form-group">
+                <label for="database">Database Name</label>
+                <input type="text" id="database" name="database" value="internpilih" required>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-primary">
+                    <span class="spinner" id="spinner"></span>
+                    <span id="btnText">Create Database</span>
+                </button>
+                <button type="reset" class="btn-secondary">Reset</button>
+            </div>
+        </form>
+
+        <div class="output" id="output"></div>
+    </div>
+
+    <script>
+        document.getElementById('setupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const host = document.getElementById('host').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const database = document.getElementById('database').value;
+
+            const outputDiv = document.getElementById('output');
+            const spinner = document.getElementById('spinner');
+            const btnText = document.getElementById('btnText');
+            const submitBtn = this.querySelector('button[type="submit"]');
+
+            spinner.classList.add('show');
+            btnText.textContent = 'Setting up...';
+            submitBtn.disabled = true;
+            outputDiv.innerHTML = 'Connecting to database...';
+            outputDiv.classList.add('show');
+            outputDiv.classList.remove('success', 'error');
+
+            fetch('database/setup-api.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    host: host,
+                    username: username,
+                    password: password,
+                    database: database
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                outputDiv.textContent = data.message;
+                
+                if (data.success) {
+                    outputDiv.classList.add('success');
+                    btnText.textContent = 'Setup Complete';
+                } else {
+                    outputDiv.classList.add('error');
+                    btnText.textContent = 'Setup Failed';
+                }
+
+                spinner.classList.remove('show');
+                submitBtn.disabled = false;
+            })
+            .catch(error => {
+                outputDiv.textContent = 'Error: ' + error.message;
+                outputDiv.classList.add('error');
+                outputDiv.classList.add('show');
+                spinner.classList.remove('show');
+                btnText.textContent = 'Setup Failed';
+                submitBtn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>

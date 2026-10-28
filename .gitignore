@@ -1,0 +1,57 @@
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+*.local.php
+*credentials*.json
+*service-account*.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+
+# Local developer and agent configuration
+.agents/
+.vscode/
+.idea/
+*.code-workspace
+
+# Dependencies
+vendor/
+node_modules/
+
+# Runtime data and user uploads
+uploads/*
+!uploads/.gitkeep
+storage/sessions/*
+!storage/sessions/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep
+storage/cache/*
+!storage/cache/.gitkeep
+*.log
+
+# Local databases and database dumps
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.sql.gz
+
+# Test, coverage, and deployment output
+.phpunit.cache/
+.phpunit.result.cache
+coverage/
+.vercel/
+
+# Operating-system and temporary files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tmp
+*.temp
+*.bak
+*~
