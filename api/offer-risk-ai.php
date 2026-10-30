@@ -31,8 +31,8 @@ $responseDays = offerResponsePeriodDays();
 $offerStmt = db()->prepare("
     SELECT
         status,
-        DATEDIFF(CURDATE(), offer_date) AS offer_age_days,
-        GREATEST(DATEDIFF(CURDATE(), DATE_ADD(offer_date, INTERVAL {$responseDays} DAY)), 0) AS overdue_days
+        CURRENT_DATE - offer_date AS offer_age_days,
+        GREATEST(CURRENT_DATE - (offer_date + {$responseDays}), 0) AS overdue_days
     FROM offers
     WHERE student_id = ?
     ORDER BY offer_date ASC

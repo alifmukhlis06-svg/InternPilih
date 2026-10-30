@@ -1,0 +1,11 @@
+Options -Indexes
+
+# These retired setup and diagnostic entry points must never be served over HTTP.
+<FilesMatch "^(setup-database\.html|setup-database\.bat|setup-db\.bat|setup-using-heidisql\.bat|quick-setup\.php|create-db\.php|verify-database\.php|test-connection\.php|test-connection-methods\.php)$">
+    Require all denied
+</FilesMatch>
+
+# Local secret/configuration and database artifacts are not web resources.
+<FilesMatch "(^\.|\.local\.php$|\.sql$|\.ini$|\.bak$|\.log$)">
+    Require all denied
+</FilesMatch>

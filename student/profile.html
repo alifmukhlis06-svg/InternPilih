@@ -1,9 +1,10 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-protected data-required-role="student">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Profile – InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
+<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -25,7 +26,7 @@
     <a class="nav-item active" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
   </nav>
   <div class="sidebar-footer">
-    <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p>Alif Mukhlis bin Ahmad</p><span>2025161705</span></div></div>
+    <div class="user-card"><div class="user-avatar">--</div><div class="user-info"><p>Loading profile</p><span></span></div></div>
     <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 </div>
@@ -43,20 +44,19 @@
         <div class="panel-body">
           <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
             <div style="position:relative;">
-              <div class="profile-avatar">AM</div>
+              <div class="profile-avatar">--</div>
               <button onclick="document.getElementById('photoInput').click()" style="position:absolute;bottom:0;right:0;width:28px;height:28px;background:var(--blue2);border:none;border-radius:50%;cursor:pointer;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;">
                 <i class="fas fa-camera"></i>
               </button>
               <input type="file" id="photoInput" style="display:none" accept="image/*">
             </div>
             <div style="flex:1;">
-              <h2 style="font-size:20px;font-weight:800;">Alif Mukhlis bin Ahmad</h2>
-              <p style="color:var(--text2);font-size:13px;">2025161705 · Faculty of Computer and Mathematical Sciences</p>
-              <p style="color:var(--text2);font-size:13px;">Bachelor of Computer Science with Honours · UiTM Shah Alam</p>
+              <h2 id="studentProfileName" style="font-size:20px;font-weight:800;">Loading profile</h2>
+              <p id="studentProfileMeta" style="color:var(--text2);font-size:13px;"></p>
+              <p id="studentProfileProgramme" style="color:var(--text2);font-size:13px;"></p>
               <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
                 <span class="badge badge-accepted">Active Student</span>
-                <span class="badge badge-verified">Placement Verified</span>
-                <span class="badge" style="background:rgba(16,185,129,.1);color:var(--green);">100% Response Rate</span>
+                <span class="badge badge-pending" id="placementBadge">Checking placement</span>
               </div>
             </div>
             <button class="btn btn-primary" onclick="editMode()"><i class="fas fa-edit"></i> Edit Profile</button>
@@ -71,23 +71,23 @@
           <div class="panel-body">
             <div class="form-group">
               <label class="form-label">Full Name</label>
-              <input type="text" class="form-control" value="Alif Mukhlis bin Ahmad" id="fullName">
+              <input type="text" class="form-control" value="" id="fullName">
             </div>
             <div class="form-group">
               <label class="form-label">Student ID / Matric No.</label>
-              <input type="text" class="form-control" value="2025161705" readonly style="opacity:.6;">
+              <input type="text" class="form-control" value="" id="studentMatric" readonly style="opacity:.6;">
             </div>
             <div class="form-group">
               <label class="form-label">Email Address</label>
-              <input type="email" class="form-control" value="2025161705@student.uitm.edu.my" readonly title="Student email follows the matric number" style="opacity:.7;">
+              <input type="email" class="form-control" value="" id="studentEmail" readonly title="Email is managed by the account record" style="opacity:.7;">
             </div>
             <div class="form-group">
               <label class="form-label">Phone Number</label>
-              <input type="text" class="form-control" value="+601X-XXXX XXXX">
+              <input type="tel" class="form-control" value="" id="studentPhone" placeholder="+60 12-345 6789">
             </div>
             <div class="form-group">
               <label class="form-label">CGPA</label>
-              <input type="text" class="form-control" value="3.67">
+              <input type="number" min="0" max="4" step="0.01" class="form-control" value="" id="studentCgpa">
             </div>
           </div>
         </div>
@@ -98,26 +98,25 @@
           <div class="panel-body">
             <div class="form-group">
               <label class="form-label">Programme</label>
-              <input type="text" class="form-control" value="Bachelor of Computer Science with Honours (Netcentric Computing)" readonly style="opacity:.7;">
+              <input type="text" class="form-control" value="" id="studentProgramme" readonly style="opacity:.7;">
             </div>
             <div class="form-group">
               <label class="form-label">Faculty</label>
-              <input type="text" class="form-control" value="Faculty of Computer and Mathematical Sciences" readonly style="opacity:.7;">
+              <input type="text" class="form-control" value="" id="studentFaculty" readonly style="opacity:.7;">
             </div>
             <div class="form-group">
               <label class="form-label">Campus</label>
               <select class="form-control">
-                <option selected>UiTM Shah Alam</option>
-                <option>UiTM Selangor</option>
+                <option selected>Not recorded</option>
               </select>
             </div>
             <div class="form-group">
               <label class="form-label">Internship Semester</label>
-              <input type="text" class="form-control" value="Semester 7 (Jan–Jun 2026)">
+              <input type="text" class="form-control" value="Not recorded" readonly style="opacity:.7;">
             </div>
             <div class="form-group">
               <label class="form-label">Coordinator</label>
-              <input type="text" class="form-control" id="coordinatorName" value="Dr. Siti Norzahra binti Mahmud" readonly style="opacity:.6;">
+              <input type="text" class="form-control" id="coordinatorName" value="" readonly style="opacity:.6;">
             </div>
           </div>
         </div>
@@ -166,7 +165,7 @@ function updatePwd(){
   setTimeout(()=>{btn.innerHTML='<i class="fas fa-key"></i> Update Password';},2000);
 }
 </script>
-<script src="../assets/js/app.js?v=20261028-1"></script>
+<script src="../assets/js/app.js?v=20261030-qa1"></script>
 </body>
 </html>
 

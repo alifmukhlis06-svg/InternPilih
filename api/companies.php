@@ -9,26 +9,37 @@ $id     = (int)($_GET['id'] ?? 0);
 
 // ── GET — list all companies ──────────────────────────────────
 if ($method === 'GET') {
-    $search = db()->real_escape_string($_GET['search'] ?? '');
+    $search = trim((string)($_GET['search'] ?? ''));
 
     $sql = "SELECT c.id, c.name, c.industry, c.location, c.allowance, c.work_mode, c.hr_email, c.status, c.created_at,
                (SELECT COUNT(*) FROM offers o WHERE o.company_id = c.id AND o.status = 'accepted') AS confirmed_placements,
-               (SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(o.position), '') ORDER BY o.position SEPARATOR '||')
-                FROM offers o WHERE o.company_id = c.id) AS positions
+               (SELECT string_agg(p.position, '||' ORDER BY p.position)
+                FROM (
+                    SELECT DISTINCT NULLIF(BTRIM(o.position), '') AS position
+                    FROM offers o
+                    WHERE o.company_id = c.id
+                ) p
+                WHERE p.position IS NOT NULL) AS positions
             FROM companies c
             WHERE c.status = 'active'";
 
     if ($search) {
-        $sql .= " AND (c.name LIKE '%$search%' OR c.industry LIKE '%$search%' OR c.location LIKE '%$search%')";
+        $sql .= " AND (c.name ILIKE ? OR c.industry ILIKE ? OR c.location ILIKE ?)";
     }
     $sql .= " ORDER BY c.name";
 
-    respond(db()->query($sql)->fetch_all(MYSQLI_ASSOC));
+    $stmt = db()->prepare($sql);
+    if ($search) {
+        $pattern = '%' . $search . '%';
+        $stmt->bind_param('sss', $pattern, $pattern, $pattern);
+    }
+    $stmt->execute();
+    respond($stmt->get_result()->fetch_all(MYSQLI_ASSOC));
 }
 
 // ── POST — add company (admin only) ──────────────────────────
 if ($method === 'POST') {
-    if (!in_array($user['role'], ['admin', 'student'], true)) respond(['error' => 'Not allowed'], 403);
+    if ($user['role'] !== 'admin') respond(['error' => 'Admins only'], 403);
     $d = body();
 
     foreach (['name', 'industry', 'location'] as $field) {

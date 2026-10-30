@@ -2,10 +2,12 @@
  * Shared browser helpers.
  */
 
-// Auth guard
-// Pages that should NOT be guarded (login page itself)
-// Resolve app-root URLs when served from a subfolder like /InternPilih.
+// Resolve app-root URLs and hold protected API work until authorization has
+// completed. Protected HTML is hidden by CSS until its initial live data has
+// loaded, so static fallback markup can never flash another account's data.
 (function () {
+  if (window.__internPilihAuthGateInstalled) return;
+  window.__internPilihAuthGateInstalled = true;
   const script = document.currentScript;
   const scriptPath = script ? new URL(script.src, window.location.href).pathname : '';
   const assetMarker = '/assets/js/app.js';
@@ -33,45 +35,128 @@
     return input;
   }
 
+  const root = document.documentElement;
+  const protectedPage = root.hasAttribute('data-protected');
   const nativeFetch = window.fetch.bind(window);
-  window.fetch = function (input, init) {
-    const resolved = apiRequestUrl(input);
-    if (resolved !== input) {
-      return nativeFetch(resolved, init);
+  let resolveAuth;
+  let authSucceeded = !protectedPage;
+  let domReady = document.readyState !== 'loading';
+  let initialRequests = 0;
+  let initialLoadFailed = false;
+  let revealTimer = null;
+
+  window.authReady = protectedPage
+    ? new Promise(resolve => { resolveAuth = resolve; })
+    : Promise.resolve(null);
+  window.__internPilihNativeFetch = nativeFetch;
+
+  function isApiRequest(input) {
+    try {
+      const value = typeof input === 'string' ? input : input.url;
+      return new URL(value, window.location.href).pathname.includes('/api/');
+    } catch (_) {
+      return false;
     }
-    return nativeFetch(input, init);
+  }
+
+  function isAuthRequest(input) {
+    try {
+      const value = typeof input === 'string' ? input : input.url;
+      return new URL(value, window.location.href).pathname.endsWith('/api/auth.php');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function finishInitialLoad() {
+    if (!protectedPage || !authSucceeded || !domReady || initialRequests !== 0) return;
+    window.clearTimeout(revealTimer);
+    revealTimer = window.setTimeout(function () {
+      if (initialRequests !== 0) return;
+      if (initialLoadFailed) {
+        root.setAttribute('data-load-error', '');
+        return;
+      }
+      root.setAttribute('data-auth-ready', '');
+    }, 0);
+  }
+
+  window.__completeInternPilihAuth = function (user) {
+    authSucceeded = true;
+    resolveAuth?.(user);
+    finishInitialLoad();
   };
+
+  window.fetch = async function (input, init) {
+    const resolved = apiRequestUrl(input);
+    const shouldGate = protectedPage && isApiRequest(resolved) && !isAuthRequest(resolved);
+    if (!shouldGate) return nativeFetch(resolved, init);
+
+    initialRequests++;
+    try {
+      await window.authReady;
+      const response = await nativeFetch(resolved, init);
+      if (response.status === 401) {
+        window.location.replace(window.appUrl('/login.html'));
+        return response;
+      }
+      if (!response.ok && !root.hasAttribute('data-auth-ready')) {
+        initialLoadFailed = true;
+      }
+      return response;
+    } catch (error) {
+      if (!root.hasAttribute('data-auth-ready')) initialLoadFailed = true;
+      throw error;
+    } finally {
+      initialRequests--;
+      finishInitialLoad();
+    }
+  };
+
+  if (!domReady) {
+    document.addEventListener('DOMContentLoaded', function () {
+      domReady = true;
+      finishInitialLoad();
+    });
+  }
 })();
 
 (async function authGuard() {
-  const isLoginPage = window.location.pathname.endsWith('login.html') ||
-                      window.location.pathname === '/' ||
-                      window.location.pathname.endsWith('index.html');
-  if (isLoginPage) return;
+  if (window.__internPilihAuthGuardStarted) return;
+  window.__internPilihAuthGuardStarted = true;
+  const root = document.documentElement;
+  if (!root.hasAttribute('data-protected')) return;
 
   try {
-    const res  = await fetch('/api/auth.php');
-    const data = await res.json();
+    const res = await window.__internPilihNativeFetch(window.appUrl('/api/auth.php'), { cache: 'no-store' });
+    const data = await res.json().catch(() => ({}));
 
-    if (!data.user) {
-      window.location.href = window.appUrl('/login.html');
+    if (!res.ok || !data.user) {
+      window.location.replace(window.appUrl('/login.html'));
       return;
     }
 
-    // Populate user name/initials wherever the page uses them
     const u = data.user;
+    const requiredRole = root.getAttribute('data-required-role');
+    if (requiredRole && u.role !== requiredRole) {
+      const roleHome = {
+        student: '/student/dashboard.html',
+        employer: '/employer/dashboard.html',
+        admin: '/admin/dashboard.html'
+      };
+      window.location.replace(window.appUrl(roleHome[u.role] || '/login.html'));
+      return;
+    }
     const initials = u.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
 
     document.querySelectorAll('.user-avatar').forEach(el => { el.textContent = initials; });
     document.querySelectorAll('.user-name,  [data-user-name]').forEach(el  => { el.textContent = u.name; });
     document.querySelectorAll('.user-matric,[data-user-matric]').forEach(el => { el.textContent = u.matric_id || u.email; });
 
-    // Store in sessionStorage for use by individual page scripts
     sessionStorage.setItem('user', JSON.stringify(u));
-
-  } catch(e) {
-    // Cannot reach API - let the page load anyway (Laragon may be starting)
-    console.warn('Auth check failed:', e.message);
+    window.__completeInternPilihAuth(u);
+  } catch (_) {
+    window.location.replace(window.appUrl('/login.html'));
   }
 })();
 
@@ -1033,7 +1118,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
               ${badge(d.status, d.status)}
               ${d.offer_id ? `<div style="font-size:11px;color:var(--text2);">Placement ${placementVerificationBadge({ id: d.offer_id, placement_verification_status: d.placement_verification_status }, docsForVerification)}</div>` : ''}
               <div style="display:flex;gap:6px;">
-                <button class="btn btn-outline btn-sm" onclick="previewDocFromDb('${esc(d.file_name)}')"><i class="fas fa-eye"></i> Preview</button>
+                <button class="btn btn-outline btn-sm" onclick="previewDocFromDb(${Number(d.id)})"><i class="fas fa-eye"></i> Preview</button>
                 ${d.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveDocFromDb(${d.id})"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="openRejectFromDb(${d.id})"><i class="fas fa-times"></i> Reject</button>` : ''}
               </div>
             </div>
@@ -1043,9 +1128,8 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     `).join('') || '<div class="panel"><div class="panel-body" style="text-align:center;color:var(--text2);">No documents uploaded yet.</div></div>';
   }
 
-  window.previewDocFromDb = function (file) {
-    setText('#previewFileName', file);
-    document.getElementById('previewModal')?.classList.add('open');
+  window.previewDocFromDb = function (id) {
+    window.open('/api/document-file.php?id=' + encodeURIComponent(id), '_blank', 'noopener,noreferrer');
   };
   window.approveDocFromDb = async function (id) {
     const result = await apiSend('/api/documents.php?id=' + id, 'PUT', { status: 'approved' });
@@ -1157,38 +1241,65 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     };
   }
 
-  async function renderStudentProfile() {
-    const data = await apiGet('/api/profile.php');
+  let studentProfileSnapshot = null;
+
+  function applyStudentProfile(data) {
     const u = data.user;
+    studentProfileSnapshot = { ...u };
     updateIdentity(u);
-    const inputs = document.querySelectorAll('.form-control');
-    if (inputs[0]) inputs[0].value = u.name || '';
-    if (inputs[1]) inputs[1].value = u.matric_id || '';
-    if (inputs[2]) inputs[2].value = u.email || '';
-    if (inputs[4]) inputs[4].value = u.cgpa || '';
-    if (inputs[5]) inputs[5].value = u.programme || '';
-    if (inputs[6]) inputs[6].value = u.faculty || '';
+    const fieldValues = {
+      fullName: u.name || '',
+      studentMatric: u.matric_id || '',
+      studentEmail: u.email || '',
+      studentPhone: u.phone || '',
+      studentCgpa: u.cgpa ?? '',
+      studentProgramme: u.programme || '',
+      studentFaculty: u.faculty || ''
+    };
+    Object.entries(fieldValues).forEach(([id, value]) => {
+      const field = document.getElementById(id);
+      if (field) field.value = value;
+    });
     const coordinatorInput = document.getElementById('coordinatorName');
     if (coordinatorInput) coordinatorInput.value = u.coordinator_name || 'Not assigned';
-    const h2 = document.querySelector('.panel h2');
-    if (h2) h2.textContent = u.name || '';
-    const subtitle = h2?.nextElementSibling;
-    if (subtitle) subtitle.textContent = `${u.matric_id || '-'} - ${u.faculty || '-'}`;
+    setText('#studentProfileName', u.name || 'Student');
+    setText('#studentProfileMeta', `${u.matric_id || '-'} - ${u.faculty || '-'}`);
+    setText('#studentProfileProgramme', u.programme || 'Programme not recorded');
+    const avatar = document.querySelector('.profile-avatar');
+    if (avatar) avatar.textContent = initials(u.name);
+    const placementBadge = document.getElementById('placementBadge');
+    if (placementBadge) {
+      const placement = data.placement;
+      const verified = placement?.placement_verification_status === 'verified';
+      placementBadge.className = `badge ${verified ? 'badge-verified' : (placement ? 'badge-accepted' : 'badge-pending')}`;
+      placementBadge.textContent = verified
+        ? 'Placement Verified'
+        : (placement ? 'Placement Accepted - Verification Pending' : 'No Accepted Placement');
+    }
+  }
+
+  async function renderStudentProfile() {
+    applyStudentProfile(await apiGet('/api/profile.php'));
   }
 
   function hookStudentProfile() {
     window.saveProfile = async function () {
-      const inputs = document.querySelectorAll('.form-control');
-      const payload = {
-        name: inputs[0]?.value || '',
-        email: inputs[2]?.value || '',
-        cgpa: inputs[4]?.value || '',
-        programme: inputs[5]?.value || '',
-        faculty: inputs[6]?.value || ''
+      const candidates = {
+        name: document.getElementById('fullName')?.value.trim() || '',
+        phone: document.getElementById('studentPhone')?.value.trim() || '',
+        cgpa: document.getElementById('studentCgpa')?.value.trim() || ''
       };
+      const payload = {};
+      Object.entries(candidates).forEach(([field, value]) => {
+        if (String(studentProfileSnapshot?.[field] ?? '') !== String(value)) payload[field] = value;
+      });
+      if (!Object.keys(payload).length) {
+        showToast('No profile changes to save.', 'success');
+        return;
+      }
       try {
         const result = await apiSend('/api/profile.php', 'PUT', payload);
-        updateIdentity(result.user);
+        applyStudentProfile(result);
         showToast('Profile saved!', 'success');
       } catch (err) {
         alert(err.message);
@@ -1254,6 +1365,11 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     const confirmedPlacements = Number(company.confirmed_placements || accepted.length || 0);
     const verifiedDocs = accepted.filter(o => placementVerificationStatus(o, data.documents) === 'verified').length;
     const pendingDocs = accepted.filter(o => placementVerificationStatus(o, data.documents) !== 'verified').length;
+    const companyName = company.name || data.user.name;
+    document.querySelectorAll('.sidebar-footer .user-info p').forEach(el => { el.textContent = companyName; });
+    document.querySelectorAll('.sidebar-footer .user-avatar').forEach(el => { el.textContent = initials(companyName); });
+    const briefKicker = document.querySelector('.dashboard-brief-kicker');
+    if (briefKicker) briefKicker.textContent = companyName;
 
     const topbarSub = document.querySelector('.topbar p');
     if (topbarSub && page === 'dashboard.html') {
@@ -1272,8 +1388,10 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       });
       const changes = document.querySelectorAll('.stats-grid .stat-change');
       if (page === 'dashboard.html') {
+        if (changes[0]) changes[0].textContent = pct(offers.length, offers.length) + '%';
         if (changes[1]) changes[1].textContent = pct(accepted.length, offers.length) + '%';
-        if (changes[3]) changes[3].textContent = pending.length ? 'Awaiting student' : 'No pending responses';
+        if (changes[2]) changes[2].textContent = pct(rejected.length, offers.length) + '%';
+        if (changes[3]) changes[3].textContent = pct(pending.length, offers.length) + '%';
       }
     }
     if (page === 'dashboard.html') {
@@ -1511,6 +1629,12 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       if (section === 'student' && page === 'profile.html') {
         hookStudentProfile();
         await renderStudentProfile();
+        window.addEventListener('storage', function (event) {
+          if (event.key === 'internpilih:offers-updated') renderStudentProfile();
+        });
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'visible') renderStudentProfile();
+        });
         return;
       }
       if (section === 'student' && page === 'notifications.html') {

@@ -7,6 +7,24 @@ function notificationEmailConfig(): array {
     if (file_exists($localPath)) {
         $config = array_merge($config, require $localPath);
     }
+    $environmentOverrides = [
+        'INTERNPILIH_MAIL_DRIVER' => 'driver',
+        'INTERNPILIH_MAIL_FROM_EMAIL' => 'from_email',
+        'INTERNPILIH_MAIL_FROM_NAME' => 'from_name',
+        'INTERNPILIH_MAIL_REPLY_TO' => 'reply_to',
+        'INTERNPILIH_APP_URL' => 'app_url',
+        'INTERNPILIH_SMTP_HOST' => 'smtp_host',
+        'INTERNPILIH_SMTP_PORT' => 'smtp_port',
+        'INTERNPILIH_SMTP_ENCRYPTION' => 'smtp_encryption',
+        'INTERNPILIH_SMTP_USERNAME' => 'smtp_username',
+        'INTERNPILIH_SMTP_PASSWORD' => 'smtp_password',
+    ];
+    foreach ($environmentOverrides as $environmentName => $configKey) {
+        $value = getenv($environmentName);
+        if ($value !== false && trim($value) !== '') {
+            $config[$configKey] = $configKey === 'smtp_port' ? (int)$value : $value;
+        }
+    }
     return $config;
 }
 
@@ -20,6 +38,9 @@ function notificationUrl(?string $link): string {
 
 function laragonSendmailStatus(): array {
     $config = notificationEmailConfig();
+    if (in_array(($config['driver'] ?? ''), ['disabled', 'null'], true)) {
+        return ['ok' => true, 'mode' => 'disabled', 'error' => null];
+    }
     if (($config['driver'] ?? 'local_capture') === 'smtp') {
         if (empty($config['smtp_username']) || empty($config['smtp_password'])) {
             return ['ok' => false, 'mode' => 'smtp', 'error' => 'SMTP username/app password is missing in config/mail.php'];
@@ -153,6 +174,28 @@ function sendPlainTextEmail(string $email, string $subject, string $message, ?st
     $transport = laragonSendmailStatus();
     if (!$transport['ok']) {
         return ['sent' => false, 'email' => $email, 'error' => $transport['error']];
+    }
+    if (($transport['mode'] ?? '') === 'disabled') {
+        $isStaging = strtolower(trim((string)(getenv('INTERNPILIH_ENVIRONMENT') ?: ''))) === 'staging';
+        $isReservedRecipient = str_ends_with(strtolower($email), '@example.test');
+        if ($isStaging && $isReservedRecipient) {
+            // Staging records the workflow result but deliberately performs no
+            // network delivery. Reserved example.test addresses cannot receive mail.
+            return [
+                'sent' => true,
+                'simulated' => true,
+                'mode' => 'staging_simulation',
+                'email' => $email,
+                'error' => null,
+            ];
+        }
+        return [
+            'sent' => false,
+            'simulated' => false,
+            'mode' => 'disabled',
+            'email' => $email,
+            'error' => 'Email delivery is disabled in this environment',
+        ];
     }
 
     $config = notificationEmailConfig();

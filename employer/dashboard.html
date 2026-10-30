@@ -1,9 +1,10 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-protected data-required-role="employer">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Employer Dashboard - InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
+<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -21,7 +22,7 @@
     <span>You can view internship information and student responses but cannot edit system records.</span>
   </div>
   <div class="sidebar-footer">
-    <div class="user-card"><div class="user-avatar" style="background:#dcfce7;color:var(--green);">TS</div><div class="user-info"><p>Tech Solutions</p><span>Employer Account</span></div></div>
+    <div class="user-card"><div class="user-avatar" style="background:#dcfce7;color:var(--green);">--</div><div class="user-info"><p>Loading company</p><span>Employer Account</span></div></div>
     <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 </div>
@@ -29,7 +30,7 @@
 <div class="main">
   <div class="topbar">
     <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
-    <div><h1>Employer Dashboard</h1><p class="topbar-sub">Tech Solutions Sdn Bhd - Read-only access</p></div>
+    <div><h1>Employer Dashboard</h1><p class="topbar-sub">Loading company - Read-only access</p></div>
     <div class="topbar-right">
       <div class="badge badge-pending">
         <i class="fas fa-eye"></i> View Only
@@ -40,7 +41,7 @@
   <div class="content fade-in">
     <section class="dashboard-brief" aria-labelledby="employer-brief-title">
       <div class="dashboard-brief-copy">
-        <span class="dashboard-brief-kicker">Tech Solutions Sdn Bhd</span>
+        <span class="dashboard-brief-kicker">Loading company</span>
         <h2 id="employer-brief-title">Your internship responses, clearly tracked.</h2>
         <p>View student decisions and confirmed placements in one read-only workspace, with no changes to university records.</p>
         <a class="dashboard-brief-link" href="offers.html">View offer responses <i class="fas fa-arrow-right"></i></a>
@@ -50,10 +51,10 @@
     <div class="alert alert-info"><i class="fas fa-info-circle"></i>Welcome to the employer portal. You have <strong>read-only</strong> access to view student offer responses and placement confirmations.</div>
 
     <div class="stats-grid four">
-      <div class="stat-card blue"><div class="stat-icon blue"><i class="fas fa-paper-plane"></i></div><div><div class="stat-val">8</div><div class="stat-label">Offers Sent</div></div></div>
-      <div class="stat-card green"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div><div class="stat-val">3</div><div class="stat-label">Accepted</div><div class="stat-change up">37.5%</div></div></div>
-      <div class="stat-card red"><div class="stat-icon red"><i class="fas fa-times-circle"></i></div><div><div class="stat-val">3</div><div class="stat-label">Rejected</div></div></div>
-      <div class="stat-card gold"><div class="stat-icon gold"><i class="fas fa-hourglass-half"></i></div><div><div class="stat-val">2</div><div class="stat-label">Awaiting Response</div><div class="stat-change down">Action needed</div></div></div>
+      <div class="stat-card blue"><div class="stat-icon blue"><i class="fas fa-paper-plane"></i></div><div><div class="stat-val">0</div><div class="stat-label">Offers Sent</div><div class="stat-change">0%</div></div></div>
+      <div class="stat-card green"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div><div class="stat-val">0</div><div class="stat-label">Accepted</div><div class="stat-change up">0%</div></div></div>
+      <div class="stat-card red"><div class="stat-icon red"><i class="fas fa-times-circle"></i></div><div><div class="stat-val">0</div><div class="stat-label">Rejected</div><div class="stat-change">0%</div></div></div>
+      <div class="stat-card gold"><div class="stat-icon gold"><i class="fas fa-hourglass-half"></i></div><div><div class="stat-val">0</div><div class="stat-label">Awaiting Response</div><div class="stat-change">0%</div></div></div>
     </div>
 
     <div class="page-grid">
@@ -67,32 +68,32 @@
             <thead><tr><th>Student</th><th>Position</th><th>Response</th><th>Date</th><th>Details</th></tr></thead>
             <tbody>
               <tr>
-                <td><strong>Alif Mukhlis bin Ahmad</strong><br><small style="color:var(--text2);">2025161705</small></td>
+                <td><strong>Loading student</strong><br><small style="color:var(--text2);"></small></td>
                 <td>Back-end Developer</td>
                 <td><span class="badge badge-pending">Pending</span></td>
                 <td style="color:var(--text2);">Offer: 10-Jan</td>
-                <td><button class="btn btn-outline btn-sm" onclick="viewResp('Alif Mukhlis bin Ahmad','pending')"><i class="fas fa-eye"></i></button></td>
+                <td></td>
               </tr>
               <tr>
-                <td><strong>Nurul Aisyah binti Hassan</strong><br><small style="color:var(--text2);">2025161708</small></td>
+                <td><strong>Loading student</strong><br><small style="color:var(--text2);"></small></td>
                 <td>Front-end Developer</td>
                 <td><span class="badge badge-pending">Pending</span></td>
                 <td style="color:var(--text2);">Offer: 12-Jan</td>
-                <td><button class="btn btn-outline btn-sm" onclick="viewResp('Nurul Aisyah binti Hassan','pending')"><i class="fas fa-eye"></i></button></td>
+                <td></td>
               </tr>
               <tr>
-                <td><strong>Muhammad Faris bin Abdullah</strong><br><small style="color:var(--text2);">2025161712</small></td>
+                <td><strong>Loading student</strong><br><small style="color:var(--text2);"></small></td>
                 <td>DevOps Engineer</td>
                 <td><span class="badge badge-rejected">Rejected</span></td>
                 <td style="color:var(--text2);">08-Jan-2026</td>
-                <td><button class="btn btn-outline btn-sm" onclick="viewResp('Muhammad Faris bin Abdullah','rejected')"><i class="fas fa-eye"></i></button></td>
+                <td></td>
               </tr>
               <tr>
-                <td><strong>Ahmad Zulkifli</strong><br><small style="color:var(--text2);">2025161730</small></td>
+                <td><strong>Loading student</strong><br><small style="color:var(--text2);"></small></td>
                 <td>Back-end Developer</td>
                 <td><span class="badge badge-accepted">Accepted</span></td>
                 <td style="color:var(--text2);">15-Jan-2026</td>
-                <td><button class="btn btn-outline btn-sm" onclick="viewResp('Ahmad Zulkifli','accepted')"><i class="fas fa-eye"></i></button></td>
+                <td></td>
               </tr>
             </tbody>
           </table>
@@ -105,15 +106,15 @@
           <div class="panel-section">
             <div class="notif-item">
               <div class="notif-dot-icon" style="background:rgba(16,185,129,.15);color:var(--green);"><i class="fas fa-check"></i></div>
-              <div><p style="font-size:13px;font-weight:600;">Ahmad Zulkifli</p><p class="meta-text">Back-end Dev - Starts 01-Mar-2026</p><span class="badge badge-verified" style="font-size:10px;margin-top:4px;">Verified</span></div>
+              <div><p style="font-size:13px;font-weight:600;">Loading placement</p></div>
             </div>
             <div class="notif-item">
               <div class="notif-dot-icon" style="background:rgba(16,185,129,.15);color:var(--green);"><i class="fas fa-check"></i></div>
-              <div><p style="font-size:13px;font-weight:600;">Siti Hajar</p><p class="meta-text">UI/UX Designer - Starts 01-Mar-2026</p><span class="badge badge-pending" style="font-size:10px;margin-top:4px;">Docs Pending</span></div>
+              <div><p style="font-size:13px;font-weight:600;">Loading placement</p></div>
             </div>
             <div class="notif-item">
               <div class="notif-dot-icon" style="background:rgba(16,185,129,.15);color:var(--green);"><i class="fas fa-check"></i></div>
-              <div><p style="font-size:13px;font-weight:600;">Khairul Anwar</p><p class="meta-text">System Analyst - Starts 01-Mar-2026</p><span class="badge badge-verified" style="font-size:10px;margin-top:4px;">Verified</span></div>
+              <div><p style="font-size:13px;font-weight:600;">Loading placement</p></div>
             </div>
           </div>
         </div>
@@ -121,9 +122,9 @@
         <div class="panel">
           <div class="panel-header"><h3 class="icon-heading"><i class="fas fa-building"></i>Company Info</h3></div>
           <div class="panel-body detail-list">
-            <div class="detail-row"><span>Company</span><strong>Tech Solutions Sdn Bhd</strong></div>
+            <div class="detail-row"><span>Company</span><strong>Loading</strong></div>
             <div class="detail-row"><span>Industry</span><strong>IT Services</strong></div>
-            <div class="detail-row"><span>Location</span><strong>Mid Valley, KL</strong></div>
+            <div class="detail-row"><span>Location</span><strong>Loading</strong></div>
             <div class="detail-row"><span>Recorded Positions</span><strong>Software Development Intern</strong></div>
             <div class="detail-row"><span>Confirmed Interns</span><strong style="color:var(--green);">3</strong></div>
           </div>
@@ -161,7 +162,7 @@ function viewResp(name,status){
   document.getElementById('respModal').classList.add('open');
 }
 </script>
-  <script src="../assets/js/app.js?v=20261020-2"></script>
+  <script src="../assets/js/app.js?v=20261030-qa1"></script>
 </body>
 </html>
 

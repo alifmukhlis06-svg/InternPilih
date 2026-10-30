@@ -1,9 +1,10 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-protected data-required-role="student">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Upload Documents - InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
+<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -25,7 +26,7 @@
     <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
   </nav>
   <div class="sidebar-footer">
-    <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p>Alif Mukhlis bin Ahmad</p><span>2025161705</span></div></div>
+    <div class="user-card"><div class="user-avatar">--</div><div class="user-info"><p>Loading profile</p><span></span></div></div>
     <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 </div>
@@ -132,8 +133,11 @@ const docTypes = [
 async function loadPage() {
   try {
     const resOffers = await fetch('../api/offers.php');
-    if (!resOffers.ok) throw new Error('Unauthenticated');
-    const offers = await resOffers.json();
+    const offersPayload = await resOffers.json().catch(() => ({}));
+    if (!resOffers.ok || !Array.isArray(offersPayload)) {
+      throw new Error(offersPayload.error || 'Unable to load placement offers.');
+    }
+    const offers = offersPayload;
 
     acceptedOffer = offers.find(o => o.status === 'accepted');
 
@@ -160,11 +164,15 @@ async function loadPage() {
 
     // Fetch documents
     const resDocs = await fetch('../api/documents.php');
-    uploadedDocs = resDocs.ok ? await resDocs.json() : [];
+    const documentsPayload = await resDocs.json().catch(() => ({}));
+    if (!resDocs.ok || !Array.isArray(documentsPayload)) {
+      throw new Error(documentsPayload.error || 'Unable to load uploaded documents.');
+    }
+    uploadedDocs = documentsPayload;
 
     renderDocs();
   } catch (err) {
-    console.error(err);
+    document.documentElement.setAttribute('data-load-error', '');
   }
 }
 
@@ -205,6 +213,7 @@ function renderDocs() {
             <i class="fas fa-file-pdf" style="color:var(--blue3);"></i>
             <span style="word-break:break-all;">${doc.file_name}</span>
             <span style="margin-left:auto;font-size:11px;color:var(--text2);">Verified by admin</span>
+            <a class="btn btn-outline btn-sm" href="../api/document-file.php?id=${encodeURIComponent(doc.id)}" target="_blank" rel="noopener"><i class="fas fa-download"></i> View</a>
           </div>
         `;
       } else if (doc.status === 'rejected') {
@@ -215,7 +224,7 @@ function renderDocs() {
           <div class="upload-area" style="padding:20px;" onclick="triggerUpload('input-${t.key}')">
             <i class="fas fa-cloud-upload-alt" style="font-size:24px;"></i>
             <p style="font-size:12px;"><span>Click to re-upload</span></p>
-            <input type="file" id="input-${t.key}" style="display:none" onchange="uploadFile(this, '${t.key}')">
+            <input type="file" id="input-${t.key}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadFile(this, '${t.key}')">
           </div>
         `;
       } else {
@@ -226,8 +235,9 @@ function renderDocs() {
           <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;margin-top:12px;">
             <i class="fas fa-file-pdf" style="color:var(--gold);"></i>
             <span style="word-break:break-all;">${doc.file_name}</span>
+            <a class="btn btn-outline btn-sm" href="../api/document-file.php?id=${encodeURIComponent(doc.id)}" target="_blank" rel="noopener"><i class="fas fa-download"></i> View</a>
             <button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="triggerUpload('input-${t.key}')"><i class="fas fa-redo"></i> Replace</button>
-            <input type="file" id="input-${t.key}" style="display:none" onchange="uploadFile(this, '${t.key}')">
+            <input type="file" id="input-${t.key}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadFile(this, '${t.key}')">
           </div>
         `;
       }
@@ -236,7 +246,7 @@ function renderDocs() {
         <div class="upload-area" style="padding:20px;margin-top:12px;" onclick="triggerUpload('input-${t.key}')">
           <i class="fas fa-cloud-upload-alt" style="font-size:24px;"></i>
           <p style="font-size:12px;"><span>Click to upload</span></p>
-          <input type="file" id="input-${t.key}" style="display:none" onchange="uploadFile(this, '${t.key}')">
+          <input type="file" id="input-${t.key}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadFile(this, '${t.key}')">
         </div>
       `;
     }
@@ -304,22 +314,59 @@ async function uploadFile(input, docType) {
   submitBtn.disabled = true;
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
 
+  const completionText = document.getElementById('completion-text');
+  const completionBar = document.getElementById('completion-bar');
+
   try {
-    const res = await fetch('../api/documents.php', {
-      method: 'POST',
-      body: fd
+    const data = await uploadDocumentWithProgress(fd, function (percent) {
+      completionText.textContent = `Uploading ${percent}%`;
+      completionBar.style.width = `${percent}%`;
     });
-    const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error || 'Failed to upload document');
 
     showToast('Document uploaded successfully!', 'success');
-    loadPage();
+    await loadPage();
   } catch (err) {
-    alert(err.message);
+    const reference = err.requestId ? ` (reference ${err.requestId})` : '';
+    alert((err.message || 'The document could not be uploaded.') + reference);
+    renderDocs();
   } finally {
     submitBtn.disabled = false;
     submitBtn.innerHTML = '<i class="fas fa-check"></i> Finish Submission';
   }
+}
+
+function uploadDocumentWithProgress(formData, onProgress) {
+  return new Promise(function (resolve, reject) {
+    const request = new XMLHttpRequest();
+    const url = window.appUrl ? window.appUrl('/api/documents.php') : '../api/documents.php';
+    request.open('POST', url);
+    request.responseType = 'json';
+    request.upload.addEventListener('progress', function (event) {
+      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+    });
+    request.addEventListener('load', function () {
+      const payload = request.response && typeof request.response === 'object'
+        ? request.response
+        : {};
+      if (request.status < 200 || request.status >= 300 || payload.error) {
+        const error = new Error(payload.error || `Upload failed with HTTP ${request.status}.`);
+        error.requestId = payload.request_id || '';
+        error.code = payload.code || 'upload_failed';
+        reject(error);
+        return;
+      }
+      onProgress(100);
+      resolve(payload);
+    });
+    request.addEventListener('error', function () {
+      reject(new Error('The upload endpoint could not be reached. Check the staging deployment and try again.'));
+    });
+    request.addEventListener('timeout', function () {
+      reject(new Error('The upload timed out before storage confirmed the file. Please try again.'));
+    });
+    request.timeout = 45000;
+    request.send(formData);
+  });
 }
 
 function submitDocs() {
@@ -328,7 +375,7 @@ function submitDocs() {
 
 document.addEventListener('DOMContentLoaded', loadPage);
 </script>
-<script src="../assets/js/app.js?v=20261028-1"></script>
+<script src="../assets/js/app.js?v=20261030-qa1"></script>
 </body>
 </html>
 

@@ -4,11 +4,10 @@
  * Include this at the top of your files that need database access
  */
 
-require_once __DIR__ . '/config/DatabaseConnection.php';
+require_once __DIR__ . '/../config/db.php';
 
 // Create a new database connection
-$db = new DatabaseConnection();
-$conn = $db->getConnection();
+$conn = db();
 
 // Example 1: Simple query to fetch data
 $result = $conn->query("SELECT * FROM users WHERE role = 'student'");
@@ -27,15 +26,12 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 
 // Example 3: Insert data
-$stmt = $conn->prepare("INSERT INTO users (name, email, password, role, phone) VALUES (?, ?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
 $name = "John Doe";
 $password = password_hash("password123", PASSWORD_BCRYPT);
-$phone = "081234567890";
-$stmt->bind_param("sssss", $name, $email, $password, $role, $phone);
+$stmt->bind_param("ssss", $name, $email, $password, $role);
 if ($stmt->execute()) {
     echo "User created successfully with ID: " . $conn->insert_id . "\n";
 }
 
-// Close the connection when done
-$db->close();
-?>
+// The shared PDO-backed connection closes automatically at request end.

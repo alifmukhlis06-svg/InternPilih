@@ -1,9 +1,10 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-protected data-required-role="admin">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Reports & Analytics – InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
+<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -24,7 +25,7 @@
     <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user-shield"></i></span>Profile</a>
   </nav>
   <div class="sidebar-footer">
-    <div class="user-card"><div class="user-avatar avatar-admin">SN</div><div class="user-info"><p>Dr. Siti Norzahra binti Mahmud</p><span>Coordinator</span></div></div>
+    <div class="user-card"><div class="user-avatar avatar-admin">--</div><div class="user-info"><p>Loading coordinator</p><span>Coordinator</span></div></div>
     <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 </div>
@@ -150,7 +151,7 @@ function showToast(msg){
 function exportReport(){window.downloadAdminReport('pdf','placement');}
 function exportCSV(){window.downloadAdminReport('csv','placement');}
 </script>
-  <script src="../assets/js/app.js?v=20261028-2"></script>
+  <script src="../assets/js/app.js?v=20261030-qa1"></script>
 </body>
 </html>
 

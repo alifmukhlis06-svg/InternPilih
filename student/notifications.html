@@ -1,9 +1,10 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-protected data-required-role="student">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Notifications - InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
+<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -25,7 +26,7 @@
     <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
   </nav>
   <div class="sidebar-footer">
-    <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p>Alif Mukhlis bin Ahmad</p><span>2025161705</span></div></div>
+    <div class="user-card"><div class="user-avatar">--</div><div class="user-info"><p>Loading profile</p><span></span></div></div>
     <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 </div>
@@ -155,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
   new MutationObserver(syncCurrentView).observe(list, { childList:true });
 });
 </script>
-  <script src="../assets/js/app.js?v=20261028-1"></script>
+  <script src="../assets/js/app.js?v=20261030-qa1"></script>
 </body>
 </html>
 

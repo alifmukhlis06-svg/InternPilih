@@ -36,7 +36,7 @@ if ($method === 'GET') {
         $stmt = db()->prepare(placementChangeSelectSql() . " WHERE pcr.student_id = ? ORDER BY pcr.created_at DESC");
         $stmt->bind_param('i', $user['id']);
     } elseif ($user['role'] === 'admin') {
-        $stmt = db()->prepare(placementChangeSelectSql() . " WHERE s.coordinator_id = ? ORDER BY FIELD(pcr.status, 'pending', 'approved', 'rejected'), pcr.created_at DESC");
+        $stmt = db()->prepare(placementChangeSelectSql() . " WHERE s.coordinator_id = ? ORDER BY CASE pcr.status WHEN 'pending' THEN 1 WHEN 'approved' THEN 2 WHEN 'rejected' THEN 3 ELSE 4 END, pcr.created_at DESC");
         $stmt->bind_param('i', $user['id']);
     } else {
         respond(['error' => 'Forbidden'], 403);
@@ -213,8 +213,9 @@ if ($method === 'PUT' && $id) {
 
         respond(['success' => true]);
     } catch (Throwable $e) {
-        $conn->rollback();
-        respond(['error' => 'Could not review request: ' . $e->getMessage()], 500);
+        if ($conn->inTransaction()) $conn->rollback();
+        error_log('InternPilih placement change review failed: ' . $e->getMessage());
+        respond(['error' => 'Could not review the placement change request.'], 500);
     }
 }
 

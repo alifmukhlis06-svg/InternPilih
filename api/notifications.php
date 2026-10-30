@@ -30,8 +30,8 @@ function notificationRowsForGroup(string $group, int $coordinatorId): array {
             JOIN offers o ON o.student_id = u.id
             WHERE u.role = 'student' AND s.coordinator_id = {$coordinatorId}
             GROUP BY u.id
-            HAVING SUM(o.status = 'pending') > 1
-                OR SUM(o.status = 'pending' AND DATEDIFF(CURDATE(), o.offer_date) > {$responsePeriodDays}) > 0
+            HAVING COUNT(*) FILTER (WHERE o.status = 'pending') > 1
+                OR COUNT(*) FILTER (WHERE o.status = 'pending' AND CURRENT_DATE - o.offer_date > {$responsePeriodDays}) > 0
             ORDER BY u.id
         ";
     } else {
@@ -54,7 +54,7 @@ if ($method === 'GET') {
                 a.recipient_group,
                 a.created_at,
                 a.recipient_count,
-                COALESCE(SUM(n.is_read = 0), 0) AS unread_count,
+                COUNT(n.id) FILTER (WHERE n.is_read = FALSE) AS unread_count,
                 a.email_sent_count,
                 a.email_failed_count,
                 a.telegram_sent_at,
@@ -101,6 +101,13 @@ if ($method === 'POST') {
     $title = trim((string)($data['title'] ?? ''));
     $body = trim((string)($data['body'] ?? ''));
     $link = trim((string)($data['link_url'] ?? 'notifications.html'));
+    $linkParts = parse_url($link);
+    if ($link === '' || $linkParts === false
+        || isset($linkParts['scheme']) || isset($linkParts['host'])
+        || str_starts_with($link, '//')
+        || preg_match('#(^|/)\.\.(/|$)#', $link)) {
+        $link = 'notifications.html';
+    }
 
     if ($title === '' || $body === '') {
         respond(['error' => 'Subject and message are required.'], 422);
@@ -141,9 +148,12 @@ if ($method === 'POST') {
     $recipientCount = count($recipients);
     $updateAnnouncement->bind_param('iiii', $recipientCount, $emailSent, $emailFailed, $announcementId);
     $updateAnnouncement->execute();
-    // The configured Telegram chat is shared across courses, so it cannot
-    // deliver a programme-only announcement to the correct recipients.
-    $telegramResult = ['sent' => false, 'message_id' => null, 'error' => 'Course-specific Telegram delivery is not configured'];
+    $telegramResult = sendTelegramAnnouncement(
+        $title,
+        $body,
+        $link,
+        (string)($user['coordinator_programme'] ?? '')
+    );
     updateAnnouncementTelegramStatus($announcementId, $telegramResult);
     logActivity($createdBy, 'announcement.sent', 'announcement', $announcementId, [
         'recipient_group' => $group,
@@ -167,14 +177,14 @@ if ($method === 'POST') {
 
 if ($method === 'PUT') {
     if ($id) {
-        $stmt = db()->prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND recipient_user_id = ?");
+        $stmt = db()->prepare("UPDATE notifications SET is_read = TRUE WHERE id = ? AND recipient_user_id = ?");
         $stmt->bind_param('ii', $id, $user['id']);
         $stmt->execute();
         logActivity((int)$user['id'], 'notification.read', 'notification', $id);
         respond(['success' => true]);
     }
 
-    $stmt = db()->prepare("UPDATE notifications SET is_read = 1 WHERE recipient_user_id = ?");
+    $stmt = db()->prepare("UPDATE notifications SET is_read = TRUE WHERE recipient_user_id = ?");
     $stmt->bind_param('i', $user['id']);
     $stmt->execute();
     logActivity((int)$user['id'], 'notification.read_all', 'notification', null);

@@ -3,6 +3,28 @@
 /* Base */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
+/* Protected static pages stay data-free until the shared auth guard has
+   verified both the session and the workspace role. */
+html[data-protected]:not([data-auth-ready]) body { visibility:hidden; }
+html[data-protected]:not([data-auth-ready])::before {
+  content:'Checking your InternPilih session\2026';
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:#f4f8fc;
+  color:#486078;
+  font:600 13px/1.5 'Inter',sans-serif;
+  visibility:visible;
+}
+html[data-protected][data-load-error]:not([data-auth-ready])::before {
+  content:'InternPilih could not load this page safely. Refresh to try again.';
+  color:#a7352d;
+}
+
 :root {
   --uitm-blue:#083b3f;
   --uitm-blue-2:#087f82;
@@ -157,7 +179,7 @@ a { color:inherit; }
 .panel-section { padding:0 20px; }
 
 /* Tables */
-.data-table { width:100%; border-collapse:collapse; }
+.data-table { width:100%; min-width:620px; border-collapse:collapse; }
 .data-table th { padding:11px 14px; text-align:left; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; color:#68778b; background:#f4f7fa; border-bottom:1px solid var(--border); white-space:nowrap; }
 .data-table td { padding:13px 14px; font-size:13px; border-bottom:1px solid var(--border); color:var(--text3); vertical-align:middle; }
 .data-table tr:last-child td { border-bottom:none; }
@@ -312,8 +334,8 @@ textarea.form-control { resize:vertical; min-height:100px; }
 .entity-facts i { width:15px; color:var(--blue3); }
 
 .document-card { padding:15px; background:#f8fafc; border:1px solid var(--border); border-radius:6px; }
-.document-card-head { display:flex; justify-content:space-between; align-items:center; gap:12px; }
-.document-card-main { display:flex; align-items:center; gap:10px; }
+.document-card-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+.document-card-main { display:flex; align-items:center; gap:10px; min-width:0; }
 .document-card-icon { width:38px; height:38px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; background:#e5f6f4; color:#087f82; border-radius:5px; }
 .document-status-row { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); font-size:12px; }
 
@@ -401,6 +423,7 @@ textarea.form-control { resize:vertical; min-height:100px; }
   .topbar-sub { display:none; }
 
   .content { padding:14px; }
+  .content, .panel, .panel-body, .page-grid > *, .split-grid > * { min-width:0; }
 
   .dashboard-brief { min-height:190px; padding:22px; background-position:62% center; }
   .dashboard-brief::before { background:rgba(5,47,51,.8); }
@@ -416,6 +439,7 @@ textarea.form-control { resize:vertical; min-height:100px; }
   .form-row { grid-template-columns:1fr; }
 
   .table-scroll, .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .table-scroll .data-table, .table-wrap .data-table { min-width:620px; }
 
   .modal-overlay { padding:0; align-items:flex-end; }
   .modal { border-radius:8px 8px 0 0; max-height:92vh; max-width:100%; }
@@ -427,6 +451,9 @@ textarea.form-control { resize:vertical; min-height:100px; }
   .search-input-wrap { min-width:100%; }
 
   .tab-nav { flex-wrap:nowrap; overflow-x:auto; }
+  .document-card-head > .badge { flex:0 0 auto; }
+  .document-card .btn { max-width:100%; white-space:normal; }
+  input, select, textarea, button { max-width:100%; }
 }
 
 @media (max-width:480px) {
@@ -446,6 +473,12 @@ textarea.form-control { resize:vertical; min-height:100px; }
   .entity-meta-grid { grid-template-columns:1fr; }
   .verification-actions { align-items:flex-start; width:100%; }
   .verification-actions-row { justify-content:flex-start; }
+  .topbar { min-height:64px; height:auto; padding-top:10px; padding-bottom:10px; }
+  .topbar-right { margin-left:auto; }
+  .document-card { padding:12px; }
+  .document-card-main { width:100%; }
+  .modal-body { padding:16px; }
+  .btn { min-height:40px; }
 }
 
 /* Login */

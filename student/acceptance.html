@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-protected data-required-role="student">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Acceptance System - InternPilih</title>
-  <link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
+<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     .acceptance-layout { display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start; }
@@ -52,7 +53,7 @@
       <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
     </nav>
     <div class="sidebar-footer">
-      <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p class="user-name">Alif Mukhlis bin Ahmad</p><span class="user-matric">2025161705</span></div></div>
+      <div class="user-card"><div class="user-avatar">--</div><div class="user-info"><p class="user-name">Loading profile</p><span class="user-matric"></span></div></div>
       <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
   </div>
@@ -225,6 +226,15 @@
         });
         const acceptData = await acceptResponse.json().catch(function () { return {}; });
         if (!acceptResponse.ok || acceptData.error) throw new Error(acceptData.error || 'The offer could not be accepted.');
+        if (!acceptData.offer || acceptData.offer.status !== 'accepted'
+            || Number(acceptData.offer.id) !== Number(selectedOffer.id)) {
+          throw new Error('The server did not confirm the accepted offer state. Refresh and check My Offers.');
+        }
+
+        offers = offers.map(function (offer) {
+          return Number(offer.id) === Number(acceptData.offer.id) ? acceptData.offer : offer;
+        });
+        localStorage.setItem('internpilih:offers-updated', String(Date.now()));
 
         if (selectedFile) {
           button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading Agreement...';
@@ -248,6 +258,7 @@
             ? 'Your placement with ' + selectedOffer.company_name + ' is confirmed. The agreement could not be uploaded (' + agreementError + '); please submit it from Upload Docs.'
             : 'Your placement with ' + selectedOffer.company_name + ' is confirmed. You can upload the company agreement later from Upload Docs.';
         document.getElementById('successMessage').textContent = message;
+        await loadOffers();
         document.getElementById('successModal').classList.add('open');
       } catch (error) {
         alert(error.message);
@@ -295,6 +306,6 @@
       loadOffers();
     });
   </script>
-  <script src="../assets/js/app.js?v=20261028-1"></script>
+  <script src="../assets/js/app.js?v=20261030-qa1"></script>
 </body>
 </html>

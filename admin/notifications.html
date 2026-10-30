@@ -1,9 +1,10 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-protected data-required-role="admin">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Announcements – InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
+<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -23,7 +24,7 @@
     <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user-shield"></i></span>Profile</a>
   </nav>
   <div class="sidebar-footer">
-    <div class="user-card"><div class="user-avatar avatar-admin">SN</div><div class="user-info"><p>Dr. Siti Norzahra binti Mahmud</p><span>Coordinator</span></div></div>
+    <div class="user-card"><div class="user-avatar avatar-admin">--</div><div class="user-info"><p>Loading coordinator</p><span>Coordinator</span></div></div>
     <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 </div>
@@ -146,11 +147,13 @@
 
 <script>
 const templates={
-  deadline:{subject:'REMINDER: Internship Document Submission Deadline – 28 Feb 2026',msg:'Dear Students,\n\nThis is a reminder that all internship-related documents (Acceptance Confirmation Letter, Internship Agreement Form) must be submitted through the InternPilih system by 28 February 2026.\n\nFailure to submit on time may result in placement cancellation.\n\nPlease log in and upload your documents immediately.\n\nThank you.\n\nDr. Siti Norzahra binti Mahmud\nInternship Coordinator, Faculty of Computer and Mathematical Sciences'},
-  response:{subject:'ACTION REQUIRED: Respond to Your Pending Internship Offers',msg:'Dear Students,\n\nOur records show that you currently have one or more pending internship offers that have not been responded to. Please log in to InternPilih and either accept or formally reject all pending offers as soon as possible.\n\nDelaying your response affects other students and damages our university\'s professional reputation with employers.\n\nDr. Siti Norzahra binti Mahmud'},
-  hoarding:{subject:'ACTION REQUIRED: Pending Internship Offer Flag',msg:'Dear Student,\n\nOur system has flagged your account because you have more than one active pending internship offer, or an offer has remained pending beyond the configured response period.\n\nPlease log in and accept or formally reject your pending offers as soon as possible. Contact the Internship Coordinator if you require assistance.\n\nDr. Siti Norzahra binti Mahmud'},
-  orientation:{subject:'Internship Orientation Briefing – Jan 2026 Semester',msg:'Dear Students,\n\nYou are invited to attend the Internship Orientation Briefing for the Jan–Jun 2026 semester. This session will cover placement procedures, documentation requirements, and your responsibilities during the internship period.\n\nPlease check your university email for the meeting link.\n\nDr. Siti Norzahra binti Mahmud'}
+  deadline:{subject:'REMINDER: Internship Document Submission Deadline – 28 Feb 2026',msg:'Dear Students,\n\nThis is a reminder that all internship-related documents (Acceptance Confirmation Letter, Internship Agreement Form) must be submitted through the InternPilih system by 28 February 2026.\n\nFailure to submit on time may result in placement cancellation.\n\nPlease log in and upload your documents immediately.\n\nThank you.'},
+  response:{subject:'ACTION REQUIRED: Respond to Your Pending Internship Offers',msg:'Dear Students,\n\nOur records show that you currently have one or more pending internship offers that have not been responded to. Please log in to InternPilih and either accept or formally reject all pending offers as soon as possible.\n\nDelaying your response affects other students and damages our university\'s professional reputation with employers.'},
+  hoarding:{subject:'ACTION REQUIRED: Pending Internship Offer Flag',msg:'Dear Student,\n\nOur system has flagged your account because you have more than one active pending internship offer, or an offer has remained pending beyond the configured response period.\n\nPlease log in and accept or formally reject your pending offers as soon as possible. Contact the Internship Coordinator if you require assistance.'},
+  orientation:{subject:'Internship Orientation Briefing – Jan 2026 Semester',msg:'Dear Students,\n\nYou are invited to attend the Internship Orientation Briefing for the Jan–Jun 2026 semester. This session will cover placement procedures, documentation requirements, and your responsibilities during the internship period.\n\nPlease check your university email for the meeting link.'}
 };
+let coordinatorProfile=null;
+window.authReady.then(user=>{coordinatorProfile=user;});
 let currentType='general',currentRecipient='all',recipientCounts={all:0,pending:0,risk:0};
 function escText(value){
   return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
@@ -172,7 +175,10 @@ function setRecipient(r){
 function loadTemplate(key){
   const t=templates[key];
   document.getElementById('annSubject').value=t.subject;
-  document.getElementById('annMessage').value=t.msg;
+  const signature=coordinatorProfile
+    ? `\n\n${coordinatorProfile.name}\nInternship Coordinator${coordinatorProfile.faculty?' - '+coordinatorProfile.faculty:''}`
+    : '\n\nInternship Coordinator';
+  document.getElementById('annMessage').value=t.msg+signature;
 }
 function toggleSchedule(){
   const fields=document.getElementById('scheduleFields');
@@ -259,7 +265,7 @@ toggleSchedule();
 loadNotificationMeta();
 loadSentHistory();
 </script>
-  <script src="../assets/js/app.js?v=20260918-1"></script>
+  <script src="../assets/js/app.js?v=20261030-qa1"></script>
 </body>
 </html>
 

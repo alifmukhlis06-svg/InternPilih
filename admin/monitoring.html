@@ -1,9 +1,10 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-protected data-required-role="admin">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Monitoring – InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
+<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -23,7 +24,7 @@
     <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user-shield"></i></span>Profile</a>
   </nav>
   <div class="sidebar-footer">
-    <div class="user-card"><div class="user-avatar avatar-admin">SN</div><div class="user-info"><p>Dr. Siti Norzahra binti Mahmud</p><span>Coordinator</span></div></div>
+    <div class="user-card"><div class="user-avatar avatar-admin">--</div><div class="user-info"><p>Loading coordinator</p><span>Coordinator</span></div></div>
     <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 </div>
@@ -181,9 +182,9 @@ function viewStudent(name,id,status){
       <table class="data-table">
         <thead><tr><th>Company</th><th>Position</th><th>Status</th><th>Date</th></tr></thead>
         <tbody>
-          <tr><td>Tech Solutions</td><td>Back-end Dev</td><td><span class="badge badge-pending">Pending</span></td><td>10-Jan</td></tr>
-          ${status==='risk'?'<tr><td>Axiata Digital</td><td>Mobile Dev</td><td><span class="badge badge-pending">Pending</span></td><td>15-Jan</td></tr>':''}
-          ${status==='confirmed'?'<tr><td>Petronas ICT</td><td>Data Analyst</td><td><span class="badge badge-accepted">Accepted</span></td><td>12-Jan</td></tr>':''}
+          <tr><td>Loading company</td><td></td><td><span class="badge badge-pending">Loading</span></td><td></td></tr>
+          ${status==='risk'?'<tr><td>Loading company</td><td></td><td><span class="badge badge-pending">Pending</span></td><td></td></tr>':''}
+          ${status==='confirmed'?'<tr><td>Loading company</td><td></td><td><span class="badge badge-accepted">Accepted</span></td><td></td></tr>':''}
         </tbody>
       </table>
     </div>
@@ -191,7 +192,7 @@ function viewStudent(name,id,status){
   document.getElementById('studentModal').classList.add('open');
 }
 </script>
-  <script src="../assets/js/app.js?v=20261028-2"></script>
+  <script src="../assets/js/app.js?v=20261030-qa1"></script>
 </body>
 </html>
 

@@ -4,6 +4,19 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/gemini-client.php';
 
 $user = requireAuth();
+if ($user['role'] !== 'student') {
+    respondError('Students only', 403, 'student_role_required');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $available = geminiIsConfigured();
+    respond([
+        'available' => $available,
+        'message' => $available
+            ? 'AI drafting is available.'
+            : 'AI drafting is unavailable because the server key is not configured. The normal templates remain available.',
+    ]);
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     respond(['error' => 'Method not allowed'], 405);
@@ -21,8 +34,11 @@ if ($company === '' || $position === '' || $reason === '') {
     respond(['error' => 'Company, position, and reason are required.'], 422);
 }
 
-$studentName = $user['name'] ?? 'Alif Mukhlis bin Ahmad';
-$studentId = $user['matric_id'] ?? '2025161705';
+$studentName = trim((string)($user['name'] ?? ''));
+$studentId = trim((string)($user['matric_id'] ?? ''));
+if ($studentName === '' || $studentId === '') {
+    respondError('Your student profile is incomplete, so an AI draft cannot be personalized safely.', 422, 'student_profile_incomplete');
+}
 
 $prompt = "You are a professional career advisor helping a Malaysian university student write a polite and formal internship offer rejection email.\n\n"
     . "Details:\n"

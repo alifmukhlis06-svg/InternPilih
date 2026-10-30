@@ -38,10 +38,10 @@ if ($report === 'placement') {
             sp.matric_id,
             sp.faculty,
             sp.programme,
-            COALESCE(SUM(o.status = 'pending'), 0) AS pending_count,
-            COALESCE(SUM(o.status = 'accepted'), 0) AS accepted_count,
-            COALESCE(SUM(o.status = 'rejected'), 0) AS rejected_count,
-            COALESCE(SUM(o.status = 'pending' AND DATEDIFF(CURDATE(), o.offer_date) > {$responseDays}), 0) AS overdue_pending_count,
+            COUNT(o.id) FILTER (WHERE o.status = 'pending') AS pending_count,
+            COUNT(o.id) FILTER (WHERE o.status = 'accepted') AS accepted_count,
+            COUNT(o.id) FILTER (WHERE o.status = 'rejected') AS rejected_count,
+            COUNT(o.id) FILTER (WHERE o.status = 'pending' AND CURRENT_DATE - o.offer_date > {$responseDays}) AS overdue_pending_count,
             MAX(CASE WHEN o.status = 'accepted' THEN c.name END) AS placement_company,
             MAX(CASE WHEN o.status = 'accepted' THEN c.industry END) AS placement_industry,
             MAX(CASE WHEN o.status = 'accepted' THEN c.allowance END) AS placement_allowance,
@@ -129,11 +129,11 @@ if ($report === 'placement') {
             o.position,
             o.offer_date,
             o.deadline,
-            DATE_ADD(o.offer_date, INTERVAL {$responseDays} DAY) AS configured_response_deadline,
+            o.offer_date + {$responseDays} AS configured_response_deadline,
             o.status,
             o.response_date,
             o.placement_verification_status,
-            (o.status = 'pending' AND DATEDIFF(CURDATE(), o.offer_date) > {$responseDays}) AS response_period_exceeded,
+            (o.status = 'pending' AND CURRENT_DATE - o.offer_date > {$responseDays}) AS response_period_exceeded,
             flags.pending_count,
             flags.overdue_pending_count
         FROM offers o
@@ -143,8 +143,8 @@ if ($report === 'placement') {
         JOIN (
             SELECT
                 student_id,
-                SUM(status = 'pending') AS pending_count,
-                SUM(status = 'pending' AND DATEDIFF(CURDATE(), offer_date) > {$responseDays}) AS overdue_pending_count
+                COUNT(*) FILTER (WHERE status = 'pending') AS pending_count,
+                COUNT(*) FILTER (WHERE status = 'pending' AND CURRENT_DATE - offer_date > {$responseDays}) AS overdue_pending_count
             FROM offers
             GROUP BY student_id
         ) flags ON flags.student_id = o.student_id

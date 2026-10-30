@@ -15,6 +15,7 @@
 
 # Local developer and agent configuration
 .agents/
+.local-staging/
 .vscode/
 .idea/
 *.code-workspace
@@ -26,6 +27,7 @@ node_modules/
 # Runtime data and user uploads
 uploads/*
 !uploads/.gitkeep
+!uploads/.htaccess
 storage/sessions/*
 !storage/sessions/.gitkeep
 storage/logs/*
@@ -55,3 +57,9 @@ Desktop.ini
 *.temp
 *.bak
 *~
+
+.vercel
+.env*
+!.env.example
+!.env.sample
+!.env.template

@@ -34,9 +34,9 @@ function sendReportCsv(string $filename, array $headers, array $rows): never {
 
     // UTF-8 BOM keeps names readable when the CSV is opened in Microsoft Excel.
     fwrite($output, "\xEF\xBB\xBF");
-    fputcsv($output, array_map('reportCsvValue', $headers));
+    fputcsv($output, array_map('reportCsvValue', $headers), ',', '"', '');
     foreach ($rows as $row) {
-        fputcsv($output, array_map('reportCsvValue', $row));
+        fputcsv($output, array_map('reportCsvValue', $row), ',', '"', '');
     }
     fclose($output);
     exit;

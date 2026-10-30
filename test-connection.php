@@ -26,7 +26,8 @@ if (extension_loaded('pdo')) {
 echo "\n--- Testing MySQL Connection ---\n";
 
 try {
-    $conn = new mysqli('localhost', 'root', 'alifmukhlis');
+    $legacyPassword = getenv('INTERNPILIH_MYSQL_PASSWORD') ?: '';
+    $conn = new mysqli('localhost', 'root', $legacyPassword);
     if ($conn->connect_error) {
         echo "❌ Connection Error: " . $conn->connect_error . "\n";
     } else {

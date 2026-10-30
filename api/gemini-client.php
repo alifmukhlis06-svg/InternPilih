@@ -6,12 +6,21 @@ class GeminiClientException extends RuntimeException {
     }
 }
 
-function geminiGenerateText(string $prompt, array $generationConfig = []): array {
+function geminiConfiguration(): array {
     $config = require __DIR__ . '/../config/gemini.php';
     $localConfig = __DIR__ . '/../config/gemini.local.php';
     if (is_file($localConfig)) {
         $config = array_replace($config, require $localConfig);
     }
+    return $config;
+}
+
+function geminiIsConfigured(): bool {
+    return trim((string)(geminiConfiguration()['api_key'] ?? '')) !== '';
+}
+
+function geminiGenerateText(string $prompt, array $generationConfig = []): array {
+    $config = geminiConfiguration();
     $apiKey = trim((string)($config['api_key'] ?? ''));
     $model = trim((string)($config['model'] ?? 'gemini-3.1-flash-lite'));
     if ($apiKey === '') {

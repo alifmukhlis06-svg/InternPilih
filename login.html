@@ -53,12 +53,12 @@
 
     <div class="form-group">
       <label class="form-label">Email Address</label>
-      <input type="email" class="form-control" id="email" placeholder="studentid@student.uitm.edu.my" value="2026124101@student.uitm.edu.my">
+      <input type="email" class="form-control" id="email" placeholder="Enter your account email" autocomplete="username">
     </div>
     <div class="form-group">
       <label class="form-label">Password</label>
       <div class="password-wrap">
-        <input type="password" class="form-control" id="password" placeholder="Enter your password" value="password123">
+        <input type="password" class="form-control" id="password" placeholder="Enter your password" autocomplete="current-password">
         <button class="password-toggle" onclick="togglePwd()" aria-label="Show or hide password"><i class="fas fa-eye" id="eye-icon"></i></button>
       </div>
     </div>
@@ -72,26 +72,17 @@
       <i class="fas fa-sign-in-alt"></i> Sign In
     </button>
 
-    <div class="demo-accounts">
-      <p><i class="fas fa-key"></i> Demo Accounts</p>
-      <div class="demo-row">
-        <span><i class="fas fa-user-graduate"></i> Student - 2026124101@student.uitm.edu.my</span>
-        <button class="demo-fill" onclick="fillDemo('student')">Use</button>
-      </div>
-      <div class="demo-row">
-        <span><i class="fas fa-user-shield"></i> Coordinator - admin@uitm.edu.my</span>
-        <button class="demo-fill" onclick="fillDemo('admin')">Use</button>
-      </div>
-      <div class="demo-row">
-        <span><i class="fas fa-building"></i> Employer - hr@techsolutions.com.my</span>
-        <button class="demo-fill" onclick="fillDemo('employer')">Use</button>
-      </div>
+    <div class="demo-accounts" id="staging-demo-accounts" hidden>
+      <p><i class="fas fa-key"></i> Staging Demo Accounts</p>
+      <div id="staging-demo-list"></div>
+      <span>Use the privately configured staging test password.</span>
     </div>
   </div>
 </div>
 
 <script>
 let currentRole='student';
+const demoAccountsByRole={student:[],admin:[],employer:[]};
 const loginBasePath = window.location.protocol === 'file:'
   ? 'http://localhost/InternPilih'
   : window.location.pathname.replace(/\/login\.html$/i, '').replace(/\/$/, '');
@@ -102,10 +93,51 @@ function setRole(r){
   currentRole=r;
   document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('role-'+r).classList.add('active');
-  const emails={student:'2026124101@student.uitm.edu.my',admin:'admin@uitm.edu.my',employer:'hr@techsolutions.com.my'};
-  document.getElementById('email').value=emails[r];
+  const account=demoAccountsByRole[r]?.[0];
+  if(account) document.getElementById('email').value=account.email;
 }
-function fillDemo(r){setRole(r);}
+function fillDemo(r,email){
+  setRole(r);
+  document.getElementById('email').value=email;
+  document.getElementById('password').focus();
+}
+async function loadDemoAccounts(){
+  const panel=document.getElementById('staging-demo-accounts');
+  const list=document.getElementById('staging-demo-list');
+  try{
+    const res=await fetch(appPath('/api/auth.php'),{headers:{'Accept':'application/json'}});
+    const data=await res.json();
+    const accounts=Array.isArray(data.demo_accounts)?data.demo_accounts:[];
+    const roleLabels={student:'Student',admin:'Coordinator',employer:'Employer'};
+    const roleIcons={student:'fas fa-user-graduate',admin:'fas fa-user-shield',employer:'fas fa-building'};
+    accounts.forEach(account=>{
+      if(!account||!roleLabels[account.role]||typeof account.email!=='string')return;
+      demoAccountsByRole[account.role].push(account);
+      const row=document.createElement('div');
+      row.className='demo-row';
+      const description=document.createElement('span');
+      const icon=document.createElement('i');
+      icon.className=roleIcons[account.role];
+      description.append(icon,document.createTextNode(` ${roleLabels[account.role]} - ${account.email}`));
+      const button=document.createElement('button');
+      button.type='button';
+      button.className='demo-fill';
+      button.textContent='Use';
+      button.addEventListener('click',()=>fillDemo(account.role,account.email));
+      row.append(description,button);
+      list.appendChild(row);
+    });
+    if(list.children.length){
+      panel.hidden=false;
+      const firstStudent=demoAccountsByRole.student[0];
+      if(firstStudent&&!document.getElementById('email').value){
+        document.getElementById('email').value=firstStudent.email;
+      }
+    }
+  }catch(_){
+    panel.hidden=true;
+  }
+}
 function togglePwd(){
   const inp=document.getElementById('password');
   const icon=document.getElementById('eye-icon');
@@ -146,7 +178,7 @@ async function doLogin(){
     window.location.href = appPath('/' + (destinations[role] || 'login.html'));
 
   } catch(e) {
-    showErr('Cannot reach ' + appPath('/api/auth.php') + '. Make sure Laragon is running.');
+    showErr('Cannot reach the login service. Please try again.');
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
   }
@@ -165,6 +197,7 @@ function showErr(msg) {
 
 // Allow Enter key to submit
 document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+loadDemoAccounts();
 </script>
 <script src="assets/js/app.js"></script>
 </body>

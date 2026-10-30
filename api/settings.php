@@ -37,9 +37,9 @@ if ($method === 'PUT') {
     $stmt = db()->prepare("
         INSERT INTO system_settings (setting_key, setting_value, updated_by)
         VALUES ('offer_response_period_days', ?, ?)
-        ON DUPLICATE KEY UPDATE
-            setting_value = VALUES(setting_value),
-            updated_by = VALUES(updated_by),
+        ON CONFLICT (setting_key) DO UPDATE SET
+            setting_value = EXCLUDED.setting_value,
+            updated_by = EXCLUDED.updated_by,
             updated_at = CURRENT_TIMESTAMP
     ");
     $stmt->bind_param('si', $value, $adminId);

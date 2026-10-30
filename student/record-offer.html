@@ -1,9 +1,10 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-protected data-required-role="student">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Record Offer - InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
+<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -25,7 +26,7 @@
     <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
   </nav>
   <div class="sidebar-footer">
-    <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p>Alif Mukhlis bin Ahmad</p><span>2025161705</span></div></div>
+    <div class="user-card"><div class="user-avatar">--</div><div class="user-info"><p>Loading profile</p><span></span></div></div>
     <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 </div>
@@ -51,11 +52,6 @@
               <label class="form-label">Company Name *</label>
               <select class="form-control" id="companyId" onchange="autoFillCompany()">
                 <option value="">Select company...</option>
-                <option value="1">Petronas ICT Sdn Bhd</option>
-                <option value="2">Tech Solutions Sdn Bhd</option>
-                <option value="3">Axiata Digital Sdn Bhd</option>
-                <option value="4">Maybank IT Division</option>
-                <option value="5">Microsoft Malaysia</option>
                 <option value="6">KPJ Healthcare IT</option>
                 <option value="__manual__">Company not listed - enter manually</option>
               </select>
@@ -206,8 +202,9 @@ let companiesList = [];
 async function loadCompanies() {
   try {
     const res = await fetch('../api/companies.php');
-    if (!res.ok) throw new Error('Unauthenticated');
-    companiesList = await res.json();
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok || !Array.isArray(payload)) throw new Error(payload.error || 'Unable to load companies.');
+    companiesList = payload;
 
     const select = document.getElementById('companyId');
     select.innerHTML = '<option value="">Select company...</option>';
@@ -218,7 +215,7 @@ async function loadCompanies() {
       select.appendChild(opt);
     });
   } catch (err) {
-    console.error(err);
+    document.documentElement.setAttribute('data-load-error', '');
   }
 }
 
@@ -297,7 +294,7 @@ document.getElementById('deadline').valueAsDate = deadlineDate;
 
 // The final loader below keeps the manual option and fallback companies intact.
 </script>
-<script src="../assets/js/app.js?v=20261028-1"></script>
+<script src="../assets/js/app.js?v=20261030-qa1"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function () {
   try {

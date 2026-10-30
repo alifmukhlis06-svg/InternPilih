@@ -6,22 +6,9 @@ require_once __DIR__ . '/mailer.php';
 header('Cache-Control: no-store, no-cache, must-revalidate');
 
 function ensurePasswordResetTable(): void {
-    $sql = "
-        CREATE TABLE IF NOT EXISTS password_reset_tokens (
-            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            user_id INT UNSIGNED NOT NULL,
-            token_hash CHAR(64) NOT NULL UNIQUE,
-            expires_at DATETIME NOT NULL,
-            used_at DATETIME NULL,
-            requested_ip VARCHAR(45) NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_password_reset_user (user_id, created_at),
-            INDEX idx_password_reset_expiry (expires_at),
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    ";
-
-    if (!db()->query($sql)) {
+    $result = db()->query("SELECT to_regclass('public.password_reset_tokens') AS table_name");
+    $row = $result instanceof DatabaseResult ? $result->fetch_assoc() : null;
+    if (empty($row['table_name'])) {
         throw new RuntimeException('Password recovery storage could not be initialised.');
     }
 }
@@ -76,7 +63,7 @@ try {
         $userId = (int)$user['id'];
         $recent = db()->prepare("
             SELECT id FROM password_reset_tokens
-            WHERE user_id = ? AND used_at IS NULL AND created_at > DATE_SUB(NOW(), INTERVAL 60 SECOND)
+            WHERE user_id = ? AND used_at IS NULL AND created_at > NOW() - INTERVAL '60 seconds'
             LIMIT 1
         ");
         $recent->bind_param('i', $userId);
@@ -85,7 +72,7 @@ try {
             respond(['success' => true, 'message' => $genericMessage]);
         }
 
-        db()->query("DELETE FROM password_reset_tokens WHERE expires_at < DATE_SUB(NOW(), INTERVAL 1 DAY)");
+        db()->query("DELETE FROM password_reset_tokens WHERE expires_at < NOW() - INTERVAL '1 day'");
         $invalidate = db()->prepare('UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL');
         $invalidate->bind_param('i', $userId);
         $invalidate->execute();
@@ -96,7 +83,7 @@ try {
 
         $insert = db()->prepare("
             INSERT INTO password_reset_tokens (user_id, token_hash, expires_at, requested_ip)
-            VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR), ?)
+            VALUES (?, ?, NOW() + INTERVAL '1 hour', ?)
         ");
         $insert->bind_param('iss', $userId, $hash, $ip);
         $insert->execute();
@@ -164,7 +151,7 @@ try {
 
     respond(['error' => 'Invalid password reset action.'], 422);
 } catch (Throwable $e) {
-    if (isset($database) && $database instanceof mysqli) {
+    if (isset($database) && $database instanceof DatabaseConnection && $database->inTransaction()) {
         try { $database->rollback(); } catch (Throwable $ignored) {}
     }
     error_log('InternPilih password reset error: ' . $e->getMessage());

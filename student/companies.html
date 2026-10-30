@@ -1,9 +1,10 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-protected data-required-role="student">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Company Database - InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
+<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -25,7 +26,7 @@
     <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
   </nav>
   <div class="sidebar-footer">
-    <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p class="user-name">Alif Mukhlis bin Ahmad</p><span class="user-matric">2025161705</span></div></div>
+    <div class="user-card"><div class="user-avatar">--</div><div class="user-info"><p class="user-name">Loading profile</p><span class="user-matric"></span></div></div>
     <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 </div>
@@ -77,8 +78,9 @@ let currentIndustryFilter = 'all';
 async function loadCompanies() {
   try {
     const res = await fetch('../api/companies.php');
-    if (!res.ok) throw new Error('Unauthenticated');
-    companiesList = await res.json();
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok || !Array.isArray(payload)) throw new Error(payload.error || 'Unable to load companies.');
+    companiesList = payload;
 
     // Generate unique industries for chips
     const industries = new Set();
@@ -102,7 +104,7 @@ async function loadCompanies() {
 
     renderCompanies();
   } catch (err) {
-    console.error(err);
+    document.documentElement.setAttribute('data-load-error', '');
   }
 }
 
@@ -208,7 +210,7 @@ function formatPositions(value, emptyLabel = 'Positions added with each offer') 
 
 document.addEventListener('DOMContentLoaded', loadCompanies);
 </script>
-  <script src="../assets/js/app.js?v=20261028-1"></script>
+  <script src="../assets/js/app.js?v=20261030-qa1"></script>
 </body>
 </html>
 

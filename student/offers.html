@@ -1,9 +1,10 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-protected data-required-role="student">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>My Offers - InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
+<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -25,7 +26,7 @@
     <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user"></i></span>Profile</a>
   </nav>
   <div class="sidebar-footer">
-    <div class="user-card"><div class="user-avatar">AM</div><div class="user-info"><p class="user-name">Alif Mukhlis bin Ahmad</p><span class="user-matric">2025161705</span></div></div>
+    <div class="user-card"><div class="user-avatar">--</div><div class="user-info"><p class="user-name">Loading profile</p><span class="user-matric"></span></div></div>
     <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 </div>
@@ -161,9 +162,12 @@ async function loadOffers() {
       fetch('../api/offers.php'),
       fetch('../api/placement-changes.php')
     ]);
-    if (!res.ok) throw new Error('Unauthenticated');
-    allOffers = await res.json();
-    placementRequests = changeRes.ok ? await changeRes.json() : [];
+    const offersPayload = await res.json().catch(() => ({}));
+    const changesPayload = await changeRes.json().catch(() => ({}));
+    if (!res.ok || !Array.isArray(offersPayload)) throw new Error(offersPayload.error || 'Unable to load offers.');
+    if (!changeRes.ok || !Array.isArray(changesPayload)) throw new Error(changesPayload.error || 'Unable to load placement changes.');
+    allOffers = offersPayload;
+    placementRequests = changesPayload;
 
     const pending = allOffers.filter(o => o.status === 'pending');
     const accepted = allOffers.filter(o => o.status === 'accepted');
@@ -188,7 +192,11 @@ async function loadOffers() {
 
     renderOffers();
   } catch (err) {
-    console.error(err);
+    if (!document.documentElement.hasAttribute('data-auth-ready')) {
+      document.documentElement.setAttribute('data-load-error', '');
+    } else {
+      alert(err.message || 'Offers could not be refreshed.');
+    }
   }
 }
 
@@ -380,9 +388,17 @@ window.submitPlacementChange = async function() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', loadOffers);
+document.addEventListener('DOMContentLoaded', function () {
+  loadOffers();
+  window.addEventListener('storage', function (event) {
+    if (event.key === 'internpilih:offers-updated') loadOffers();
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') loadOffers();
+  });
+});
 </script>
-<script src="../assets/js/app.js?v=20261028-1"></script>
+<script src="../assets/js/app.js?v=20261030-qa1"></script>
 </body>
 </html>
 

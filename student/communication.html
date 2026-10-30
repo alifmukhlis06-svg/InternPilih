@@ -1,11 +1,12 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-protected data-required-role="student">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Rejection System – InternPilih</title>
-  <link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
+<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     .ai-panel {
@@ -296,7 +297,7 @@
       <div class="user-card">
         <div class="user-avatar">AM</div>
         <div class="user-info">
-          <p class="user-name">Alif Mukhlis bin Ahmad</p><span class="user-matric">2025161705</span>
+          <p class="user-name">Loading profile</p><span class="user-matric"></span>
         </div>
       </div>
       <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -427,8 +428,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Subject</label>
-                <input type="text" class="form-control" id="emailSubject"
-                  value="Internship Offer Decline – Alif Mukhlis bin Ahmad (2025161705)">
+                <input type="text" class="form-control" id="emailSubject" value="" placeholder="Select an offer to prepare the subject">
               </div>
               <div class="form-group">
                 <label class="form-label" style="display:flex;align-items:center;gap:8px;">
@@ -546,14 +546,27 @@
   <script>
     let selectedOffer = null;
     let selectedTone = 'Professional & Formal';
+    let currentStudent = null;
+    let aiAvailable = false;
 
-    const templates = {
-      1: 'Dear Hiring Manager,\n\nThank you sincerely for offering me the internship position at your esteemed organization. After careful consideration, I have decided to accept another offer that more closely aligns with my current academic focus and career goals.\n\nI truly appreciate the time and effort your team invested in the selection process. I hold your company in high regard and hope our paths may cross again in the future.\n\nThank you once again for this opportunity.\n\nYours sincerely,\nAlif Mukhlis bin Ahmad\nStudent ID: 2025161705\nUniversiti Teknologi MARA (UiTM)',
-      2: 'Dear Hiring Manager,\n\nThank you for extending an internship offer to me. After careful deliberation, I must respectfully decline due to location and relocation constraints that make it unfeasible for me to commit to this position at this time.\n\nI appreciate your understanding and hope to remain connected for potential future opportunities.\n\nYours sincerely,\nAlif Mukhlis bin Ahmad\nStudent ID: 2025161705\nUniversiti Teknologi MARA (UiTM)',
-      3: 'Dear Hiring Manager,\n\nThank you for offering me the internship opportunity at your organization. After reflection, I have decided to pursue a different career direction that better aligns with my evolving academic interests.\n\nThis was not an easy decision, and I genuinely appreciate the opportunity you extended to me. I wish your team continued success.\n\nYours sincerely,\nAlif Mukhlis bin Ahmad\nStudent ID: 2025161705\nUniversiti Teknologi MARA (UiTM)',
-      4: 'Dear Hiring Manager,\n\nThank you for the internship offer. Due to personal and family commitments that have recently arisen, I am unable to accept this position at this time.\n\nI sincerely regret any inconvenience this may cause and appreciate your understanding.\n\nYours sincerely,\nAlif Mukhlis bin Ahmad\nStudent ID: 2025161705\nUniversiti Teknologi MARA (UiTM)',
-      5: 'Dear Hiring Manager,\n\nThank you for the internship offer. Unfortunately, due to a scheduling conflict with my academic commitments, I am unable to begin at the proposed start date.\n\nI hope you will consider me for future opportunities and I apologize for any inconvenience caused.\n\nYours sincerely,\nAlif Mukhlis bin Ahmad\nStudent ID: 2025161705\nUniversiti Teknologi MARA (UiTM)'
-    };
+    let templates = {};
+
+    function studentSignature() {
+      if (!currentStudent) return '';
+      return 'Yours sincerely,\n' + currentStudent.name + '\nStudent ID: ' + currentStudent.matric_id
+        + '\nUniversiti Teknologi MARA (UiTM)';
+    }
+
+    function buildTemplates() {
+      const signature = studentSignature();
+      return {
+        1: 'Dear Hiring Manager,\n\nThank you sincerely for offering me the internship position at your organization. After careful consideration, I have decided to accept another offer that more closely aligns with my current academic focus and career goals.\n\nI truly appreciate the time and effort your team invested in the selection process. I hold your company in high regard and hope our paths may cross again in the future.\n\nThank you once again for this opportunity.\n\n' + signature,
+        2: 'Dear Hiring Manager,\n\nThank you for extending an internship offer to me. After careful deliberation, I must respectfully decline due to location and relocation constraints that make it unfeasible for me to commit to this position at this time.\n\nI appreciate your understanding and hope to remain connected for potential future opportunities.\n\n' + signature,
+        3: 'Dear Hiring Manager,\n\nThank you for offering me the internship opportunity at your organization. After reflection, I have decided to pursue a different career direction that better aligns with my evolving academic interests.\n\nThis was not an easy decision, and I genuinely appreciate the opportunity you extended to me. I wish your team continued success.\n\n' + signature,
+        4: 'Dear Hiring Manager,\n\nThank you for the internship offer. Due to personal and family commitments that have recently arisen, I am unable to accept this position at this time.\n\nI sincerely regret any inconvenience this may cause and appreciate your understanding.\n\n' + signature,
+        5: 'Dear Hiring Manager,\n\nThank you for the internship offer. Unfortunately, due to a scheduling conflict with my academic commitments, I am unable to begin at the proposed start date.\n\nI hope you will consider me for future opportunities and I apologize for any inconvenience caused.\n\n' + signature
+      };
+    }
 
     document.querySelectorAll('.tone-chip').forEach(function (chip) {
       chip.addEventListener('click', function () {
@@ -581,12 +594,20 @@
       if (el) { el.style.borderColor = 'var(--blue3)'; el.style.background = 'rgba(59,130,246,.05)'; }
       selectedOffer = o;
       document.getElementById('toEmail').value = o.hr_email || '';
+      if (currentStudent) {
+        document.getElementById('emailSubject').value = 'Internship Offer Decline - '
+          + currentStudent.name + ' (' + currentStudent.matric_id + ')';
+      }
       document.getElementById('aiResultBox').classList.remove('visible');
     }
 
     function useTemplate() {
       var val = document.getElementById('templateSelect').value;
       if (!val) return;
+      if (!currentStudent) {
+        alert('Your student profile is still loading. Please try again.');
+        return;
+      }
       document.getElementById('emailBody').value = templates[val];
       document.getElementById('aiTagBadge').style.display = 'none';
       document.getElementById('templateSelect').value = '';
@@ -646,7 +667,7 @@
       } catch (err) {
         alert(err.message);
       } finally {
-        btn.disabled = false;
+        btn.disabled = !aiAvailable;
         btn.classList.remove('loading');
         label.textContent = 'Generate draft';
         icon.style.display = '';
@@ -705,7 +726,9 @@
 
         var sentMessage = document.getElementById('sentMessage');
         if (sentMessage && data.email_to) {
-          sentMessage.textContent = 'Email delivered to ' + data.email_to + ' and logged in your communication history.';
+          sentMessage.textContent = data.email_simulated
+            ? 'Staging simulation completed for ' + data.email_to + '. No real email was sent.'
+            : 'Email delivered to ' + data.email_to + ' and logged in your communication history.';
         }
         selectedOffer = null;
         document.getElementById('previewModal').classList.remove('open');
@@ -720,7 +743,32 @@
 
     async function loadOffers() {
       var offers = [];
-      try { var res = await fetch('../api/offers.php'); offers = res.ok ? await res.json() : []; } catch (e) { offers = []; }
+      try {
+        var responses = await Promise.all([
+          fetch('../api/offers.php'),
+          fetch('../api/profile.php'),
+          fetch('../api/gemini.php')
+        ]);
+        var offerPayload = await responses[0].json().catch(function () { return []; });
+        var profilePayload = await responses[1].json().catch(function () { return {}; });
+        var aiPayload = await responses[2].json().catch(function () { return {}; });
+        if (!responses[0].ok || !Array.isArray(offerPayload)) throw new Error(offerPayload.error || 'Unable to load offers.');
+        if (!responses[1].ok || !profilePayload.user) throw new Error(profilePayload.error || 'Unable to load your profile.');
+        offers = offerPayload;
+        currentStudent = profilePayload.user;
+        templates = buildTemplates();
+        aiAvailable = responses[2].ok && aiPayload.available === true;
+        var aiButton = document.getElementById('generateBtn');
+        if (aiButton) {
+          aiButton.disabled = !aiAvailable;
+          aiButton.title = aiAvailable ? 'Generate an AI draft' : (aiPayload.message || 'AI drafting is unavailable. Use a normal template.');
+        }
+        var aiLabel = document.getElementById('generateLabel');
+        if (aiLabel && !aiAvailable) aiLabel.textContent = 'AI unavailable - use template';
+      } catch (e) {
+        document.documentElement.setAttribute('data-load-error', '');
+        return;
+      }
 
       var pending = offers.filter(function (o) { return o.status === 'pending'; });
       var accepted = offers.filter(function (o) { return o.status === 'accepted'; });
@@ -756,7 +804,7 @@
 
     document.addEventListener('DOMContentLoaded', loadOffers);
   </script>
-  <script src="../assets/js/app.js?v=20261028-1"></script>
+  <script src="../assets/js/app.js?v=20261030-qa1"></script>
 </body>
 
 </html>

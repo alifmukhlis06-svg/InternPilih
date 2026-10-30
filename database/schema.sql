@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name        VARCHAR(150)  NOT NULL,
     email       VARCHAR(150)  NOT NULL UNIQUE,
+    phone       VARCHAR(30)   NULL,
     password    VARCHAR(255)  NOT NULL,
     role        ENUM('student','admin','employer') NOT NULL DEFAULT 'student',
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP

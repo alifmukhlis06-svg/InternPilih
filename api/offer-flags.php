@@ -11,19 +11,14 @@ function ensureOfferFlagSettings(): bool {
     }
 
     try {
-        $ready = (bool)db()->query("
-            CREATE TABLE IF NOT EXISTS system_settings (
-                setting_key VARCHAR(80) PRIMARY KEY,
-                setting_value VARCHAR(255) NOT NULL,
-                updated_by INT UNSIGNED NULL,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
-            )
-        ");
+        $table = db()->query("SELECT to_regclass('public.system_settings') AS table_name");
+        $row = $table instanceof DatabaseResult ? $table->fetch_assoc() : null;
+        $ready = !empty($row['table_name']);
         if ($ready) {
-            $ready = (bool)db()->query("
-                INSERT IGNORE INTO system_settings (setting_key, setting_value)
+            db()->query("
+                INSERT INTO system_settings (setting_key, setting_value)
                 VALUES ('offer_response_period_days', '" . DEFAULT_OFFER_RESPONSE_PERIOD_DAYS . "')
+                ON CONFLICT (setting_key) DO NOTHING
             ");
         }
     } catch (Throwable $error) {
@@ -33,7 +28,7 @@ function ensureOfferFlagSettings(): bool {
     if (!$ready) {
         return false;
     }
-    return $ready;
+    return (bool)$ready;
 }
 
 function offerResponsePeriodDays(): int {

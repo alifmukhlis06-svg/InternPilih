@@ -11,12 +11,15 @@ if ($user['role'] !== 'admin') {
 $config = telegramConfig();
 $enabled = !empty($config['enabled']);
 $hasToken = trim((string)($config['bot_token'] ?? '')) !== '';
-$hasChat = trim((string)($config['chat_id'] ?? '')) !== '';
+$programme = trim((string)($user['coordinator_programme'] ?? ''));
+$courseChatIds = is_array($config['course_chat_ids'] ?? null) ? $config['course_chat_ids'] : [];
+$courseChatId = trim((string)($courseChatIds[$programme] ?? ''));
+$hasChat = $courseChatId !== '';
 
 respond([
     'enabled' => $enabled,
     'configured' => $enabled && $hasToken && $hasChat,
     'has_bot_token' => $hasToken,
     'has_chat_id' => $hasChat,
-    'chat_id' => $hasChat ? (string)$config['chat_id'] : null,
+    'programme' => $programme !== '' ? $programme : null,
 ]);

@@ -17,8 +17,8 @@ if ($method === 'GET') {
         // Student sees only their own offers
         $stmt = db()->prepare("
             SELECT o.*,
-                DATE_ADD(o.offer_date, INTERVAL {$responsePeriodDays} DAY) AS configured_response_deadline,
-                (o.status = 'pending' AND DATEDIFF(CURDATE(), o.offer_date) > {$responsePeriodDays}) AS response_period_exceeded,
+                o.offer_date + {$responsePeriodDays} AS configured_response_deadline,
+                (o.status = 'pending' AND CURRENT_DATE - o.offer_date > {$responsePeriodDays}) AS response_period_exceeded,
                 c.name AS company_name, c.industry, c.location, c.allowance, c.work_mode, c.hr_email
             FROM offers o
             JOIN companies c ON c.id = o.company_id
@@ -30,8 +30,8 @@ if ($method === 'GET') {
         // Employer sees offers for their company
         $stmt = db()->prepare("
             SELECT o.*,
-                DATE_ADD(o.offer_date, INTERVAL {$responsePeriodDays} DAY) AS configured_response_deadline,
-                (o.status = 'pending' AND DATEDIFF(CURDATE(), o.offer_date) > {$responsePeriodDays}) AS response_period_exceeded,
+                o.offer_date + {$responsePeriodDays} AS configured_response_deadline,
+                (o.status = 'pending' AND CURRENT_DATE - o.offer_date > {$responsePeriodDays}) AS response_period_exceeded,
                 c.name AS company_name, c.industry, c.location, c.allowance, c.work_mode, c.hr_email, u.name AS student_name, s.matric_id, u.email AS student_email, s.faculty, s.programme, s.cgpa
             FROM offers o
             JOIN companies c ON c.id = o.company_id
@@ -45,8 +45,8 @@ if ($method === 'GET') {
         // Coordinators see offers for students in their programme.
         $stmt = db()->prepare("
             SELECT o.*,
-                DATE_ADD(o.offer_date, INTERVAL {$responsePeriodDays} DAY) AS configured_response_deadline,
-                (o.status = 'pending' AND DATEDIFF(CURDATE(), o.offer_date) > {$responsePeriodDays}) AS response_period_exceeded,
+                o.offer_date + {$responsePeriodDays} AS configured_response_deadline,
+                (o.status = 'pending' AND CURRENT_DATE - o.offer_date > {$responsePeriodDays}) AS response_period_exceeded,
                 c.name AS company_name, c.industry, c.location, c.allowance, c.work_mode, c.hr_email, u.name AS student_name, s.matric_id, u.email AS student_email, s.faculty, s.programme, s.cgpa
             FROM offers o
             JOIN companies c ON c.id = o.company_id
@@ -133,25 +133,119 @@ if ($method === 'PUT' && $id) {
     $target->execute();
     $offer = $target->get_result()->fetch_assoc();
     if (!$offer) {
-        respond(['error' => 'Offer not found'], 404);
+        respondError('Offer not found', 404, 'offer_not_found', ['offer_id' => $id]);
+    }
+
+    if ($offer['status'] !== 'pending') {
+        respondError('Only a pending offer can be accepted or rejected.', 409, 'offer_not_pending', [
+            'offer_id' => $id,
+            'current_status' => $offer['status'],
+        ]);
     }
 
     if ($status === 'accepted') {
-        $check = db()->prepare("
-            SELECT c.name AS company_name
+        $conn = db();
+        $conn->begin_transaction();
+        try {
+            // Serialize acceptance for this student so two concurrent requests
+            // cannot both pass the one-accepted-placement rule.
+            $lock = $conn->prepare("
+                SELECT o.id, o.status, c.name AS company_name
+                FROM offers o
+                JOIN companies c ON c.id = o.company_id
+                WHERE o.student_id = ?
+                ORDER BY o.id
+                FOR UPDATE
+            ");
+            $lock->bind_param('i', $user['id']);
+            $lock->execute();
+            $studentOffers = $lock->get_result()->fetch_all(MYSQLI_ASSOC);
+            $targetIsPending = false;
+            $existingCompany = null;
+            foreach ($studentOffers as $studentOffer) {
+                if ((int)$studentOffer['id'] === $id && $studentOffer['status'] === 'pending') {
+                    $targetIsPending = true;
+                }
+                if ((int)$studentOffer['id'] !== $id && $studentOffer['status'] === 'accepted') {
+                    $existingCompany = (string)$studentOffer['company_name'];
+                }
+            }
+
+            if (!$targetIsPending) {
+                $currentStatus = 'not_found';
+                foreach ($studentOffers as $studentOffer) {
+                    if ((int)$studentOffer['id'] === $id) {
+                        $currentStatus = (string)$studentOffer['status'];
+                        break;
+                    }
+                }
+                $conn->rollback();
+                respondError('This offer is no longer pending.', 409, 'offer_not_pending', [
+                    'offer_id' => $id,
+                    'current_status' => $currentStatus,
+                ]);
+            }
+            if ($existingCompany !== null) {
+                $conn->rollback();
+                respondError(
+                    'You already accepted an offer from ' . $existingCompany . '. Contact your coordinator before changing placement.',
+                    409,
+                    'placement_already_accepted',
+                    ['offer_id' => $id, 'accepted_company' => $existingCompany]
+                );
+            }
+
+            $today = date('Y-m-d');
+            $accept = $conn->prepare("
+                UPDATE offers
+                SET status = 'accepted', response_date = ?, reject_reason = NULL
+                WHERE id = ? AND student_id = ? AND status = 'pending'
+            ");
+            $accept->bind_param('sii', $today, $id, $user['id']);
+            $accept->execute();
+            if ($accept->affected_rows !== 1) {
+                $conn->rollback();
+                respondError('This offer is no longer pending.', 409, 'offer_not_pending', [
+                    'offer_id' => $id,
+                    'current_status' => 'changed_concurrently',
+                ]);
+            }
+
+            $placement = recalculatePlacementVerification($id, (int)$user['id']);
+            logActivity((int)$user['id'], 'offer.accepted', 'offer', $id, [
+                'placement_verification_status' => $placement['status'],
+            ]);
+            $conn->commit();
+        } catch (Throwable $error) {
+            if ($conn->inTransaction()) $conn->rollback();
+            error_log('InternPilih offer acceptance failed; request=' . INTERNPILIH_REQUEST_ID
+                . '; student=' . (int)$user['id'] . '; offer=' . $id . '; error=' . $error->getMessage());
+            respondError('Unable to accept the offer.', 500, 'offer_acceptance_failed', [
+                'offer_id' => $id,
+                'retryable' => true,
+            ]);
+        }
+
+        $acceptedOfferStatement = db()->prepare("
+            SELECT o.*, c.name AS company_name, c.industry, c.location,
+                   c.allowance, c.work_mode, c.hr_email
             FROM offers o
             JOIN companies c ON c.id = o.company_id
-            WHERE o.student_id = ? AND o.status = 'accepted' AND o.id <> ?
+            WHERE o.id = ? AND o.student_id = ?
             LIMIT 1
         ");
-        $check->bind_param('ii', $user['id'], $id);
-        $check->execute();
-        $existing = $check->get_result()->fetch_assoc();
-        if ($existing) {
-            respond([
-                'error' => 'You already accepted an offer from ' . $existing['company_name'] . '. Reject or contact coordinator before accepting another offer.'
-            ], 409);
-        }
+        $acceptedOfferStatement->bind_param('ii', $id, $user['id']);
+        $acceptedOfferStatement->execute();
+        $acceptedOffer = $acceptedOfferStatement->get_result()->fetch_assoc();
+
+        respond([
+            'success' => true,
+            'offer' => $acceptedOffer,
+            'email_sent' => false,
+            'email_to' => null,
+            'recipient_overridden' => false,
+            'placement_verification_status' => $placement['status'],
+        ]);
     }
 
     $today = date('Y-m-d');
@@ -213,6 +307,7 @@ if ($method === 'PUT' && $id) {
     logActivity((int)$user['id'], 'offer.' . $status, 'offer', $id, [
         'reject_reason' => $reason,
         'email_sent' => (bool)($emailDelivery['sent'] ?? false),
+        'email_simulated' => (bool)($emailDelivery['simulated'] ?? false),
         'email_to' => $emailDelivery['email'] ?? null,
         'recipient_overridden' => $recipientOverridden ?? false,
         'placement_verification_status' => $placement['status'],
@@ -220,6 +315,7 @@ if ($method === 'PUT' && $id) {
     respond([
         'success' => true,
         'email_sent' => (bool)($emailDelivery['sent'] ?? false),
+        'email_simulated' => (bool)($emailDelivery['simulated'] ?? false),
         'email_to' => $emailDelivery['email'] ?? null,
         'recipient_overridden' => $recipientOverridden ?? false,
         'placement_verification_status' => $placement['status'],
@@ -229,13 +325,28 @@ if ($method === 'PUT' && $id) {
 // ── DELETE — remove offer (student or admin) ──────────────────
 if ($method === 'DELETE' && $id) {
     if ($user['role'] === 'student') {
-        $stmt = db()->prepare("DELETE FROM offers WHERE id = ? AND student_id = ?");
+        $stmt = db()->prepare("
+            DELETE FROM offers
+            WHERE id = ? AND student_id = ? AND status IN ('pending', 'rejected')
+        ");
+        $stmt->bind_param('ii', $id, $user['id']);
+    } elseif ($user['role'] === 'admin') {
+        $stmt = db()->prepare("
+            DELETE FROM offers o
+            USING students s
+            WHERE o.id = ?
+              AND o.student_id = s.user_id
+              AND s.coordinator_id = ?
+              AND o.status <> 'accepted'
+        ");
         $stmt->bind_param('ii', $id, $user['id']);
     } else {
-        $stmt = db()->prepare("DELETE FROM offers WHERE id = ?");
-        $stmt->bind_param('i', $id);
+        respond(['error' => 'Not allowed'], 403);
     }
     $stmt->execute();
+    if ($stmt->affected_rows !== 1) {
+        respond(['error' => 'Offer not found or cannot be deleted in its current state.'], 404);
+    }
     logActivity((int)$user['id'], 'offer.deleted', 'offer', $id);
     respond(['success' => true]);
 }

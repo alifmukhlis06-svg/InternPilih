@@ -69,16 +69,29 @@ if ($method === 'POST') {
 }
 
 if ($method === 'PUT' && $id) {
-    if (!in_array($user['role'], ['admin', 'employer'], true)) respond(['error' => 'Not allowed'], 403);
+    if (!in_array($user['role'], ['admin', 'employer', 'student'], true)) respond(['error' => 'Not allowed'], 403);
     $data = body();
     $status = $data['status'] ?? '';
-    if (!in_array($status, ['draft','submitted','shortlisted','interview','offered','rejected','withdrawn'], true)) {
+    $allowedStatuses = $user['role'] === 'student'
+        ? ['withdrawn']
+        : ['submitted', 'shortlisted', 'interview', 'offered', 'rejected'];
+    if (!in_array($status, $allowedStatuses, true)) {
         respond(['error' => 'Invalid status'], 422);
     }
     $notes = array_key_exists('notes', $data) ? trim((string)$data['notes']) : null;
     $interviewAt = $data['interview_at'] ?? null;
 
-    if ($user['role'] === 'employer') {
+    if ($user['role'] === 'student') {
+        $check = db()->prepare("
+            SELECT id
+            FROM internship_applications
+            WHERE id = ? AND student_id = ? AND status IN ('submitted', 'shortlisted', 'interview')
+            LIMIT 1
+        ");
+        $check->bind_param('ii', $id, $user['id']);
+        $check->execute();
+        if (!$check->get_result()->fetch_assoc()) respond(['error' => 'Application not found or cannot be withdrawn'], 404);
+    } elseif ($user['role'] === 'employer') {
         $check = db()->prepare("SELECT id FROM internship_applications WHERE id = ? AND company_id = ? LIMIT 1");
         $check->bind_param('ii', $id, $user['company_id']);
         $check->execute();
