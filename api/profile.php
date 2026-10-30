@@ -11,7 +11,7 @@ function profileForUser(int $id): ?array {
         SELECT u.id, u.name, u.email, to_jsonb(u)->>'phone' AS phone, u.role, s.matric_id,
                COALESCE(s.faculty, a.faculty) AS faculty,
                s.programme, s.cgpa, s.coordinator_id, coordinator.name AS coordinator_name,
-               a.programme AS coordinator_programme, e.company_id
+               a.programme AS coordinator_programme, a.staff_id, e.company_id
         FROM users u
         LEFT JOIN students s ON s.user_id = u.id
         LEFT JOIN employers e ON e.user_id = u.id
@@ -59,6 +59,7 @@ if ($method === 'PUT') {
     $phone = array_key_exists('phone', $data) ? trim((string)$data['phone']) : (string)($current['phone'] ?? '');
     $faculty = array_key_exists('faculty', $data) ? trim((string)$data['faculty']) : (string)($current['faculty'] ?? '');
     $programme = array_key_exists('programme', $data) ? trim((string)$data['programme']) : (string)($current['programme'] ?? '');
+    $staffId = array_key_exists('staff_id', $data) ? trim((string)$data['staff_id']) : (string)($current['staff_id'] ?? '');
     $cgpa = array_key_exists('cgpa', $data)
         ? ($data['cgpa'] === '' ? null : (float)$data['cgpa'])
         : ($current['cgpa'] ?? null);
@@ -91,6 +92,23 @@ if ($method === 'PUT') {
         }
     }
 
+    if ($current['role'] === 'admin') {
+        if ($staffId !== '' && !preg_match('/^[0-9]{6}$/', $staffId)) {
+            respondError('Staff ID must contain exactly 6 digits.', 422, 'invalid_staff_id');
+        }
+        $emailChanged = array_key_exists('email', $data) && $email !== $current['email'];
+        $stagingEmailAllowed = strtolower((string)(getenv('INTERNPILIH_ENVIRONMENT') ?: '')) === 'staging'
+            && str_ends_with(strtolower($email), '@example.test');
+        if ($emailChanged && !$stagingEmailAllowed
+            && !preg_match('/^[a-z][a-z._-]*(?:[0-9]{3})?@uitm\.edu\.my$/i', $email)) {
+            respondError(
+                'Coordinator email must use a UiTM address such as name@uitm.edu.my or name123@uitm.edu.my.',
+                422,
+                'invalid_coordinator_email'
+            );
+        }
+    }
+
     if ($current['role'] === 'student' && $cgpa !== null && ($cgpa < 0 || $cgpa > 4)) {
         respond(['error' => 'CGPA must be between 0 and 4.'], 422);
     }
@@ -115,10 +133,22 @@ if ($method === 'PUT') {
             && (string)$cgpa !== (string)($current['cgpa'] ?? '')) {
             $student = $conn->prepare('UPDATE students SET cgpa = ? WHERE user_id = ?');
             $student->execute([$cgpa, (int)$user['id']]);
-        } elseif ($current['role'] === 'admin' && array_key_exists('faculty', $data)) {
-            $admin = $conn->prepare('UPDATE admins SET faculty = ? WHERE user_id = ?');
-            $admin->bind_param('si', $faculty, $user['id']);
-            $admin->execute();
+        } elseif ($current['role'] === 'admin') {
+            $adminChanges = [];
+            $adminValues = [];
+            if (array_key_exists('faculty', $data) && $faculty !== (string)($current['faculty'] ?? '')) {
+                $adminChanges[] = 'faculty = ?';
+                $adminValues[] = $faculty;
+            }
+            if (array_key_exists('staff_id', $data) && $staffId !== (string)($current['staff_id'] ?? '')) {
+                $adminChanges[] = 'staff_id = ?';
+                $adminValues[] = $staffId === '' ? null : $staffId;
+            }
+            if ($adminChanges !== []) {
+                $adminValues[] = (int)$user['id'];
+                $admin = $conn->prepare('UPDATE admins SET ' . implode(', ', $adminChanges) . ' WHERE user_id = ?');
+                $admin->execute($adminValues);
+            }
         }
         $conn->commit();
     } catch (Throwable $error) {
@@ -133,6 +163,9 @@ if ($method === 'PUT') {
             );
         }
         if ((string)$error->getCode() === '23505') {
+            if (str_contains(strtolower($error->getMessage()), 'staff_id')) {
+                respondError('That staff ID is already assigned to another coordinator.', 409, 'staff_id_already_used');
+            }
             respondError('That email address is already in use.', 409, 'email_already_used');
         }
         respondError('Unable to save the profile.', 500, 'profile_update_failed');

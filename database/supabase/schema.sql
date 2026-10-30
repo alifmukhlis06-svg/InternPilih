@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS public.companies (
 
 CREATE TABLE IF NOT EXISTS public.admins (
     user_id bigint PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
+    staff_id varchar(6) UNIQUE CHECK (staff_id IS NULL OR staff_id ~ '^[0-9]{6}$'),
     faculty varchar(100),
     programme varchar(150) UNIQUE
 );

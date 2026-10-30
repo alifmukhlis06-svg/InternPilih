@@ -1586,6 +1586,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     const values = {
       coordinatorFullName: u.name || '',
       coordinatorAccountId: String(u.id || ''),
+      coordinatorStaffId: u.staff_id || '',
       coordinatorEmail: u.email || '',
       coordinatorStudentCount: String((data.students || []).length),
       coordinatorFaculty: u.faculty || '',
@@ -1605,7 +1606,8 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       try {
         const result = await apiSend('/api/profile.php', 'PUT', {
           name: document.getElementById('coordinatorFullName').value.trim(),
-          email: document.getElementById('coordinatorEmail').value.trim()
+          email: document.getElementById('coordinatorEmail').value.trim(),
+          staff_id: document.getElementById('coordinatorStaffId').value.trim()
         });
         updateIdentity(result.user);
         title.textContent = result.user.name;

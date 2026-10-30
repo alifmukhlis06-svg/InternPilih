@@ -63,7 +63,7 @@
             <div class="form-group" id="individualPicker" style="display:none;">
               <label class="form-label" for="studentSearch">Find Student</label>
               <input type="search" class="form-control" id="studentSearch" placeholder="Search by student name or matric ID" autocomplete="off" oninput="renderStudentResults()">
-              <div id="selectedStudent" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);font-size:13px;"></div>
+              <div id="selectedStudents" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);font-size:13px;"></div>
               <div id="studentResults" style="display:none;margin-top:6px;border:1px solid var(--border);border-radius:8px;background:var(--card);max-height:220px;overflow:auto;"></div>
             </div>
             <div class="form-group">
@@ -162,7 +162,7 @@ const templates={
 let coordinatorProfile=null;
 window.authReady.then(user=>{coordinatorProfile=user;});
 let currentType='general',currentRecipient='all',recipientCounts={all:0,pending:0,risk:0};
-let availableStudents=[],selectedStudent=null;
+let availableStudents=[],selectedStudents=new Map();
 function escText(value){
   return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
 }
@@ -191,18 +191,30 @@ function renderStudentResults(){
     String(student.matric_id||'').toLowerCase().includes(query)
   ).slice(0,10);
   results.innerHTML=matches.map(student=>`<button type="button" onclick="selectIndividualStudent(${Number(student.id)})" style="display:block;width:100%;padding:10px 12px;border:0;border-bottom:1px solid var(--border);background:transparent;text-align:left;cursor:pointer;color:var(--text);">
-    <strong>${escText(student.name)}</strong><br><span style="font-size:11px;color:var(--text2);">${escText(student.matric_id||'No matric ID')}</span>
+    <strong>${escText(student.name)}</strong><br><span style="font-size:11px;color:var(--text2);">Student ID: ${escText(student.matric_id||'Not assigned')} · ${selectedStudents.has(Number(student.id))?'Selected':'Add student'}</span>
   </button>`).join('')||'<div style="padding:12px;color:var(--text2);font-size:12px;">No assigned student found.</div>';
   results.style.display='block';
 }
 function selectIndividualStudent(studentId){
-  selectedStudent=availableStudents.find(student=>Number(student.id)===Number(studentId))||null;
-  const selected=document.getElementById('selectedStudent');
-  if(!selectedStudent){selected.style.display='none';return;}
-  selected.innerHTML=`<i class="fas fa-user" style="color:var(--blue3);margin-right:6px;"></i><strong>${escText(selectedStudent.name)}</strong> · ${escText(selectedStudent.matric_id||'No matric ID')}`;
-  selected.style.display='block';
+  const student=availableStudents.find(item=>Number(item.id)===Number(studentId));
+  if(!student)return;
+  selectedStudents.set(Number(student.id),student);
+  renderSelectedStudents();
   document.getElementById('studentSearch').value='';
   document.getElementById('studentResults').style.display='none';
+}
+function removeIndividualStudent(studentId){
+  selectedStudents.delete(Number(studentId));
+  renderSelectedStudents();
+}
+function renderSelectedStudents(){
+  const selected=document.getElementById('selectedStudents');
+  const students=Array.from(selectedStudents.values());
+  selected.innerHTML=students.map(student=>`<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:5px 0;">
+    <span><strong>${escText(student.name)}</strong> · Student ID: ${escText(student.matric_id||'Not assigned')}</span>
+    <button type="button" class="btn btn-outline" style="padding:3px 8px;font-size:11px;" onclick="removeIndividualStudent(${Number(student.id)})">Remove</button>
+  </div>`).join('');
+  selected.style.display=students.length?'block':'none';
 }
 function loadTemplate(key){
   const t=templates[key];
@@ -221,12 +233,12 @@ async function sendAnn(){
   const subj=document.getElementById('annSubject').value.trim();
   const msg=document.getElementById('annMessage').value.trim();
   if(!subj||!msg){alert('Please fill in Subject and Message.');return;}
-  if(currentRecipient==='individual'&&!selectedStudent){alert('Please select a student recipient.');return;}
+  if(currentRecipient==='individual'&&selectedStudents.size===0){alert('Please select at least one student recipient.');return;}
   try{
     const res=await fetch('../api/notifications.php',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({type:currentType,recipient_group:currentRecipient,recipient_user_id:selectedStudent?.id||null,title:subj,body:msg,link_url:'notifications.html'})
+      body:JSON.stringify({type:currentType,recipient_group:currentRecipient,recipient_user_ids:Array.from(selectedStudents.keys()),title:subj,body:msg,link_url:'notifications.html'})
     });
     const data=await res.json();
     if(!res.ok||data.error) throw new Error(data.error||'Unable to send announcement.');
@@ -236,8 +248,8 @@ async function sendAnn(){
     document.getElementById('annSubject').value='';
     document.getElementById('annMessage').value='';
     if(currentRecipient==='individual'){
-      selectedStudent=null;
-      document.getElementById('selectedStudent').style.display='none';
+      selectedStudents.clear();
+      renderSelectedStudents();
     }
     loadSentHistory();
     loadNotificationMeta();
@@ -283,8 +295,10 @@ async function loadSentHistory(){
     const rows=data.notifications||[];
     body.innerHTML=rows.map(n=>{
       const icon=notificationIcon(n.type);
-      const group=n.recipient_group==='individual'&&n.recipient_name
-        ? `${n.recipient_name}${n.recipient_matric_id?' ('+n.recipient_matric_id+')':''}`
+      const group=n.recipient_group==='individual'
+        ? (Number(n.recipient_count)===1&&n.recipient_name
+          ? `${n.recipient_name}${n.recipient_matric_id?' ('+n.recipient_matric_id+')':''}`
+          : `${n.recipient_count} selected students`)
         : `${(n.recipient_group||'all').replace(/^./,c=>c.toUpperCase())} Students`;
       return `<div class="notif-item">
         <div class="notif-dot-icon" style="background:rgba(59,130,246,.15);color:${icon[1]};"><i class="fas ${icon[0]}"></i></div>

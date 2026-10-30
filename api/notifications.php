@@ -10,26 +10,33 @@ $user = requireAuth();
 $method = $_SERVER['REQUEST_METHOD'];
 $id = (int)($_GET['id'] ?? 0);
 
-function notificationRowsForGroup(string $group, int $coordinatorId, int $recipientUserId = 0): array {
+function notificationRowsForGroup(string $group, int $coordinatorId, array $recipientUserIds = []): array {
     $db = db();
     if ($group === 'individual') {
-        if ($recipientUserId <= 0) {
-            respond(['error' => 'Select a student recipient.'], 422);
+        $recipientUserIds = array_values(array_unique(array_filter(
+            array_map('intval', $recipientUserIds),
+            static fn (int $id): bool => $id > 0
+        )));
+        if ($recipientUserIds === []) {
+            respond(['error' => 'Select at least one student recipient.'], 422);
         }
+        if (count($recipientUserIds) > 100) {
+            respond(['error' => 'Select no more than 100 students at once.'], 422);
+        }
+        $placeholders = implode(', ', array_fill(0, count($recipientUserIds), '?'));
         $stmt = $db->prepare("
             SELECT u.id, u.name, u.email, s.matric_id
             FROM users u
             JOIN students s ON s.user_id = u.id
-            WHERE u.id = ? AND u.role = 'student' AND s.coordinator_id = ?
-            LIMIT 1
+            WHERE u.id IN ({$placeholders}) AND u.role = 'student' AND s.coordinator_id = ?
+            ORDER BY u.name
         ");
-        $stmt->bind_param('ii', $recipientUserId, $coordinatorId);
-        $stmt->execute();
-        $recipient = $stmt->get_result()->fetch_assoc();
-        if (!$recipient) {
-            respond(['error' => 'The selected student is not assigned to this coordinator.'], 403);
+        $stmt->execute([...$recipientUserIds, $coordinatorId]);
+        $recipients = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        if (count($recipients) !== count($recipientUserIds)) {
+            respond(['error' => 'One or more selected students are not assigned to this coordinator.'], 403);
         }
-        return [$recipient];
+        return $recipients;
     } elseif ($group === 'pending') {
         $sql = "
             SELECT DISTINCT u.id, u.name, u.email
@@ -119,7 +126,9 @@ if ($method === 'POST') {
     if (!in_array($group, ['all', 'pending', 'risk', 'individual'], true)) {
         $group = 'all';
     }
-    $recipientUserId = (int)($data['recipient_user_id'] ?? 0);
+    $recipientUserIds = is_array($data['recipient_user_ids'] ?? null)
+        ? $data['recipient_user_ids']
+        : [($data['recipient_user_id'] ?? 0)];
 
     $title = trim((string)($data['title'] ?? ''));
     $body = trim((string)($data['body'] ?? ''));
@@ -137,7 +146,7 @@ if ($method === 'POST') {
     }
 
     // Resolve and authorize recipients before creating any announcement row.
-    $recipients = notificationRowsForGroup($group, (int)$user['id'], $recipientUserId);
+    $recipients = notificationRowsForGroup($group, (int)$user['id'], $recipientUserIds);
 
     $announcement = db()->prepare("
         INSERT INTO announcements (created_by, type, recipient_group, title, body, link_url)

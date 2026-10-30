@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS companies (
 -- offers, documents, notifications and activity logs.
 CREATE TABLE IF NOT EXISTS admins (
     user_id     INT UNSIGNED PRIMARY KEY,
+    staff_id    VARCHAR(6) NULL UNIQUE CHECK (staff_id IS NULL OR staff_id REGEXP '^[0-9]{6}$'),
     faculty     VARCHAR(100) NULL,
     programme   VARCHAR(150) NULL UNIQUE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

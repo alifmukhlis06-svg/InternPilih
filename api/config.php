@@ -118,7 +118,7 @@ function currentUser(): ?array {
                COALESCE(s.faculty, a.faculty) AS faculty,
                s.programme, s.cgpa, s.coordinator_id,
                coordinator.name AS coordinator_name,
-               a.programme AS coordinator_programme, e.company_id
+               a.programme AS coordinator_programme, a.staff_id, e.company_id
         FROM users u
         LEFT JOIN students s ON s.user_id = u.id
         LEFT JOIN employers e ON e.user_id = u.id
