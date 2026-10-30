@@ -121,6 +121,15 @@
   }
 })();
 
+// Load the shared accessibility controls on every application page.
+(function loadAccessibilityControls() {
+  if (window.__internPilihAccessibilityInstalled) return;
+  const script = document.createElement('script');
+  script.src = window.appUrl('/assets/js/accessibility.js?v=20261030-a11y1');
+  script.defer = true;
+  document.head.appendChild(script);
+})();
+
 (async function authGuard() {
   if (window.__internPilihAuthGuardStarted) return;
   window.__internPilihAuthGuardStarted = true;
