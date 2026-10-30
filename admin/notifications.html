@@ -57,7 +57,14 @@
                 <span class="chip active" id="toAll" onclick="setRecipient('all')"><i class="fas fa-users"></i> All Students (48)</span>
                 <span class="chip" id="toPending" onclick="setRecipient('pending')"><i class="fas fa-hourglass-half"></i> Pending Only (12)</span>
                 <span class="chip" id="toRisk" onclick="setRecipient('risk')"><i class="fas fa-exclamation-triangle"></i> Flagged Students (3)</span>
+                <span class="chip" id="toIndividual" onclick="setRecipient('individual')"><i class="fas fa-user"></i> Individual Student</span>
               </div>
+            </div>
+            <div class="form-group" id="individualPicker" style="display:none;">
+              <label class="form-label" for="studentSearch">Find Student</label>
+              <input type="search" class="form-control" id="studentSearch" placeholder="Search by student name or matric ID" autocomplete="off" oninput="renderStudentResults()">
+              <div id="selectedStudent" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);font-size:13px;"></div>
+              <div id="studentResults" style="display:none;margin-top:6px;border:1px solid var(--border);border-radius:8px;background:var(--card);max-height:220px;overflow:auto;"></div>
             </div>
             <div class="form-group">
               <label class="form-label">Subject *</label>
@@ -155,6 +162,7 @@ const templates={
 let coordinatorProfile=null;
 window.authReady.then(user=>{coordinatorProfile=user;});
 let currentType='general',currentRecipient='all',recipientCounts={all:0,pending:0,risk:0};
+let availableStudents=[],selectedStudent=null;
 function escText(value){
   return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
 }
@@ -166,11 +174,35 @@ function setType(t){
 }
 function setRecipient(r){
   currentRecipient=r;
-  ['all','pending','risk'].forEach(x=>{
+  ['all','pending','risk','individual'].forEach(x=>{
     const el=document.getElementById('to'+x.charAt(0).toUpperCase()+x.slice(1));
     el.classList.remove('active');
   });
   document.getElementById('to'+r.charAt(0).toUpperCase()+r.slice(1)).classList.add('active');
+  document.getElementById('individualPicker').style.display=r==='individual'?'block':'none';
+  if(r==='individual') document.getElementById('studentSearch').focus();
+}
+function renderStudentResults(){
+  const query=document.getElementById('studentSearch').value.trim().toLowerCase();
+  const results=document.getElementById('studentResults');
+  if(!query){results.style.display='none';results.innerHTML='';return;}
+  const matches=availableStudents.filter(student=>
+    String(student.name||'').toLowerCase().includes(query)||
+    String(student.matric_id||'').toLowerCase().includes(query)
+  ).slice(0,10);
+  results.innerHTML=matches.map(student=>`<button type="button" onclick="selectIndividualStudent(${Number(student.id)})" style="display:block;width:100%;padding:10px 12px;border:0;border-bottom:1px solid var(--border);background:transparent;text-align:left;cursor:pointer;color:var(--text);">
+    <strong>${escText(student.name)}</strong><br><span style="font-size:11px;color:var(--text2);">${escText(student.matric_id||'No matric ID')}</span>
+  </button>`).join('')||'<div style="padding:12px;color:var(--text2);font-size:12px;">No assigned student found.</div>';
+  results.style.display='block';
+}
+function selectIndividualStudent(studentId){
+  selectedStudent=availableStudents.find(student=>Number(student.id)===Number(studentId))||null;
+  const selected=document.getElementById('selectedStudent');
+  if(!selectedStudent){selected.style.display='none';return;}
+  selected.innerHTML=`<i class="fas fa-user" style="color:var(--blue3);margin-right:6px;"></i><strong>${escText(selectedStudent.name)}</strong> · ${escText(selectedStudent.matric_id||'No matric ID')}`;
+  selected.style.display='block';
+  document.getElementById('studentSearch').value='';
+  document.getElementById('studentResults').style.display='none';
 }
 function loadTemplate(key){
   const t=templates[key];
@@ -189,18 +221,24 @@ async function sendAnn(){
   const subj=document.getElementById('annSubject').value.trim();
   const msg=document.getElementById('annMessage').value.trim();
   if(!subj||!msg){alert('Please fill in Subject and Message.');return;}
+  if(currentRecipient==='individual'&&!selectedStudent){alert('Please select a student recipient.');return;}
   try{
     const res=await fetch('../api/notifications.php',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({type:currentType,recipient_group:currentRecipient,title:subj,body:msg,link_url:'notifications.html'})
+      body:JSON.stringify({type:currentType,recipient_group:currentRecipient,recipient_user_id:selectedStudent?.id||null,title:subj,body:msg,link_url:'notifications.html'})
     });
     const data=await res.json();
     if(!res.ok||data.error) throw new Error(data.error||'Unable to send announcement.');
-    document.getElementById('sentDesc').textContent=`Saved for ${data.recipient_count} students. Email sent: ${data.email_sent_count}; failed: ${data.email_failed_count}. Telegram: ${data.telegram_sent?'posted':'failed'}.`;
+    const telegramStatus=data.telegram_skipped?'not sent for an individual message':(data.telegram_sent?'posted':'failed');
+    document.getElementById('sentDesc').textContent=`Saved for ${data.recipient_count} student${data.recipient_count===1?'':'s'}. Email sent: ${data.email_sent_count}; failed: ${data.email_failed_count}. Telegram: ${telegramStatus}.`;
     document.getElementById('sentModal').classList.add('open');
     document.getElementById('annSubject').value='';
     document.getElementById('annMessage').value='';
+    if(currentRecipient==='individual'){
+      selectedStudent=null;
+      document.getElementById('selectedStudent').style.display='none';
+    }
     loadSentHistory();
     loadNotificationMeta();
   }catch(err){
@@ -219,6 +257,7 @@ async function loadNotificationMeta(){
     const res=await fetch('../api/summary.php');
     const data=await res.json();
     const students=data.students||[];
+    availableStudents=students.slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
     const offers=data.offers||[];
     recipientCounts.all=students.length;
     recipientCounts.pending=students.filter(s=>statusForStudent(s,offers).pending>0).length;
@@ -244,12 +283,14 @@ async function loadSentHistory(){
     const rows=data.notifications||[];
     body.innerHTML=rows.map(n=>{
       const icon=notificationIcon(n.type);
-      const group=(n.recipient_group||'all').replace(/^./,c=>c.toUpperCase());
+      const group=n.recipient_group==='individual'&&n.recipient_name
+        ? `${n.recipient_name}${n.recipient_matric_id?' ('+n.recipient_matric_id+')':''}`
+        : `${(n.recipient_group||'all').replace(/^./,c=>c.toUpperCase())} Students`;
       return `<div class="notif-item">
         <div class="notif-dot-icon" style="background:rgba(59,130,246,.15);color:${icon[1]};"><i class="fas ${icon[0]}"></i></div>
         <div style="flex:1;">
           <p style="font-size:13px;font-weight:600;">${escText(n.title)}</p>
-          <p style="font-size:12px;color:var(--text2);">Sent to ${group} Students · ${n.recipient_count} recipients · ${n.email_sent_count||0} emailed · ${n.telegram_sent_at?'Telegram posted':'Telegram not posted'}</p>
+          <p style="font-size:12px;color:var(--text2);">Sent to ${escText(group)} · ${n.recipient_count} recipient${Number(n.recipient_count)===1?'':'s'} · ${n.email_sent_count||0} emailed · ${n.recipient_group==='individual'?'Telegram skipped':(n.telegram_sent_at?'Telegram posted':'Telegram not posted')}</p>
           ${n.telegram_error?`<p style="font-size:11px;color:var(--red);margin-top:3px;">Telegram: ${escText(n.telegram_error)}</p>`:''}
           <p style="font-size:11px;color:var(--text2);">${escText(String(n.created_at||'').replace(' ',' · '))}</p>
         </div>

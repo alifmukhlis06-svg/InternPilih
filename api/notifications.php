@@ -10,9 +10,27 @@ $user = requireAuth();
 $method = $_SERVER['REQUEST_METHOD'];
 $id = (int)($_GET['id'] ?? 0);
 
-function notificationRowsForGroup(string $group, int $coordinatorId): array {
+function notificationRowsForGroup(string $group, int $coordinatorId, int $recipientUserId = 0): array {
     $db = db();
-    if ($group === 'pending') {
+    if ($group === 'individual') {
+        if ($recipientUserId <= 0) {
+            respond(['error' => 'Select a student recipient.'], 422);
+        }
+        $stmt = $db->prepare("
+            SELECT u.id, u.name, u.email, s.matric_id
+            FROM users u
+            JOIN students s ON s.user_id = u.id
+            WHERE u.id = ? AND u.role = 'student' AND s.coordinator_id = ?
+            LIMIT 1
+        ");
+        $stmt->bind_param('ii', $recipientUserId, $coordinatorId);
+        $stmt->execute();
+        $recipient = $stmt->get_result()->fetch_assoc();
+        if (!$recipient) {
+            respond(['error' => 'The selected student is not assigned to this coordinator.'], 403);
+        }
+        return [$recipient];
+    } elseif ($group === 'pending') {
         $sql = "
             SELECT DISTINCT u.id, u.name, u.email
             FROM users u
@@ -59,9 +77,13 @@ if ($method === 'GET') {
                 a.email_failed_count,
                 a.telegram_sent_at,
                 a.telegram_message_id,
-                a.telegram_error
+                a.telegram_error,
+                MAX(recipient.name) AS recipient_name,
+                MAX(recipient_student.matric_id) AS recipient_matric_id
             FROM announcements a
             LEFT JOIN notifications n ON n.announcement_id = a.id
+            LEFT JOIN users recipient ON recipient.id = n.recipient_user_id
+            LEFT JOIN students recipient_student ON recipient_student.user_id = recipient.id
             WHERE a.created_by = " . (int)$user['id'] . "
             GROUP BY a.id
             ORDER BY a.created_at DESC
@@ -94,9 +116,10 @@ if ($method === 'POST') {
     }
 
     $group = $data['recipient_group'] ?? 'all';
-    if (!in_array($group, ['all', 'pending', 'risk'], true)) {
+    if (!in_array($group, ['all', 'pending', 'risk', 'individual'], true)) {
         $group = 'all';
     }
+    $recipientUserId = (int)($data['recipient_user_id'] ?? 0);
 
     $title = trim((string)($data['title'] ?? ''));
     $body = trim((string)($data['body'] ?? ''));
@@ -113,6 +136,9 @@ if ($method === 'POST') {
         respond(['error' => 'Subject and message are required.'], 422);
     }
 
+    // Resolve and authorize recipients before creating any announcement row.
+    $recipients = notificationRowsForGroup($group, (int)$user['id'], $recipientUserId);
+
     $announcement = db()->prepare("
         INSERT INTO announcements (created_by, type, recipient_group, title, body, link_url)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -122,7 +148,6 @@ if ($method === 'POST') {
     $announcement->execute();
     $announcementId = (int)db()->insert_id;
 
-    $recipients = notificationRowsForGroup($group, (int)$user['id']);
     $stmt = db()->prepare("
         INSERT INTO notifications (announcement_id, recipient_user_id, created_by, type, title, body, link_url, recipient_group)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -148,12 +173,14 @@ if ($method === 'POST') {
     $recipientCount = count($recipients);
     $updateAnnouncement->bind_param('iiii', $recipientCount, $emailSent, $emailFailed, $announcementId);
     $updateAnnouncement->execute();
-    $telegramResult = sendTelegramAnnouncement(
-        $title,
-        $body,
-        $link,
-        (string)($user['coordinator_programme'] ?? '')
-    );
+    $telegramResult = $group === 'individual'
+        ? ['sent' => false, 'message_id' => null, 'error' => null, 'skipped' => true]
+        : sendTelegramAnnouncement(
+            $title,
+            $body,
+            $link,
+            (string)($user['coordinator_programme'] ?? '')
+        );
     updateAnnouncementTelegramStatus($announcementId, $telegramResult);
     logActivity($createdBy, 'announcement.sent', 'announcement', $announcementId, [
         'recipient_group' => $group,
@@ -161,6 +188,7 @@ if ($method === 'POST') {
         'email_sent_count' => $emailSent,
         'email_failed_count' => $emailFailed,
         'telegram_sent' => $telegramResult['sent'],
+        'telegram_skipped' => !empty($telegramResult['skipped']),
         'telegram_error' => $telegramResult['error'],
     ]);
 
@@ -171,6 +199,7 @@ if ($method === 'POST') {
         'email_sent_count' => $emailSent,
         'email_failed_count' => $emailFailed,
         'telegram_sent' => $telegramResult['sent'],
+        'telegram_skipped' => !empty($telegramResult['skipped']),
         'telegram_error' => $telegramResult['error'],
     ], 201);
 }
