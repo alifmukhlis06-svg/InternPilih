@@ -117,7 +117,7 @@
 (function loadAccessibilityControls() {
   if (window.__internPilihAccessibilityInstalled) return;
   const script = document.createElement('script');
-  script.src = window.appUrl('/assets/js/accessibility.js?v=20261031-brand4');
+  script.src = window.appUrl('/assets/js/accessibility.js?v=20261031-classic1');
   script.defer = true;
   document.head.appendChild(script);
 })();

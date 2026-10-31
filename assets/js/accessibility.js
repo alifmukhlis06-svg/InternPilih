@@ -153,23 +153,11 @@
     });
   }
 
-  function installBrandAssets() {
-    const logoUrl = typeof window.appUrl === 'function'
-      ? window.appUrl('/assets/images/internpilih-logo.png')
-      : 'assets/images/internpilih-logo.png';
-    document.querySelectorAll('.sidebar-logo .icon, .recovery-mark').forEach(container => {
-      container.classList.add('brand-logo-frame');
-      container.innerHTML = `<img class="brand-logo-image" src="${logoUrl}" alt="InternPilih">`;
-    });
-  }
-
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      installBrandAssets();
       installControls();
     }, { once: true });
   } else {
-    installBrandAssets();
     installControls();
   }
 })();
