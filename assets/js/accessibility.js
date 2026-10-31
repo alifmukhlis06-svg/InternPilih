@@ -3,9 +3,10 @@
   window.__internPilihAccessibilityInstalled = true;
 
   const storageKey = 'internpilih:accessibility';
-  const defaults = { theme: 'dark', textSize: 'normal', vision: 'standard' };
+  const settingsVersion = 2;
+  const defaults = { theme: 'light', textSize: 'normal', vision: 'standard' };
   const allowed = {
-    theme: ['dark'],
+    theme: ['light', 'dark'],
     textSize: ['small', 'normal', 'large'],
     vision: ['standard', 'red-green', 'blue-yellow', 'contrast']
   };
@@ -13,10 +14,11 @@
   function readSettings() {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
-      return Object.fromEntries(Object.entries(defaults).map(([key, fallback]) => [
-        key,
-        allowed[key].includes(saved[key]) ? saved[key] : fallback
-      ]));
+      return {
+        theme: saved.version === settingsVersion && allowed.theme.includes(saved.theme) ? saved.theme : defaults.theme,
+        textSize: allowed.textSize.includes(saved.textSize) ? saved.textSize : defaults.textSize,
+        vision: allowed.vision.includes(saved.vision) ? saved.vision : defaults.vision
+      };
     } catch (_) {
       return { ...defaults };
     }
@@ -29,7 +31,7 @@
     root.dataset.theme = settings.theme;
     root.dataset.textSize = settings.textSize;
     root.dataset.colorVision = settings.vision;
-    try { localStorage.setItem(storageKey, JSON.stringify(settings)); } catch (_) {}
+    try { localStorage.setItem(storageKey, JSON.stringify({ ...settings, version: settingsVersion })); } catch (_) {}
   }
 
   function updateSetting(key, value) {
@@ -51,6 +53,11 @@
     launcher.setAttribute('aria-controls', 'accessibilityPanel');
     launcher.innerHTML = '<span aria-hidden="true">Aa</span>';
 
+    const themeToggle = document.createElement('button');
+    themeToggle.id = 'themeToggle';
+    themeToggle.className = 'theme-toggle';
+    themeToggle.type = 'button';
+
     const panel = document.createElement('section');
     panel.id = 'accessibilityPanel';
     panel.className = 'accessibility-panel';
@@ -61,6 +68,10 @@
         <strong>Accessibility</strong>
         <button type="button" id="accessibilityClose" aria-label="Close accessibility settings">&times;</button>
       </div>
+      <label class="accessibility-switch">
+        <span>Dark mode</span>
+        <input type="checkbox" id="accessibilityDark">
+      </label>
       <div class="accessibility-field">
         <span>Font size</span>
         <div class="font-size-controls" role="group" aria-label="Font size">
@@ -80,10 +91,27 @@
       </label>
       <button type="button" class="accessibility-reset" id="accessibilityReset">Reset settings</button>`;
 
+    const themeHost = document.querySelector('.topbar-right, .nav-links');
+    if (themeHost) themeHost.appendChild(themeToggle);
+    else {
+      themeToggle.classList.add('floating');
+      document.body.appendChild(themeToggle);
+    }
     document.body.append(launcher, panel);
+    const dark = panel.querySelector('#accessibilityDark');
     const textSizeButtons = Array.from(panel.querySelectorAll('[data-text-size]'));
     const vision = panel.querySelector('#accessibilityVision');
+    dark.checked = settings.theme === 'dark';
     vision.value = settings.vision;
+
+    function syncThemeControls() {
+      const darkMode = settings.theme === 'dark';
+      dark.checked = darkMode;
+      themeToggle.textContent = darkMode ? '☀' : '☾';
+      themeToggle.setAttribute('aria-label', darkMode ? 'Use light mode' : 'Use dark mode');
+      themeToggle.setAttribute('title', darkMode ? 'Light mode' : 'Dark mode');
+    }
+    syncThemeControls();
 
     function syncTextSizeButtons() {
       textSizeButtons.forEach(button => {
@@ -99,6 +127,14 @@
     }
     launcher.addEventListener('click', () => setOpen(panel.hidden));
     panel.querySelector('#accessibilityClose').addEventListener('click', () => setOpen(false));
+    themeToggle.addEventListener('click', () => {
+      updateSetting('theme', settings.theme === 'dark' ? 'light' : 'dark');
+      syncThemeControls();
+    });
+    dark.addEventListener('change', () => {
+      updateSetting('theme', dark.checked ? 'dark' : 'light');
+      syncThemeControls();
+    });
     textSizeButtons.forEach(button => button.addEventListener('click', () => {
       updateSetting('textSize', button.dataset.textSize);
       syncTextSizeButtons();
@@ -106,8 +142,10 @@
     vision.addEventListener('change', () => updateSetting('vision', vision.value));
     panel.querySelector('#accessibilityReset').addEventListener('click', () => {
       settings = { ...defaults };
+      dark.checked = false;
       vision.value = defaults.vision;
       applySettings();
+      syncThemeControls();
       syncTextSizeButtons();
     });
     document.addEventListener('keydown', event => {

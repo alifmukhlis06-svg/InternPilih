@@ -21,8 +21,8 @@
 }
 
 .landing-page .nav-logo .logo-box {
-  width:40px;
-  height:40px;
+  width:52px;
+  height:52px;
   color:#fff;
   background:var(--landing-navy);
   border:0;
@@ -248,8 +248,8 @@
   .landing-page .qlogin-btns a { padding:8px 10px !important; }
 }
 
-/* Black + purple public brand theme */
-.landing-page {
+/* Optional black + purple public brand theme */
+html[data-theme="dark"] .landing-page {
   --landing-navy:#f8f5ff;
   --landing-blue:#a78bfa;
   --landing-purple:#8b5cf6;
@@ -258,57 +258,60 @@
   background:#05030b;
   color:#f8f5ff;
 }
-.landing-page .nav { background:rgba(5,3,11,.94); border-top-color:#8b5cf6; border-bottom:1px solid #342451; backdrop-filter:blur(14px); }
-.landing-page .nav-logo span,
-.landing-page .nav-links a { color:#f8f5ff; }
-.landing-page .nav-links a:hover { color:#c4b5fd; }
-.landing-page .nav-links .nav-cta { background:#7c3aed; }
-.landing-page .nav-links .nav-cta:hover { background:#8b5cf6; }
-.landing-page .hero { background:#05030b; }
-.landing-page .hero::before { z-index:0; background:radial-gradient(circle at 76% 48%,rgba(124,58,237,.14),transparent 24%),#05030b; }
-.landing-page .hero::after { display:none; }
-.landing-page .hero-content { z-index:2; }
-.landing-page .hero-title { color:#f8f5ff; }
-.landing-page .hero-title span,.landing-page .hero-badge { color:#a78bfa; }
-.landing-page .hero-sub { color:#c5bdd2; }
-.landing-page .btn-hero-primary,.landing-page .btn-hero-employer { background:#7c3aed; }
-.landing-page .btn-hero-primary:hover,.landing-page .btn-hero-employer:hover { background:#8b5cf6; }
-.landing-page .btn-hero-ghost { color:#f8f5ff; background:#120c20; border-color:#4b2e73; }
-.landing-page .btn-hero-ghost:hover { background:#24153f; }
-.landing-page .hero-stats,
-.landing-page .role-card,
-.landing-page .module-card,
-.landing-page #about > div > div > div,
-.landing-page .quick-login { background:#0d0918 !important; border-color:#342451 !important; }
-.landing-page .stat-item { border-color:#342451; }
-.landing-page .stat-item .num,
-.landing-page .section-title,
-.landing-page .role-card h3,
-.landing-page .module-card h4,
-.landing-page #about strong,
-.landing-page .quick-login p { color:#f8f5ff !important; }
-.landing-page .stat-item .lbl,
-.landing-page .section-sub,
-.landing-page .role-card p,
-.landing-page .role-features li,
-.landing-page .module-card p,
-.landing-page #about > div > p { color:#c5bdd2 !important; }
-.landing-page .section,
-.landing-page #modules { background:#05030b !important; border-color:#342451 !important; }
-.landing-page #roles { background:#090512; }
-.landing-page .footer { background:#05030b; border-bottom-color:#8b5cf6; }
-.landing-page .footer p { color:#b8aec6; }
-.landing-page .nav-logo .logo-box { background:#05030b; border:1px solid #4b2e73; }
-.landing-page .role-icon,
-.landing-page .module-icon,
-.landing-page .qlogin-btns a {
+html[data-theme="dark"] .landing-page .nav { background:rgba(5,3,11,.94); border-top-color:#8b5cf6; border-bottom:1px solid #342451; backdrop-filter:blur(14px); }
+html[data-theme="dark"] .landing-page .nav-logo span,
+html[data-theme="dark"] .landing-page .nav-links a { color:#f8f5ff; }
+html[data-theme="dark"] .landing-page .nav-links a:hover { color:#c4b5fd; }
+html[data-theme="dark"] .landing-page .nav-links .nav-cta { background:#7c3aed; }
+html[data-theme="dark"] .landing-page .nav-links .nav-cta:hover { background:#8b5cf6; }
+html[data-theme="dark"] .landing-page .hero { background:#05030b; }
+html[data-theme="dark"] .landing-page .hero::before { z-index:0; background:radial-gradient(circle at 76% 48%,rgba(124,58,237,.14),transparent 24%),#05030b; }
+html[data-theme="dark"] .landing-page .hero::after { display:none; }
+html[data-theme="dark"] .landing-page .hero-content { z-index:2; }
+html[data-theme="dark"] .landing-page .hero-title { color:#f8f5ff; }
+html[data-theme="dark"] .landing-page .hero-title span,
+html[data-theme="dark"] .landing-page .hero-badge { color:#a78bfa; }
+html[data-theme="dark"] .landing-page .hero-sub { color:#c5bdd2; }
+html[data-theme="dark"] .landing-page .btn-hero-primary,
+html[data-theme="dark"] .landing-page .btn-hero-employer { background:#7c3aed; }
+html[data-theme="dark"] .landing-page .btn-hero-primary:hover,
+html[data-theme="dark"] .landing-page .btn-hero-employer:hover { background:#8b5cf6; }
+html[data-theme="dark"] .landing-page .btn-hero-ghost { color:#f8f5ff; background:#120c20; border-color:#4b2e73; }
+html[data-theme="dark"] .landing-page .btn-hero-ghost:hover { background:#24153f; }
+html[data-theme="dark"] .landing-page .hero-stats,
+html[data-theme="dark"] .landing-page .role-card,
+html[data-theme="dark"] .landing-page .module-card,
+html[data-theme="dark"] .landing-page #about > div > div > div,
+html[data-theme="dark"] .landing-page .quick-login { background:#0d0918 !important; border-color:#342451 !important; }
+html[data-theme="dark"] .landing-page .stat-item { border-color:#342451; }
+html[data-theme="dark"] .landing-page .stat-item .num,
+html[data-theme="dark"] .landing-page .section-title,
+html[data-theme="dark"] .landing-page .role-card h3,
+html[data-theme="dark"] .landing-page .module-card h4,
+html[data-theme="dark"] .landing-page #about strong,
+html[data-theme="dark"] .landing-page .quick-login p { color:#f8f5ff !important; }
+html[data-theme="dark"] .landing-page .stat-item .lbl,
+html[data-theme="dark"] .landing-page .section-sub,
+html[data-theme="dark"] .landing-page .role-card p,
+html[data-theme="dark"] .landing-page .role-features li,
+html[data-theme="dark"] .landing-page .module-card p,
+html[data-theme="dark"] .landing-page #about > div > p { color:#c5bdd2 !important; }
+html[data-theme="dark"] .landing-page .section,
+html[data-theme="dark"] .landing-page #modules { background:#05030b !important; border-color:#342451 !important; }
+html[data-theme="dark"] .landing-page #roles { background:#090512; }
+html[data-theme="dark"] .landing-page .footer { background:#05030b; border-bottom-color:#8b5cf6; }
+html[data-theme="dark"] .landing-page .footer p { color:#b8aec6; }
+html[data-theme="dark"] .landing-page .nav-logo .logo-box { background:#05030b; border:1px solid #4b2e73; }
+html[data-theme="dark"] .landing-page .role-icon,
+html[data-theme="dark"] .landing-page .module-icon,
+html[data-theme="dark"] .landing-page .qlogin-btns a {
   color:#c4b5fd !important;
   background:#1b1030 !important;
   border-color:#4b2e73 !important;
 }
-.landing-page .role-features li::before { background:#8b5cf6 !important; }
+html[data-theme="dark"] .landing-page .role-features li::before { background:#8b5cf6 !important; }
 
 @media (max-width:760px) {
-  .landing-page .hero::before { background:rgba(5,3,11,.82); }
-  .landing-page .hero::after { display:none; }
+  html[data-theme="dark"] .landing-page .hero::before { background:rgba(5,3,11,.82); }
+  html[data-theme="dark"] .landing-page .hero::after { display:none; }
 }
