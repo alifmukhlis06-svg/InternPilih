@@ -14,20 +14,23 @@ html[data-protected]:not([data-auth-ready])::before {
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:210px 24px 0;
-  background:var(--bg) url('../images/internpilih-brand-animation.gif') center calc(50% - 18px) / 148px 148px no-repeat;
+  box-sizing:border-box;
+  padding:200px 24px 0;
+  background:var(--bg) url('../images/internpilih-brand-animation.gif') center / 140px 140px no-repeat;
   color:var(--text2);
+  font:600 12px/1.5 'Inter',sans-serif;
+  text-align:center;
   visibility:visible;
 }
 :root {
-  --uitm-blue:#083b3f;
-  --uitm-blue-2:#087f82;
-  --uitm-purple:#09a9a3;
-  --uitm-purple-2:#078e89;
-  --uitm-yellow:#ff9b2f;
-  --bg:#f4f8fc; --bg2:#ffffff; --bg3:#eef3f8;
-  --blue:var(--uitm-blue); --blue2:var(--uitm-blue-2); --blue3:#087f82;
-  --gold:#b95f0b; --green:#14785b; --red:#b23a34; --purple:#563383;
+  --uitm-blue:#312e81;
+  --uitm-blue-2:#6d28d9;
+  --uitm-purple:#7c3aed;
+  --uitm-purple-2:#6d28d9;
+  --uitm-yellow:#8b5cf6;
+  --bg:#f7f7fb; --bg2:#ffffff; --bg3:#f2eff8;
+  --blue:var(--uitm-blue); --blue2:var(--uitm-blue-2); --blue3:#7c3aed;
+  --gold:#7c3aed; --green:#14785b; --red:#b23a34; --purple:#7c3aed;
   --text:#13233b; --text2:#5d6b7f; --text3:#34475e;
   --border:#dce4ed; --card:#ffffff;
   --shadow-sm:0 2px 6px rgba(16,43,77,.035);
@@ -38,18 +41,7 @@ html[data-protected]:not([data-auth-ready])::before {
   --transition:.22s ease;
 }
 
-/* User-controlled accessibility themes. */
-html[data-theme="dark"] {
-  color-scheme:dark;
-  --bg:#05030b; --bg2:#0d0918; --bg3:#171029;
-  --text:#f8f5ff; --text2:#c5bdd2; --text3:#e1d9ec;
-  --border:#342451; --card:#0d0918;
-  --shadow-sm:0 2px 8px rgba(0,0,0,.22);
-  --shadow-md:0 10px 28px rgba(0,0,0,.32);
-  --uitm-blue:#a78bfa; --uitm-blue-2:#8b5cf6; --uitm-purple:#8b5cf6; --uitm-purple-2:#7c3aed;
-  --blue:#a78bfa; --blue2:#8b5cf6; --blue3:#a78bfa;
-  --gold:#c084fc; --green:#a78bfa; --red:#ff8a80; --purple:#c084fc;
-}
+/* User-controlled accessibility color adjustments. */
 html[data-color-vision="red-green"] {
   --green:#0072b2; --red:#d55e00; --gold:#e69f00; --blue3:#0072b2; --purple:#cc79a7;
 }
@@ -68,28 +60,6 @@ html[data-theme="dark"][data-color-vision="contrast"] {
   --blue:#7db7ff; --blue2:#7db7ff; --blue3:#7db7ff;
   --green:#72f0b7; --red:#ff8f8f; --gold:#ffd166; --purple:#e1b4ff;
 }
-html[data-text-size="large"] body { zoom:1.15; }
-html[data-text-size="larger"] body { zoom:1.3; }
-
-html[data-theme="dark"] body,
-html[data-theme="dark"] .sidebar,
-html[data-theme="dark"] .topbar,
-html[data-theme="dark"] .panel,
-html[data-theme="dark"] .modal,
-html[data-theme="dark"] .login-card,
-html[data-theme="dark"] .recovery-card { background-color:var(--bg2); color:var(--text); }
-html[data-theme="dark"] .form-control,
-html[data-theme="dark"] .search-input,
-html[data-theme="dark"] .data-table th,
-html[data-theme="dark"] .notif-btn,
-html[data-theme="dark"] .surface-box,
-html[data-theme="dark"] .info-note,
-html[data-theme="dark"] .profile-about,
-html[data-theme="dark"] .profile-meta { background:var(--bg3); color:var(--text); border-color:var(--border); }
-html[data-theme="dark"] .nav { background:#0d0918 !important; }
-html[data-theme="dark"] .hero { background:#05030b !important; }
-html[data-theme="dark"] .login-page::before { background:radial-gradient(circle at 74% 48%,rgba(124,58,237,.22),transparent 30%),rgba(5,3,11,.82) !important; }
-html[data-theme="dark"][data-protected]:not([data-auth-ready])::before { background:var(--bg); color:var(--text2); }
 html[data-color-vision="contrast"] *:focus-visible { outline:3px solid currentColor !important; outline-offset:3px; }
 
 .accessibility-launcher {
@@ -153,7 +123,7 @@ a { color:inherit; }
 .nav-section { font-size:9px; font-weight:800; color:#7a8799; text-transform:uppercase; letter-spacing:1.1px; padding:14px 9px 6px; }
 .nav-item { display:flex; align-items:center; gap:11px; min-height:40px; padding:9px 11px; border-radius:6px; color:var(--text2); text-decoration:none; font-size:12px; font-weight:600; margin-bottom:3px; transition:background var(--transition), color var(--transition); cursor:pointer; }
 .nav-item:hover { background:#edf5f8; color:var(--blue3); }
-.nav-item.active { background:#e6f6f5; color:var(--uitm-blue); box-shadow:inset 3px 0 0 var(--uitm-yellow); font-weight:700; }
+.nav-item.active { background:#f0eaff; color:var(--uitm-blue-2); box-shadow:inset 3px 0 0 var(--uitm-purple); font-weight:700; }
 .nav-item .nav-icon { width:18px; text-align:center; font-size:14px; flex-shrink:0; }
 .nav-badge { margin-left:auto; background:var(--red); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:999px; flex-shrink:0; }
 .sidebar-footer { padding:12px 10px; border-top:1px solid var(--border); flex-shrink:0; }
@@ -163,7 +133,7 @@ a { color:inherit; }
 .user-info span { font-size:11px; color:var(--text2); }
 .logout-btn { display:flex; align-items:center; gap:8px; padding:8px 12px; margin-top:6px; border-radius:8px; color:var(--text2); font-size:12px; cursor:pointer; transition:var(--transition); text-decoration:none; }
 .logout-btn:hover { background:var(--bg3); color:var(--red); }
-.readonly-note { margin:0 12px 12px; padding:12px; border:1px solid rgba(255,155,47,.28); border-radius:6px; background:#fff8ed; color:var(--gold); font-size:11px; }
+.readonly-note { margin:0 12px 12px; padding:12px; border:1px solid #d9cff0; border-radius:6px; background:#f7f2ff; color:var(--gold); font-size:11px; }
 .readonly-note span { display:block; color:var(--text2); margin-top:2px; }
 
 .sidebar-overlay {
@@ -184,7 +154,7 @@ a { color:inherit; }
 .topbar-sub { font-size:11px; color:var(--text2); margin-top:3px; }
 .topbar-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
 .notif-btn { position:relative; background:#f8fafc; border:1px solid var(--border); width:38px; height:38px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:var(--transition); color:var(--text2); font-size:14px; text-decoration:none; }
-.notif-btn:hover { color:var(--uitm-purple); border-color:#b7e4e0; background:#f4fbfa; }
+.notif-btn:hover { color:var(--uitm-purple); border-color:#c4b5fd; background:#f6f2ff; }
 .notif-dot { position:absolute; top:7px; right:7px; width:7px; height:7px; background:var(--red); border-radius:50%; border:2px solid var(--bg2); }
 
 .hamburger {
@@ -223,17 +193,17 @@ a { color:inherit; }
   display:flex;
   align-items:center;
   background:url('../images/dashboard-career-session.png') center / cover no-repeat;
-  border:1px solid #165f63;
+  border:1px solid #4c1d95;
   border-radius:6px;
   color:#fff;
 }
-.dashboard-brief::before { content:''; position:absolute; inset:0; background:rgba(5,47,51,.7); }
+.dashboard-brief::before { content:''; position:absolute; inset:0; background:rgba(24,15,40,.78); }
 .dashboard-brief-copy { width:min(570px,62%); position:relative; z-index:1; }
-.dashboard-brief-kicker { display:block; margin-bottom:8px; color:#ffad43; font-size:9px; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; }
+.dashboard-brief-kicker { display:block; margin-bottom:8px; color:#c4b5fd; font-size:9px; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; }
 .dashboard-brief h2 { margin:0; color:#fff; font-family:'Poppins','Inter',sans-serif; font-size:25px; line-height:1.2; letter-spacing:0; }
 .dashboard-brief p { margin:8px 0 0; max-width:520px; color:#d8e1eb; font-size:12px; line-height:1.6; }
 .dashboard-brief-link { display:inline-flex; align-items:center; gap:8px; margin-top:16px; color:#fff; font-size:11px; font-weight:750; text-decoration:none; }
-.dashboard-brief-link:hover { color:#ffad43; }
+.dashboard-brief-link:hover { color:#c4b5fd; }
 
 /* Stats */
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px; }
@@ -248,11 +218,11 @@ a { color:inherit; }
 .stat-card.purple::before { background:var(--uitm-purple); }
 .stat-card:hover { border-color:#c5cfdc; box-shadow:var(--shadow-md); }
 .stat-icon { width:40px; height:40px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
-.stat-icon.blue { background:#e4f6f3; color:var(--uitm-blue-2); }
-.stat-icon.gold { background:#fff7db; color:#8a6510; }
+.stat-icon.blue { background:#f3efff; color:var(--uitm-blue-2); }
+.stat-icon.gold { background:#f3efff; color:#6d28d9; }
 .stat-icon.green { background:rgba(16,185,129,.15); color:var(--green); }
 .stat-icon.red { background:rgba(239,68,68,.15); color:var(--red); }
-.stat-icon.purple { background:#e3f7f5; color:var(--uitm-purple); }
+.stat-icon.purple { background:#f3efff; color:var(--uitm-purple); }
 .stat-val { font-size:24px; font-weight:800; line-height:1; }
 .stat-label { font-size:12px; color:var(--text2); margin-top:3px; }
 .stat-change { font-size:11px; margin-top:5px; }
@@ -287,7 +257,7 @@ a { color:inherit; }
 .btn-primary { background:var(--uitm-purple); color:#fff; }
 .btn-primary:hover { background:var(--uitm-purple-2); }
 .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text2); }
-.btn-outline:hover { border-color:#b7e4e0; color:var(--uitm-blue-2); background:#f4fbfa; }
+.btn-outline:hover { border-color:#c4b5fd; color:var(--uitm-blue-2); background:#f6f2ff; }
 .btn-danger { background:rgba(239,68,68,.12); color:var(--red); border:1px solid rgba(239,68,68,.25); }
 .btn-danger:hover { background:var(--red); color:#fff; }
 .btn-success { background:rgba(16,185,129,.12); color:var(--green); border:1px solid rgba(16,185,129,.25); }
@@ -344,7 +314,7 @@ textarea.form-control { resize:vertical; min-height:100px; }
 .alert-danger { background:#fff1f1; border:1px solid #f3c2c2; color:#a7352d; }
 
 .chip { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:999px; font-size:12px; font-weight:500; border:1px solid var(--border); color:var(--text2); background:var(--bg3); cursor:pointer; transition:var(--transition); white-space:nowrap; }
-.chip.active, .chip:hover { border-color:#b7e4e0; color:var(--uitm-blue-2); background:#f4fbfa; }
+.chip.active, .chip:hover { border-color:#c4b5fd; color:var(--uitm-blue-2); background:#f6f2ff; }
 
 .notif-item { display:flex; align-items:flex-start; gap:12px; padding:13px 0; border-bottom:1px solid var(--border); }
 .notif-item:last-child { border-bottom:none; }
@@ -392,13 +362,13 @@ textarea.form-control { resize:vertical; min-height:100px; }
 .avatar-initial.green { background:#dcfce7; color:var(--green); }
 .avatar-initial.purple { background:#ede9fe; color:var(--purple); }
 
-.avatar-admin { background:#fff0df !important; color:#a95508 !important; }
-.avatar-employer { background:#e4f6f3 !important; color:#087f82 !important; }
+.avatar-admin { background:#f3efff !important; color:#6d28d9 !important; }
+.avatar-employer { background:#f3efff !important; color:#7c3aed !important; }
 .page-narrow { max-width:860px; }
 .profile-summary { display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
-.profile-avatar { width:84px; height:84px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#e4f6f3; color:#087f82; border:3px solid #d6e8e7; font-size:28px; font-weight:800; flex:0 0 auto; }
-.profile-avatar.admin { background:#fff0df; color:#a95508; border-color:#f5d9bb; }
-.profile-avatar.company { border-radius:7px; background:#e4f6f3; color:#087f82; font-size:28px; }
+.profile-avatar { width:84px; height:84px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#f3efff; color:#7c3aed; border:3px solid #e0d6f2; font-size:28px; font-weight:800; flex:0 0 auto; }
+.profile-avatar.admin { background:#f3efff; color:#6d28d9; border-color:#e0d6f2; }
+.profile-avatar.company { border-radius:7px; background:#f3efff; color:#7c3aed; font-size:28px; }
 .profile-heading { flex:1; min-width:220px; }
 .profile-heading h2 { font-family:'Poppins','Inter',sans-serif; font-size:21px; font-weight:700; }
 .profile-heading p { margin-top:3px; color:var(--text2); font-size:12px; }
@@ -417,7 +387,7 @@ textarea.form-control { resize:vertical; min-height:100px; }
 .entity-card-body { padding:20px; }
 .entity-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px; }
 .entity-leading { display:flex; align-items:center; gap:12px; min-width:0; }
-.entity-icon { width:46px; height:46px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; background:#e5f6f4; color:#087f82; border:1px solid #cfe9e7; border-radius:6px; font-size:17px; }
+.entity-icon { width:46px; height:46px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; background:#f3efff; color:#7c3aed; border:1px solid #ddd2ef; border-radius:6px; font-size:17px; }
 .entity-title { font-size:14px; font-weight:700; }
 .entity-subtitle { margin-top:2px; color:var(--text2); font-size:11px; }
 .entity-meta-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:12px 0 16px; color:var(--text2); font-size:11px; }
@@ -428,7 +398,7 @@ textarea.form-control { resize:vertical; min-height:100px; }
 .document-card { padding:15px; background:#f8fafc; border:1px solid var(--border); border-radius:6px; }
 .document-card-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
 .document-card-main { display:flex; align-items:center; gap:10px; min-width:0; }
-.document-card-icon { width:38px; height:38px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; background:#e5f6f4; color:#087f82; border-radius:5px; }
+.document-card-icon { width:38px; height:38px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; background:#f3efff; color:#7c3aed; border-radius:5px; }
 .document-status-row { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); font-size:12px; }
 
 .verification-list { display:grid; gap:12px; }
@@ -465,7 +435,7 @@ textarea.form-control { resize:vertical; min-height:100px; }
 /* Role select (login page) */
 .role-select { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:22px; }
 .role-btn { min-width:0; padding:14px 8px; border-radius:8px; border:1px solid var(--border); background:#fff; cursor:pointer; text-align:center; transition:var(--transition); color:var(--text2); }
-.role-btn:hover, .role-btn.active { border-color:#b7e4e0; background:#f4fbfa; color:var(--uitm-blue-2); }
+.role-btn:hover, .role-btn.active { border-color:#c4b5fd; background:#f6f2ff; color:var(--uitm-blue-2); }
 .role-btn i { font-size:20px; display:block; margin-bottom:6px; }
 .role-btn span { font-size:11px; font-weight:600; }
 
@@ -576,15 +546,40 @@ textarea.form-control { resize:vertical; min-height:100px; }
 }
 
 /* Login */
-.login-page { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+.login-page {
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:32px 20px;
+  background:#f7f7fb;
+}
 .login-card {
-  background:var(--bg2); border:1px solid var(--border); border-radius:10px;
-  padding:32px; width:100%; max-width:420px; min-width:0;
+  background:#fff; border:1px solid #e5e1ed; border-radius:10px;
+  padding:34px; width:100%; max-width:430px; min-width:0;
   position:relative; z-index:2;
-  box-shadow:0 14px 34px rgba(16,24,40,.12);
+  box-shadow:0 18px 48px rgba(35,24,54,.12);
 }
 .login-logo { text-align:center; margin-bottom:28px; }
-.login-logo .logo-icon { font-size:40px; margin-bottom:10px; }
+.login-brand-static {
+  width:90px;
+  height:90px;
+  margin:0 auto 14px;
+  position:relative;
+  overflow:hidden;
+  border:1px solid #4b2e73;
+  border-radius:12px;
+  background:#05030b;
+}
+.login-brand-static img {
+  width:300%;
+  max-width:none;
+  height:auto;
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+}
 .login-logo h1 { font-size:22px; font-weight:800; letter-spacing:-.5px; }
 .login-logo p { font-size:12px; color:var(--text2); margin-top:4px; }
 .password-wrap { position:relative; }
@@ -596,12 +591,18 @@ textarea.form-control { resize:vertical; min-height:100px; }
 .login-link:hover { text-decoration:underline; }
 .login-submit { width:100%; justify-content:center; padding:13px; }
 .login-error { background:#fff1f1; border:1px solid #f3c2c2; color:#a7352d; padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:14px; }
+.demo-accounts { margin-top:20px; padding:14px; background:#f6f3fa; border:1px solid var(--border); border-radius:6px; }
+.demo-accounts p { margin-bottom:10px; color:var(--text2); font-size:11px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; }
+.demo-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; }
+.demo-row span { color:var(--text3); font-size:12px; line-height:1.35; }
+.demo-row .demo-fill { padding:3px 8px; background:transparent; border:0; border-radius:4px; color:var(--uitm-purple); font-size:11px; font-weight:700; cursor:pointer; }
+.demo-row .demo-fill:hover { background:#f0eaff; }
 
 /* Password recovery */
 .recovery-page { position:relative; min-height:100vh; display:flex; align-items:center; justify-content:flex-start; padding:48px max(28px,calc((100vw - 1180px)/2)); background:#eef4f8 url('../images/internpilih-career-campus.png') center/cover no-repeat; }
 .recovery-page::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,rgba(244,248,252,.98) 0%,rgba(244,248,252,.9) 38%,rgba(244,248,252,.12) 72%); }
 .recovery-card { position:relative; z-index:1; width:100%; max-width:430px; padding:34px; background:#fff; border:1px solid var(--border); border-radius:7px; box-shadow:0 18px 44px rgba(16,43,77,.14); }
-.recovery-mark { width:48px; height:48px; margin-bottom:18px; display:flex; align-items:center; justify-content:center; border-radius:6px; background:#e6f6f5; color:var(--uitm-blue-2); font-size:18px; }
+.recovery-mark { width:48px; height:48px; margin-bottom:18px; display:flex; align-items:center; justify-content:center; border-radius:6px; background:#f0eaff; color:var(--uitm-blue-2); font-size:18px; }
 .recovery-card h1 { font-family:'Poppins','Inter',sans-serif; font-size:23px; line-height:1.25; }
 .recovery-intro { margin:8px 0 24px; color:var(--text2); font-size:13px; line-height:1.65; }
 .recovery-submit { width:100%; justify-content:center; min-height:42px; }
@@ -642,7 +643,7 @@ textarea.form-control { resize:vertical; min-height:100px; }
   [style*="grid-template-columns:1fr 1fr"] { grid-template-columns:1fr !important; }
 }
 
-/* InternPilih branding, saved theme, and loading experience */
+/* Optional dark theme */
 html[data-theme="dark"] {
   color-scheme:dark;
   --uitm-blue:#a78bfa;
@@ -710,8 +711,13 @@ html[data-theme="dark"] .recovery-page { background:#05030b; }
 html[data-theme="dark"] .recovery-page::before { background:radial-gradient(circle at 24% 48%,rgba(124,58,237,.2),transparent 34%),rgba(5,3,11,.82); }
 html[data-theme="dark"] .recovery-status { background:var(--bg3); }
 html[data-theme="dark"] .login-error,
-html[data-theme="dark"] .recovery-status.error { background:#291116; }
-html[data-theme="dark"] .recovery-status.success { background:#10251d; }
+html[data-theme="dark"] .recovery-status.error,
+html[data-theme="dark"] .recovery-status.success { background:#171029; border-color:#4b2e73; color:#f8f5ff; }
+html[data-theme="dark"] .login-page { background:#05030b; }
+html[data-theme="dark"] .login-card { background:#0d0918; border-color:#342451; box-shadow:0 24px 70px rgba(0,0,0,.52); }
+html[data-theme="dark"] .demo-accounts { background:#171029; border-color:#342451; }
+html[data-theme="dark"] .demo-row .demo-fill:hover { background:#24153f; }
+html[data-theme="dark"][data-protected]:not([data-auth-ready])::before { background-color:#05030b; color:#c5bdd2; }
 
 .form-control:focus,
 button:focus-visible,
@@ -720,23 +726,10 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible { outline:3px solid #8b5cf6; outline-offset:2px; border-color:#8b5cf6; box-shadow:0 0 0 4px rgba(139,92,246,.2); }
 
-.brand-logo-frame { position:relative; overflow:hidden; background:#05030b !important; border-color:#4b2e73 !important; }
-.brand-logo-image { position:absolute; width:300%; max-width:none; height:auto; left:50%; top:50%; transform:translate(-50%,-50%); }
 .sidebar-logo .icon.brand-logo-frame,
-.recovery-mark.brand-logo-frame { border:1px solid #4b2e73; }
-.login-brand-static { width:92px; height:92px; margin:0 auto 14px; border:1px solid #4b2e73; border-radius:14px; }
-
-html[data-protected]:not([data-auth-ready])::before {
-  content:'Loading InternPilih...';
-  padding:210px 24px 0;
-  background:var(--bg) url('../images/internpilih-brand-animation.gif') center calc(50% - 18px) / 148px 148px no-repeat;
-  color:var(--text2);
-  font:600 12px/1.5 'Inter',sans-serif;
-}
-html[data-theme="dark"][data-protected]:not([data-auth-ready])::before {
-  background:#05030b url('../images/internpilih-brand-animation.gif') center calc(50% - 18px) / 148px 148px no-repeat;
-  color:#c5bdd2;
-}
+.recovery-mark.brand-logo-frame { position:relative; overflow:hidden; background:#05030b; border:1px solid #4b2e73; }
+.sidebar-logo .brand-logo-image,
+.recovery-mark .brand-logo-image { position:absolute; width:300%; max-width:none; height:auto; left:50%; top:50%; transform:translate(-50%,-50%); }
 html[data-protected][data-auth-ready] body { animation:internpilihPageReveal .2s ease-out both; }
 @keyframes internpilihPageReveal { from { opacity:0; } to { opacity:1; } }
 
@@ -754,7 +747,7 @@ html[data-theme="dark"] .accessibility-panel { background:#0d0918; border-color:
 }
 
 @media (max-width:600px) {
-  .login-brand-static { width:82px; height:82px; }
+  .login-brand-static { width:80px; height:80px; }
   .login-page { overflow-x:hidden; }
   .login-card { max-width:100%; }
 }
