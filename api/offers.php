@@ -71,11 +71,37 @@ if ($method === 'POST') {
     $position = trim((string)($d['position'] ?? ''));
     $offerDate = trim((string)($d['offer_date'] ?? ''));
     $deadline = trim((string)($d['deadline'] ?? ''));
+    $internshipStartDate = trim((string)($d['internship_start_date'] ?? ''));
     if ($companyId < 1 || $position === '' || $offerDate === '' || $deadline === '') {
         respond(['error' => 'Company, internship position, offer date, and response deadline are required.'], 422);
     }
     if (strlen($position) > 150) {
         respond(['error' => 'Internship position must be 150 characters or fewer.'], 422);
+    }
+    $scheduleRows = db()->query("
+        SELECT setting_key, setting_value FROM system_settings
+        WHERE setting_key IN ('internship_application_open', 'main_offer_deadline',
+            'placement_confirmation_deadline', 'internship_start_date')
+    ")->fetch_all(MYSQLI_ASSOC);
+    $cycle = array_column($scheduleRows, 'setting_value', 'setting_key');
+    if ($internshipStartDate === '') {
+        $internshipStartDate = (string)($cycle['internship_start_date'] ?? '');
+    }
+    foreach ([$offerDate, $deadline, $internshipStartDate] as $dateValue) {
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $dateValue);
+        if (!$date || $date->format('Y-m-d') !== $dateValue) {
+            respond(['error' => 'Offer, response, and internship start dates must be valid dates.'], 422);
+        }
+    }
+    if ($offerDate < ($cycle['internship_application_open'] ?? '')
+        || $offerDate > ($cycle['main_offer_deadline'] ?? '9999-12-31')) {
+        respond(['error' => 'Offer dates must fall within the configured preparation period.'], 422);
+    }
+    if ($deadline < $offerDate || $deadline > ($cycle['placement_confirmation_deadline'] ?? '9999-12-31')) {
+        respond(['error' => 'The response deadline must be on or after the offer date and no later than final placement confirmation.'], 422);
+    }
+    if ($internshipStartDate !== ($cycle['internship_start_date'] ?? '')) {
+        respond(['error' => 'The internship start date must match the configured March cycle.'], 422);
     }
 
     $company = db()->prepare("SELECT id FROM companies WHERE id = ? AND status = 'active' LIMIT 1");
@@ -86,15 +112,16 @@ if ($method === 'POST') {
     }
 
     $stmt = db()->prepare("
-        INSERT INTO offers (student_id, company_id, position, offer_date, deadline, status)
-        VALUES (?, ?, ?, ?, ?, 'pending')
+        INSERT INTO offers (student_id, company_id, position, offer_date, deadline, internship_start_date, status)
+        VALUES (?, ?, ?, ?, ?, ?, 'pending')
     ");
-    $stmt->bind_param('iisss',
+    $stmt->bind_param('iissss',
         $user['id'],
         $companyId,
         $position,
         $offerDate,
-        $deadline
+        $deadline,
+        $internshipStartDate
     );
     $stmt->execute();
     $offerId = (int)db()->insert_id;

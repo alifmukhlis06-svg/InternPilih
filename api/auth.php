@@ -12,7 +12,7 @@ const INTERNPILIH_STAGING_PROJECT_REF = 'zohcslnofeuisywqnjts';
  * Return fictional login identities only for the approved staging project.
  * Passwords and password hashes are never returned to the browser.
  *
- * @return array<int, array{email:string,role:string}>
+ * @return array<int, array{identifier:string,role:string}>
  */
 function stagingDemoAccounts(): array {
     $environment = strtolower(trim((string)(getenv('INTERNPILIH_ENVIRONMENT') ?: '')));
@@ -27,18 +27,26 @@ function stagingDemoAccounts(): array {
 
     try {
         $result = db()->query("
-            SELECT email, role
-            FROM users
-            WHERE role IN ('student', 'employer', 'admin')
-              AND LOWER(email) LIKE '%@example.test'
+            SELECT CASE
+                       WHEN u.role = 'student' THEN s.matric_id
+                       WHEN u.role = 'admin' THEN a.staff_id
+                       ELSE u.email
+                   END AS identifier,
+                   u.role
+            FROM users u
+            LEFT JOIN students s ON s.user_id = u.id
+            LEFT JOIN admins a ON a.user_id = u.id
+            WHERE (u.role = 'student' AND s.matric_id LIKE 'STG%')
+               OR (u.role = 'admin' AND u.name LIKE 'Synthetic Coordinator %')
+               OR (u.role = 'employer' AND LOWER(u.email) LIKE '%@example.test')
             ORDER BY
-                CASE role WHEN 'student' THEN 1 WHEN 'employer' THEN 2 ELSE 3 END,
-                email
+                CASE u.role WHEN 'student' THEN 1 WHEN 'employer' THEN 2 ELSE 3 END,
+                identifier
         ");
         if (!$result) return [];
         return array_map(
             static fn(array $row): array => [
-                'email' => (string)$row['email'],
+                'identifier' => (string)$row['identifier'],
                 'role' => (string)$row['role'],
             ],
             $result->fetch_all(MYSQLI_ASSOC)
@@ -203,43 +211,56 @@ function checkedLoginRateLimit(string $email, bool $recordFailure = false, bool 
 // POST /api/auth.php  → login
 if ($method === 'POST') {
     $data  = body();
-    $email = trim($data['email'] ?? '');
+    $role = strtolower(trim((string)($data['role'] ?? 'student')));
+    $identifier = trim((string)($data['identifier'] ?? ''));
     $pass  = $data['password'] ?? '';
 
-    if (!$email || !$pass) {
-        respond(['error' => 'Email and password are required.'], 422);
+    if (!in_array($role, ['student', 'admin', 'employer'], true)) {
+        respond(['error' => 'Select a valid account role.'], 422);
+    }
+    $identifierLabel = $role === 'student' ? 'Student ID' : ($role === 'admin' ? 'Staff ID' : 'Email');
+    if ($identifier === '' || $pass === '') {
+        respond(['error' => $identifierLabel . ' and password are required.'], 422);
     }
 
-    $limit = checkedLoginRateLimit($email);
+    $rateLimitIdentity = $role . ':' . strtolower($identifier);
+    $limit = checkedLoginRateLimit($rateLimitIdentity);
     if ($limit['failures'] >= LOGIN_RATE_LIMIT_MAX_FAILURES) {
         header('Retry-After: ' . max(1, $limit['retry_after']));
         respond(['error' => 'Too many login attempts. Please wait and try again.'], 429);
     }
 
+    $identityClause = match ($role) {
+        'student' => 's.matric_id = ?',
+        'admin' => 'a.staff_id = ?',
+        default => 'LOWER(u.email) = LOWER(?)',
+    };
     $stmt = db()->prepare("
         SELECT u.id, u.name, u.email, to_jsonb(u)->>'phone' AS phone, u.password, u.role,
                s.matric_id, COALESCE(s.faculty, a.faculty) AS faculty,
+               COALESCE(s.campus, a.campus) AS campus,
                s.programme, s.cgpa, s.coordinator_id, coordinator.name AS coordinator_name,
-               a.programme AS coordinator_programme, e.company_id
+               a.programme AS coordinator_programme, a.staff_id, e.company_id
         FROM users u
         LEFT JOIN students s ON s.user_id = u.id
         LEFT JOIN employers e ON e.user_id = u.id
         LEFT JOIN admins a ON a.user_id = u.id
         LEFT JOIN users coordinator ON coordinator.id = s.coordinator_id
-        WHERE u.email = ? LIMIT 1
+        WHERE u.role = ? AND {$identityClause}
+        LIMIT 1
     ");
-    $stmt->bind_param('s', $email);
+    $stmt->bind_param('ss', $role, $identifier);
     $stmt->execute();
     $user = $stmt->get_result()->fetch_assoc();
 
     if (!$user || !password_verify($pass, $user['password'])) {
-        checkedLoginRateLimit($email, true);
+        checkedLoginRateLimit($rateLimitIdentity, true);
         usleep(random_int(150000, 350000));
-        respond(['error' => 'Invalid email or password.'], 401);
+        respond(['error' => 'Invalid ' . $identifierLabel . ' or password.'], 401);
     }
 
     unset($user['password']);
-    checkedLoginRateLimit($email, false, true);
+    checkedLoginRateLimit($rateLimitIdentity, false, true);
     session_regenerate_id(true);
     $_SESSION['user'] = $user;
 

@@ -70,10 +70,54 @@ try {
     ")->fetchColumn();
 
     $userCount = (int)$admin->query('SELECT COUNT(*) FROM public.users')->fetchColumn();
-    $nonSyntheticUsers = (int)$admin->query("
-        SELECT COUNT(*)
-        FROM public.users
-        WHERE email !~ '@example[.]test$'
+    $invalidAccountCount = (int)$admin->query("
+        SELECT
+            (SELECT count(*) FROM public.students s JOIN public.users u ON u.id = s.user_id
+             WHERE lower(u.email) <> lower(s.matric_id) || '@student.uitm.edu.my')
+          + (SELECT count(*) FROM public.admins a JOIN public.users u ON u.id = a.user_id
+             WHERE a.staff_id !~ '^[0-9]{6}$' OR u.email !~ '^[a-z][a-z0-9]*@uitm[.]edu[.]my$')
+          + (SELECT count(*) FROM public.users
+             WHERE role IN ('student','admin','employer') AND phone !~ '^\\+6011[0-9]{8}$')
+          + (SELECT count(*) FROM (SELECT email FROM public.users GROUP BY email HAVING count(*) > 1) duplicates)
+          + (SELECT count(*) FROM (SELECT phone FROM public.users GROUP BY phone HAVING count(*) > 1) duplicates)
+          + (SELECT count(*) FROM (SELECT staff_id FROM public.admins GROUP BY staff_id HAVING count(*) > 1) duplicates)
+    ")->fetchColumn();
+    $invalidRelationshipCount = (int)$admin->query("
+        SELECT
+            (SELECT count(*) FROM public.students s
+             LEFT JOIN public.users u ON u.id = s.user_id AND u.role = 'student'
+             LEFT JOIN public.admins a ON a.user_id = s.coordinator_id
+             WHERE u.id IS NULL OR a.user_id IS NULL)
+          + (SELECT count(*) FROM public.admins a
+             LEFT JOIN public.users u ON u.id = a.user_id AND u.role = 'admin'
+             WHERE u.id IS NULL)
+    ")->fetchColumn();
+
+    $requiredColumnCount = (int)$admin->query("
+        SELECT COUNT(*) FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND ((table_name = 'students' AND column_name = 'campus')
+            OR (table_name = 'admins' AND column_name = 'campus')
+            OR (table_name = 'offers' AND column_name = 'internship_start_date')
+            OR (table_name = 'password_reset_tokens' AND column_name = 'purpose'))
+    ")->fetchColumn();
+    $scheduleCount = (int)$admin->query("
+        SELECT COUNT(*) FROM public.system_settings
+        WHERE (setting_key, setting_value) IN (
+            ('internship_application_open', '2026-11-02'),
+            ('main_offer_deadline', '2026-12-15'),
+            ('placement_confirmation_deadline', '2027-01-15'),
+            ('document_completion_deadline', '2027-01-31'),
+            ('internship_start_date', '2027-03-01')
+        )
+    ")->fetchColumn();
+    $campusCount = (int)$admin->query("
+        SELECT COUNT(*) FROM (
+            SELECT s.campus FROM public.students s WHERE s.matric_id = 'STG000001' AND s.campus = 'Arau'
+            UNION ALL
+            SELECT a.campus FROM public.admins a JOIN public.users u ON u.id = a.user_id
+            WHERE a.staff_id = '100001' AND a.campus = 'Arau'
+        ) campus_checks
     ")->fetchColumn();
 
     $application = stagingPdo('APP');
@@ -100,7 +144,11 @@ try {
         && !stagingPgBool($bucket['public'])
         && (int)$bucket['file_size_limit'] === 5242880
         && $storagePolicyCount === 0
-        && $nonSyntheticUsers === 0
+        && $invalidAccountCount === 0
+        && $invalidRelationshipCount === 0
+        && $requiredColumnCount === 4
+        && $scheduleCount === 5
+        && $campusCount === 2
         && stagingPgBool($applicationProbe['correct_role'] ?? false)
         && !stagingPgBool($applicationProbe['can_create'] ?? true)
         && stagingPgBool($applicationProbe['can_read_users'] ?? false)
@@ -111,7 +159,11 @@ try {
     echo 'Tables with RLS enabled: ' . $rlsCount . '/' . count($expectedTables) . "\n";
     echo 'anon/authenticated public-table grants: ' . $grantCount . "\n";
     echo 'Synthetic users: ' . $userCount . "\n";
-    echo 'Non-synthetic user emails: ' . $nonSyntheticUsers . "\n";
+    echo 'Invalid normalized accounts: ' . $invalidAccountCount . "\n";
+    echo 'Invalid role relationships: ' . $invalidRelationshipCount . "\n";
+    echo 'Campus/schedule/password columns: ' . $requiredColumnCount . "/4\n";
+    echo 'March-cycle settings: ' . $scheduleCount . "/5\n";
+    echo 'Synthetic Arau campus checks: ' . $campusCount . "/2\n";
     echo 'Private documents bucket: ' . ($bucket && !stagingPgBool($bucket['public']) ? 'yes' : 'no') . "\n";
     echo 'Storage object policies: ' . $storagePolicyCount . "\n";
     echo 'Restricted backend role: ' . ($passed ? 'verified' : 'FAILED') . "\n";

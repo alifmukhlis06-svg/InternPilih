@@ -35,12 +35,18 @@ if (count($courses) !== count($names)) {
     throw new RuntimeException('Coordinator names must match the number of distinct programmes.');
 }
 $coordinators = [];
+$campuses = ['Arau', 'Shah Alam', 'Puncak Alam', 'Tapah', 'Jasin', 'Machang', 'Kuala Terengganu', 'Samarahan', 'Kota Kinabalu', 'Segamat'];
 $index = 0;
 foreach ($courses as $programme => $faculty) {
+    $academicName = preg_replace('/^Dr\.?\s+/i', '', $names[$index]);
+    $givenName = preg_split('/\s+(?:bin|binti)\s+/i', (string)$academicName)[0];
+    $emailName = preg_replace('/[^a-z0-9]/', '', strtolower($givenName));
     $coordinators[$programme] = [
         $names[$index],
-        $index === 0 ? 'admin@uitm.edu.my' : sprintf('coordinator%02d@demo.internpilih.test', $index + 1),
+        $emailName . '@uitm.edu.my',
         $faculty,
+        sprintf('%06d', 100001 + $index),
+        $campuses[$index % count($campuses)],
     ];
     $index++;
 }

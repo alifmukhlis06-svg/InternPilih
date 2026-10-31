@@ -1,15 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-protected data-required-role="employer">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Offer Responses – InternPilih Employer</title>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
-<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
+<link rel="stylesheet" href="../assets/css/style.css?v=20261031-brand2">
+<script src="../assets/js/auth-gate.js?v=20261031-brand2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
-  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-building"></i></div><div><div style="font-size:14px;font-weight:800;color:var(--text);">InternPilih</div><div style="font-size:10px;color:var(--text2);">Employer Portal</div></div></div></div>
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon brand-logo-frame"><img class="brand-logo-image" src="../assets/images/internpilih-logo.png" alt="InternPilih"></div><div><div style="font-size:14px;font-weight:800;color:var(--text);">InternPilih</div><div style="font-size:10px;color:var(--text2);">Employer Portal</div></div></div></div>
   <nav>
     <div class="nav-section">Overview</div>
     <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
@@ -69,34 +69,34 @@
               <td><strong>Loading student</strong></td>
               <td style="color:var(--text2);"></td>
               <td>Back-end Developer</td>
-              <td>08-Jan-2026</td>
+              <td>20-Nov-2026</td>
               <td><span class="badge badge-accepted"><i class="fas fa-check"></i> Accepted</span></td>
-              <td>15-Jan-2026</td>
+              <td>10-Jan-2027</td>
               <td></td>
             </tr>
             <tr data-fstatus="accepted">
               <td><strong>Loading student</strong></td>
               <td style="color:var(--text2);"></td>
               <td>UI/UX Designer</td>
-              <td>08-Jan-2026</td>
+              <td>22-Nov-2026</td>
               <td><span class="badge badge-accepted"><i class="fas fa-check"></i> Accepted</span></td>
-              <td>14-Jan-2026</td>
+              <td>11-Jan-2027</td>
               <td></td>
             </tr>
             <tr data-fstatus="accepted">
               <td><strong>Loading student</strong></td>
               <td style="color:var(--text2);"></td>
               <td>System Analyst</td>
-              <td>10-Jan-2026</td>
+              <td>25-Nov-2026</td>
               <td><span class="badge badge-accepted"><i class="fas fa-check"></i> Accepted</span></td>
-              <td>18-Jan-2026</td>
+              <td>12-Jan-2027</td>
               <td></td>
             </tr>
             <tr data-fstatus="pending">
               <td><strong>Loading student</strong></td>
               <td style="color:var(--text2);"></td>
               <td>Back-end Developer</td>
-              <td>10-Jan-2026</td>
+              <td>28-Nov-2026</td>
               <td><span class="badge badge-pending"><i class="fas fa-clock"></i> Awaiting</span></td>
               <td style="color:var(--text2);">–</td>
               <td></td>
@@ -105,7 +105,7 @@
               <td><strong>Loading student</strong></td>
               <td style="color:var(--text2);"></td>
               <td>Front-end Developer</td>
-              <td>12-Jan-2026</td>
+              <td>01-Dec-2026</td>
               <td><span class="badge badge-pending"><i class="fas fa-clock"></i> Awaiting</span></td>
               <td style="color:var(--text2);">–</td>
               <td></td>
@@ -114,27 +114,27 @@
               <td><strong>Loading student</strong></td>
               <td style="color:var(--text2);"></td>
               <td>DevOps Engineer</td>
-              <td>06-Jan-2026</td>
+              <td>18-Nov-2026</td>
               <td><span class="badge badge-rejected"><i class="fas fa-times"></i> Declined</span></td>
-              <td>08-Jan-2026</td>
+              <td>10-Dec-2026</td>
               <td></td>
             </tr>
             <tr data-fstatus="rejected">
               <td><strong>Loading student</strong></td>
               <td style="color:var(--text2);"></td>
               <td>Data Analyst</td>
-              <td>06-Jan-2026</td>
+              <td>19-Nov-2026</td>
               <td><span class="badge badge-rejected"><i class="fas fa-times"></i> Declined</span></td>
-              <td>10-Jan-2026</td>
+              <td>08-Jan-2027</td>
               <td></td>
             </tr>
             <tr data-fstatus="rejected">
               <td><strong>Loading student</strong></td>
               <td style="color:var(--text2);"></td>
               <td>QA Engineer</td>
-              <td>07-Jan-2026</td>
+              <td>21-Nov-2026</td>
               <td><span class="badge badge-rejected"><i class="fas fa-times"></i> Declined</span></td>
-              <td>11-Jan-2026</td>
+              <td>09-Jan-2027</td>
               <td></td>
             </tr>
           </tbody>
@@ -180,13 +180,13 @@ function viewMsg(name,status,reason){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;">
       <div><span style="color:var(--text2);">Student</span><br><strong>${name}</strong></div>
       <div><span style="color:var(--text2);">Status</span><br>${badges[status]}</div>
-      <div><span style="color:var(--text2);">Offer Sent</span><br><strong>08-Jan-2026</strong></div>
-      <div><span style="color:var(--text2);">Response Date</span><br><strong>${status!=='pending'?'10–18 Jan 2026':'Awaiting'}</strong></div>
+      <div><span style="color:var(--text2);">Offer Sent</span><br><strong>20-Nov-2026</strong></div>
+      <div><span style="color:var(--text2);">Response Date</span><br><strong>${status!=='pending'?'8–12 Jan 2027':'Awaiting'}</strong></div>
     </div>${extra}`;
   document.getElementById('msgModal').classList.add('open');
 }
 </script>
-  <script src="../assets/js/app.js?v=20261030-qa1"></script>
+  <script src="../assets/js/app.js?v=20261031-brand2"></script>
 </body>
 </html>
 

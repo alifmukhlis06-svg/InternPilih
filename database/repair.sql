@@ -15,9 +15,9 @@ CREATE TABLE users (
     id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name        VARCHAR(150)  NOT NULL,
     email       VARCHAR(150)  NOT NULL UNIQUE,
+    phone       VARCHAR(30)   NULL,
     password    VARCHAR(255)  NOT NULL,
     role        ENUM('student','admin','employer') NOT NULL DEFAULT 'student',
-    -- student fields
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -38,6 +38,8 @@ CREATE TABLE companies (
 
 CREATE TABLE admins (
     user_id     INT UNSIGNED PRIMARY KEY,
+    staff_id    VARCHAR(6) NOT NULL UNIQUE CHECK (staff_id REGEXP '^[0-9]{6}$'),
+    campus      VARCHAR(100) NOT NULL,
     faculty     VARCHAR(100) NULL,
     programme   VARCHAR(150) NULL UNIQUE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -46,6 +48,7 @@ CREATE TABLE admins (
 CREATE TABLE students (
     user_id     INT UNSIGNED PRIMARY KEY,
     matric_id   VARCHAR(20) NULL UNIQUE,
+    campus      VARCHAR(100) NOT NULL,
     faculty     VARCHAR(100) NULL,
     programme   VARCHAR(150) NULL,
     coordinator_id INT UNSIGNED NULL,
@@ -71,6 +74,7 @@ CREATE TABLE offers (
     position      VARCHAR(150) NOT NULL,
     offer_date    DATE         NOT NULL,
     deadline      DATE         NULL,
+    internship_start_date DATE NULL,
     status        ENUM('pending','accepted','rejected','withdrawn') NOT NULL DEFAULT 'pending',
     response_date DATE         NULL,
     reject_reason TEXT         NULL,
@@ -193,6 +197,7 @@ CREATE TABLE password_reset_tokens (
     id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id       INT UNSIGNED NOT NULL,
     token_hash    CHAR(64) NOT NULL UNIQUE,
+    purpose       ENUM('password_reset','password_change') NOT NULL DEFAULT 'password_reset',
     expires_at    DATETIME NOT NULL,
     used_at       DATETIME NULL,
     requested_ip  VARCHAR(45) NULL,
@@ -237,6 +242,12 @@ CREATE TABLE system_settings (
 
 INSERT INTO system_settings (setting_key, setting_value)
 VALUES ('offer_response_period_days', '14');
+INSERT INTO system_settings (setting_key, setting_value) VALUES
+('internship_application_open', '2026-11-02'),
+('main_offer_deadline', '2026-12-15'),
+('placement_confirmation_deadline', '2027-01-15'),
+('document_completion_deadline', '2027-01-31'),
+('internship_start_date', '2027-03-01');
 
 -- ============================================================
 -- SEED: Companies
@@ -252,36 +263,36 @@ INSERT INTO companies (name, industry, location, allowance, work_mode, hr_email)
 -- ============================================================
 -- SEED: Users  (password for all = "password123")
 -- ============================================================
-INSERT INTO users (name, email, password, role) VALUES
-('Alif Mukhlis bin Ahmad',      '2025161705@student.uitm.edu.my', '$2y$10$AjfPLRSCzdaJBIfWxn52POHM4KNEG9WmjtpgtgMsfaTmp/Kvrba2a', 'student'),
-('Nurul Aisyah binti Hassan',   '2025161708@student.uitm.edu.my', '$2y$10$AjfPLRSCzdaJBIfWxn52POHM4KNEG9WmjtpgtgMsfaTmp/Kvrba2a', 'student'),
-('Muhammad Faris bin Abdullah','2025161712@student.uitm.edu.my', '$2y$10$AjfPLRSCzdaJBIfWxn52POHM4KNEG9WmjtpgtgMsfaTmp/Kvrba2a', 'student');
+INSERT INTO users (name, email, phone, password, role) VALUES
+('Alif Mukhlis bin Mohd Tarmizi', '2025161705@student.uitm.edu.my', '+601100000001', '$2y$10$AjfPLRSCzdaJBIfWxn52POHM4KNEG9WmjtpgtgMsfaTmp/Kvrba2a', 'student'),
+('Nurul Aisyah binti Hassan', '2025161708@student.uitm.edu.my', '+601100000002', '$2y$10$AjfPLRSCzdaJBIfWxn52POHM4KNEG9WmjtpgtgMsfaTmp/Kvrba2a', 'student'),
+('Muhammad Faris bin Abdullah', '2025161712@student.uitm.edu.my', '+601100000003', '$2y$10$AjfPLRSCzdaJBIfWxn52POHM4KNEG9WmjtpgtgMsfaTmp/Kvrba2a', 'student');
 
-INSERT INTO users (name, email, password, role) VALUES
-('Dr. Siti Norzahra binti Mahmud', 'admin@uitm.edu.my', '$2y$10$AjfPLRSCzdaJBIfWxn52POHM4KNEG9WmjtpgtgMsfaTmp/Kvrba2a', 'admin'),
-('Nadia Farzana binti Rahim', 'hr@techsolutions.com.my', '$2y$10$AjfPLRSCzdaJBIfWxn52POHM4KNEG9WmjtpgtgMsfaTmp/Kvrba2a', 'employer'),
-('Dr. Hazim Farhan bin Zainal', 'coordinator02@demo.internpilih.test', '$2y$10$AjfPLRSCzdaJBIfWxn52POHM4KNEG9WmjtpgtgMsfaTmp/Kvrba2a', 'admin');
+INSERT INTO users (name, email, phone, password, role) VALUES
+('Dr. Siti Norzahra binti Mahmud', 'sitinorzahra@uitm.edu.my', '+601100000004', '$2y$10$AjfPLRSCzdaJBIfWxn52POHM4KNEG9WmjtpgtgMsfaTmp/Kvrba2a', 'admin'),
+('Nadia Farzana binti Rahim', 'hr@techsolutions.com.my', '+601100000005', '$2y$10$AjfPLRSCzdaJBIfWxn52POHM4KNEG9WmjtpgtgMsfaTmp/Kvrba2a', 'employer'),
+('Dr. Hazim Farhan bin Zainal', 'hazimfarhan@uitm.edu.my', '+601100000006', '$2y$10$AjfPLRSCzdaJBIfWxn52POHM4KNEG9WmjtpgtgMsfaTmp/Kvrba2a', 'admin');
 
-INSERT INTO admins (user_id, faculty, programme) VALUES
-(4, 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours (Netcentric Computing)'),
-(6, 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours');
+INSERT INTO admins (user_id, staff_id, campus, faculty, programme) VALUES
+(4, '100001', 'Arau', 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours (Netcentric Computing)'),
+(6, '100002', 'Shah Alam', 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours');
 
-INSERT INTO students (user_id, matric_id, faculty, programme, coordinator_id, cgpa) VALUES
-(1, '2025161705', 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours (Netcentric Computing)', 4, 3.67),
-(2, '2025161708', 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours', 6, 3.55),
-(3, '2025161712', 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours', 6, 3.40);
+INSERT INTO students (user_id, matric_id, campus, faculty, programme, coordinator_id, cgpa) VALUES
+(1, '2025161705', 'Arau', 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours (Netcentric Computing)', 4, 3.67),
+(2, '2025161708', 'Shah Alam', 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours', 6, 3.55),
+(3, '2025161712', 'Shah Alam', 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours', 6, 3.40);
 INSERT INTO employers (user_id, company_id) VALUES (5, 2);
 
 -- ============================================================
 -- SEED: Offers
 -- ============================================================
-INSERT INTO offers (student_id, company_id, position, offer_date, deadline, status, response_date) VALUES
-(1, 1, 'Data Analytics Intern',        '2026-01-05', '2026-01-20', 'accepted', '2026-01-15'),
-(1, 2, 'Cybersecurity Intern',         '2026-01-10', '2026-02-20', 'pending',  NULL),
-(1, 3, 'Network Engineering Intern',   '2026-01-12', '2026-03-01', 'pending',  NULL),
-(2, 2, 'Software Development Intern',  '2026-01-12', '2026-02-15', 'accepted', '2026-01-18'),
-(2, 3, 'Mobile Development Intern',    '2026-01-15', '2026-02-28', 'pending',  NULL),
-(3, 2, 'Cloud Operations Intern',      '2026-01-06', '2026-01-20', 'rejected', '2026-01-08');
+INSERT INTO offers (student_id, company_id, position, offer_date, deadline, internship_start_date, status, response_date) VALUES
+(1, 1, 'Data Analytics Intern',        '2026-11-20', '2026-12-15', '2027-03-01', 'accepted', '2027-01-10'),
+(1, 2, 'Cybersecurity Intern',         '2026-11-25', '2026-12-20', '2027-03-01', 'pending',  NULL),
+(1, 3, 'Network Engineering Intern',   '2026-12-01', '2027-01-10', '2027-03-01', 'pending',  NULL),
+(2, 2, 'Software Development Intern',  '2026-11-22', '2026-12-18', '2027-03-01', 'accepted', '2027-01-12'),
+(2, 3, 'Mobile Development Intern',    '2026-12-05', '2027-01-15', '2027-03-01', 'pending',  NULL),
+(3, 2, 'Cloud Operations Intern',      '2026-11-18', '2026-12-15', '2027-03-01', 'rejected', '2026-12-10');
 
 -- ============================================================
 -- SEED: Documents
@@ -292,9 +303,9 @@ INSERT INTO documents (student_id, offer_id, doc_type, file_name, status) VALUES
 (1, 1, 'agreement',    'agreement_alif.pdf',         'pending');
 
 INSERT INTO internship_applications (student_id, company_id, position, source, status, applied_at, offer_id, notes) VALUES
-(1, 1, 'Data Analytics Intern', 'student', 'offered', '2025-12-20', 1, 'Converted into accepted offer.'),
-(1, 2, 'Cybersecurity Intern', 'student', 'offered', '2026-01-02', 2, 'Offer received and awaiting student response.'),
-(2, 3, 'Network Engineering Intern', 'student', 'submitted', '2026-01-08', NULL, 'Awaiting employer response.');
+(1, 1, 'Data Analytics Intern', 'student', 'offered', '2026-11-02', 1, 'Converted into accepted offer.'),
+(1, 2, 'Cybersecurity Intern', 'student', 'offered', '2026-11-08', 2, 'Offer received and awaiting student response.'),
+(2, 3, 'Network Engineering Intern', 'student', 'submitted', '2026-11-12', NULL, 'Awaiting employer response.');
 
 INSERT INTO announcements (created_by, type, recipient_group, title, body, link_url, recipient_count, email_sent_count, email_failed_count) VALUES
 (4, 'urgent', 'all', 'Document submission reminder', 'Please upload your internship agreement and remaining placement documents for coordinator verification.', 'documents.html', 1, 0, 0),

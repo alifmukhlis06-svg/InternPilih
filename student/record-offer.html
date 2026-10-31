@@ -1,15 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-protected data-required-role="student">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Record Offer - InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
-<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
+<link rel="stylesheet" href="../assets/css/style.css?v=20261031-brand2">
+<script src="../assets/js/auth-gate.js?v=20261031-brand2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
-  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div></div>
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon brand-logo-frame"><img class="brand-logo-image" src="../assets/images/internpilih-logo.png" alt="InternPilih"></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div></div>
   <nav>
     <div class="nav-section">Main</div>
     <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
@@ -104,17 +104,17 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Offer Date Received *</label>
-              <input type="date" class="form-control" id="offerDate">
+              <input type="date" class="form-control" id="offerDate" data-schedule-value="internship_application_open">
             </div>
             <div class="form-group">
               <label class="form-label">Response Deadline *</label>
-              <input type="date" class="form-control" id="deadline">
+              <input type="date" class="form-control" id="deadline" data-schedule-value="main_offer_deadline">
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Internship Start Date</label>
-              <input type="date" class="form-control" id="startDate">
+              <input type="date" class="form-control" id="startDate" data-schedule-value="internship_start_date" readonly>
             </div>
             <div class="form-group">
               <label class="form-label">Duration</label>
@@ -250,6 +250,7 @@ async function submitOffer() {
   const position = document.getElementById('position').value.trim();
   const offerDate = document.getElementById('offerDate').value;
   const deadline = document.getElementById('deadline').value;
+  const startDate = document.getElementById('startDate').value;
 
   if (!cid || !position || !offerDate || !deadline) {
     alert('Please fill in Company Name, Position, Offer Date, and Response Deadline.');
@@ -264,7 +265,8 @@ async function submitOffer() {
         company_id: parseInt(cid),
         position: position,
         offer_date: offerDate,
-        deadline: deadline
+        deadline: deadline,
+        internship_start_date: startDate
       })
     });
     const data = await res.json();
@@ -294,7 +296,7 @@ document.getElementById('deadline').valueAsDate = deadlineDate;
 
 // The final loader below keeps the manual option and fallback companies intact.
 </script>
-<script src="../assets/js/app.js?v=20261030-qa1"></script>
+<script src="../assets/js/app.js?v=20261031-brand2"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function () {
   try {
@@ -395,6 +397,7 @@ window.submitOffer = async function () {
   const position = document.getElementById('position').value.trim();
   const offerDate = document.getElementById('offerDate').value;
   const deadline = document.getElementById('deadline').value;
+  const startDate = document.getElementById('startDate').value;
 
   if (!document.getElementById('companyId').value || !position || !offerDate || !deadline) {
     alert('Please fill in Company Name, Position, Offer Date, and Response Deadline.');
@@ -411,7 +414,8 @@ window.submitOffer = async function () {
         company_id: parseInt(cid),
         position: position,
         offer_date: offerDate,
-        deadline: deadline
+        deadline: deadline,
+        internship_start_date: startDate
       })
     });
     const data = await res.json().catch(() => ({}));

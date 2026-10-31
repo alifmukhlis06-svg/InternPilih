@@ -116,6 +116,7 @@ function currentUser(): ?array {
     $stmt = db()->prepare("
         SELECT u.id, u.name, u.email, to_jsonb(u)->>'phone' AS phone, u.role, s.matric_id,
                COALESCE(s.faculty, a.faculty) AS faculty,
+               COALESCE(s.campus, a.campus) AS campus,
                s.programme, s.cgpa, s.coordinator_id,
                coordinator.name AS coordinator_name,
                a.programme AS coordinator_programme, a.staff_id, e.company_id

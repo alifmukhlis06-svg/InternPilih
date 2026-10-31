@@ -14,6 +14,8 @@ $steps = [
     'serverless-storage' => __DIR__ . '/002_serverless_storage.sql',
     'security' => __DIR__ . '/003_security.sql',
     'profile-phone' => __DIR__ . '/004_qa_profile_phone.sql',
+    'campus-schedule-password' => __DIR__ . '/005_campus_schedule_password_verification.sql',
+    'account-normalization' => __DIR__ . '/006_normalize_synthetic_accounts.sql',
 ];
 
 $step = '';
@@ -24,7 +26,7 @@ foreach ($argv as $argument) {
 }
 
 if (!isset($steps[$step])) {
-    fwrite(STDERR, "Choose --step=schema, --step=serverless-storage, --step=security, or --step=profile-phone.\n");
+    fwrite(STDERR, "Choose --step=schema, --step=serverless-storage, --step=security, --step=profile-phone, --step=campus-schedule-password, or --step=account-normalization.\n");
     exit(2);
 }
 
@@ -71,6 +73,24 @@ try {
         if ($publicTableCount !== 16
             || !stagingPgBool($pdo->query("SELECT to_regclass('public.users') IS NOT NULL")->fetchColumn())) {
             throw new RuntimeException('The profile phone migration is out of order.');
+        }
+        assertStagingMarker($pdo);
+    }
+
+    if ($step === 'campus-schedule-password') {
+        if ($publicTableCount !== 16
+            || !stagingPgBool($pdo->query("SELECT to_regclass('public.students') IS NOT NULL")->fetchColumn())
+            || !stagingPgBool($pdo->query("SELECT to_regclass('public.password_reset_tokens') IS NOT NULL")->fetchColumn())) {
+            throw new RuntimeException('The campus/schedule/password migration is out of order.');
+        }
+        assertStagingMarker($pdo);
+    }
+
+    if ($step === 'account-normalization') {
+        if ($publicTableCount !== 16
+            || !stagingPgBool($pdo->query("SELECT to_regclass('public.admins') IS NOT NULL")->fetchColumn())
+            || !stagingPgBool($pdo->query("SELECT to_regclass('public.students') IS NOT NULL")->fetchColumn())) {
+            throw new RuntimeException('The account normalization migration is out of order.');
         }
         assertStagingMarker($pdo);
     }
@@ -131,6 +151,41 @@ try {
         ")->fetchColumn();
         if ($phoneColumnCount !== 1) {
             throw new RuntimeException('The profile phone column verification failed.');
+        }
+    }
+
+
+    if ($step === 'campus-schedule-password') {
+        $requiredColumns = (int)$pdo->query("
+            SELECT COUNT(*) FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND ((table_name = 'students' AND column_name = 'campus')
+                OR (table_name = 'admins' AND column_name = 'campus')
+                OR (table_name = 'offers' AND column_name = 'internship_start_date')
+                OR (table_name = 'password_reset_tokens' AND column_name = 'purpose'))
+        ")->fetchColumn();
+        $scheduleCount = (int)$pdo->query("
+            SELECT COUNT(*) FROM public.system_settings
+            WHERE setting_key IN ('internship_application_open', 'main_offer_deadline',
+                'placement_confirmation_deadline', 'document_completion_deadline', 'internship_start_date')
+        ")->fetchColumn();
+        if ($requiredColumns !== 4 || $scheduleCount !== 5) {
+            throw new RuntimeException('The campus/schedule/password verification failed.');
+        }
+    }
+
+    if ($step === 'account-normalization') {
+        $invalidAccountCount = (int)$pdo->query("
+            SELECT
+                (SELECT count(*) FROM public.students s JOIN public.users u ON u.id = s.user_id
+                 WHERE lower(u.email) <> lower(s.matric_id) || '@student.uitm.edu.my')
+              + (SELECT count(*) FROM public.admins a JOIN public.users u ON u.id = a.user_id
+                 WHERE a.staff_id !~ '^[0-9]{6}$' OR u.email !~ '^[a-z][a-z0-9]*@uitm[.]edu[.]my$')
+              + (SELECT count(*) FROM public.users
+                 WHERE role IN ('student','admin','employer') AND phone !~ '^\\+6011[0-9]{8}$')
+        ")->fetchColumn();
+        if ($invalidAccountCount !== 0) {
+            throw new RuntimeException('The account normalization verification failed.');
         }
     }
 

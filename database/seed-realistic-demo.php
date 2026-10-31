@@ -68,21 +68,21 @@ function pdfSample(string $filename, array $lines): void {
 // Repair the three original schema fixtures so every document row has a file.
 pdfSample('offer_letter_petronas.pdf', [
     'InternPilih sample placement record',
-    'Student: Alif Mukhlis bin Ahmad (2025161705)',
+    'Student: Alif Mukhlis bin Mohd Tarmizi (2025161705)',
     'Document: Offer letter',
     'Placement: Data Analyst at Petronas ICT Sdn Bhd',
     'This file is fictional and is for interface demonstration only.',
 ]);
 pdfSample('student_id_alif.pdf', [
     'InternPilih sample student identification record',
-    'Student: Alif Mukhlis bin Ahmad',
+    'Student: Alif Mukhlis bin Mohd Tarmizi',
     'Student ID: 2025161705',
     'Universiti Teknologi MARA',
     'This file is fictional and is for interface demonstration only.',
 ]);
 pdfSample('agreement_alif.pdf', [
     'InternPilih sample internship agreement',
-    'Student: Alif Mukhlis bin Ahmad (2025161705)',
+    'Student: Alif Mukhlis bin Mohd Tarmizi (2025161705)',
     'Company: Petronas ICT Sdn Bhd',
     'Placement: Data Analyst',
     'This file is fictional and is for interface demonstration only.',
@@ -131,6 +131,10 @@ $employerContactNames = [
 $additionalCompanies = [];
 $counts = ['students' => 0, 'coordinators' => 0, 'companies' => 0, 'employers' => 0, 'offers' => 0, 'applications' => 0, 'documents' => 0, 'announcements' => 0, 'notifications' => 0, 'activity' => 0, 'change_requests' => 0];
 $today = new DateTimeImmutable('today');
+$applicationOpen = new DateTimeImmutable('2026-11-02');
+$mainOfferDeadline = new DateTimeImmutable('2026-12-15');
+$placementDeadline = new DateTimeImmutable('2027-01-15');
+$internshipStart = new DateTimeImmutable('2027-03-01');
 $password = password_hash('password123', PASSWORD_DEFAULT);
 
 $db->begin_transaction();
@@ -154,24 +158,24 @@ try {
             $counts['employers']++;
         }
         $employerId = seedId('SELECT id FROM users WHERE email = ? LIMIT 1', [$email]);
-        seedRun('UPDATE users SET name = ? WHERE id = ? AND role = \'employer\'', [$employerContactNames[$index], $employerId]);
+        seedRun('UPDATE users SET name = ?, phone = ? WHERE id = ? AND role = \'employer\'', [$employerContactNames[$index], '+6011' . str_pad((string)$employerId, 8, '0', STR_PAD_LEFT), $employerId]);
         if (!seedId('SELECT user_id AS id FROM employers WHERE user_id = ? LIMIT 1', [$employerId])) {
             seedRun('INSERT INTO employers (user_id, company_id) VALUES (?, ?)', [$employerId, $additionalCompanies[$index]]);
         }
     }
 
-    foreach ($coordinatorProfiles as $programme => [$name, $email, $faculty]) {
+    foreach ($coordinatorProfiles as $programme => [$name, $email, $faculty, $staffId, $campus]) {
         $coordinatorId = seedId('SELECT id FROM users WHERE email = ? AND role = \'admin\' LIMIT 1', [$email]);
         if (!$coordinatorId) {
             seedRun("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'admin')", [$name, $email, $password]);
             $coordinatorId = (int)$db->insert_id;
             $counts['coordinators']++;
         }
-        seedRun('UPDATE users SET name = ? WHERE id = ?', [$name, $coordinatorId]);
+        seedRun('UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ?', [$name, $email, '+6011' . str_pad((string)$coordinatorId, 8, '0', STR_PAD_LEFT), $coordinatorId]);
         if (!seedId('SELECT user_id AS id FROM admins WHERE user_id = ? LIMIT 1', [$coordinatorId])) {
-            seedRun('INSERT INTO admins (user_id, faculty, programme) VALUES (?, ?, ?)', [$coordinatorId, $faculty, $programme]);
+            seedRun('INSERT INTO admins (user_id, staff_id, campus, faculty, programme) VALUES (?, ?, ?, ?, ?)', [$coordinatorId, $staffId, $campus, $faculty, $programme]);
         } else {
-            seedRun('UPDATE admins SET faculty = ?, programme = ? WHERE user_id = ?', [$faculty, $programme, $coordinatorId]);
+            seedRun('UPDATE admins SET staff_id = ?, campus = ?, faculty = ?, programme = ? WHERE user_id = ?', [$staffId, $campus, $faculty, $programme, $coordinatorId]);
         }
     }
 
@@ -179,6 +183,7 @@ try {
         [$name, $matric, $faculty, $programme, $cgpa] = $student;
         $coordinatorId = seedId('SELECT user_id AS id FROM admins WHERE programme = ? LIMIT 1', [$programme]);
         if (!$coordinatorId) throw new RuntimeException('No coordinator exists for programme: ' . $programme);
+        $campus = (string)(seedRun('SELECT campus FROM admins WHERE user_id = ?', [$coordinatorId])->get_result()->fetch_assoc()['campus'] ?? 'Shah Alam');
         $email = $matric . '@student.uitm.edu.my';
         $studentId = seedId('SELECT user_id AS id FROM students WHERE matric_id = ? LIMIT 1', [$matric]);
         if (!$studentId) $studentId = seedId('SELECT id FROM users WHERE email = ? LIMIT 1', [$email]);
@@ -188,10 +193,10 @@ try {
             $counts['students']++;
         }
         if (!seedId('SELECT user_id AS id FROM students WHERE user_id = ? LIMIT 1', [$studentId])) {
-            seedRun('INSERT INTO students (user_id, matric_id, faculty, programme, cgpa) VALUES (?, ?, ?, ?, ?)', [$studentId, $matric, $faculty, $programme, $cgpa]);
+            seedRun('INSERT INTO students (user_id, matric_id, campus, faculty, programme, cgpa) VALUES (?, ?, ?, ?, ?, ?)', [$studentId, $matric, $campus, $faculty, $programme, $cgpa]);
         }
-        seedRun('UPDATE users SET name = ?, email = ? WHERE id = ? AND role = \'student\'', [$name, $email, $studentId]);
-        seedRun('UPDATE students SET faculty = ?, programme = ? WHERE user_id = ?', [$faculty, $programme, $studentId]);
+        seedRun('UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ? AND role = \'student\'', [$name, $email, '+6011' . str_pad((string)$studentId, 8, '0', STR_PAD_LEFT), $studentId]);
+        seedRun('UPDATE students SET campus = ?, faculty = ?, programme = ? WHERE user_id = ?', [$campus, $faculty, $programme, $studentId]);
 
         $companyIndex = $companyChoices[$index % count($companyChoices)];
         $companyId = $additionalCompanies[$companyIndex];
@@ -199,17 +204,17 @@ try {
         $status = $index % 6 === 0 ? 'pending' : ($index % 6 === 5 ? 'rejected' : 'accepted');
         $offerId = seedId('SELECT id FROM offers WHERE student_id = ? AND company_id = ? AND position = ? LIMIT 1', [$studentId, $companyId, $position]);
         if (!$offerId) {
-            $offerDate = $today->modify('-' . (4 + $index % 10) . ' days')->format('Y-m-d');
-            $deadline = $today->modify('+' . (5 + $index % 11) . ' days')->format('Y-m-d');
-            $responseDate = $status === 'pending' ? null : $today->modify('-' . (1 + $index % 3) . ' days')->format('Y-m-d');
+            $offerDate = $applicationOpen->modify('+' . (10 + $index % 28) . ' days')->format('Y-m-d');
+            $deadline = $mainOfferDeadline->modify('+' . ($index % 12) . ' days')->format('Y-m-d');
+            $responseDate = $status === 'pending' ? null : $placementDeadline->modify('-' . (1 + $index % 8) . ' days')->format('Y-m-d');
             $reason = $status === 'rejected' ? 'Thank you for the opportunity. I have decided to pursue a different internship aligned with my study plan.' : null;
-            seedRun('INSERT INTO offers (student_id, company_id, position, offer_date, deadline, status, response_date, reject_reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [$studentId, $companyId, $position, $offerDate, $deadline, $status, $responseDate, $reason]);
+            seedRun('INSERT INTO offers (student_id, company_id, position, offer_date, deadline, internship_start_date, status, response_date, reject_reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [$studentId, $companyId, $position, $offerDate, $deadline, $internshipStart->format('Y-m-d'), $status, $responseDate, $reason]);
             $offerId = (int)$db->insert_id;
             $counts['offers']++;
         }
 
         if (!seedId('SELECT id FROM internship_applications WHERE student_id = ? AND company_id = ? AND position = ? LIMIT 1', [$studentId, $companyId, $position])) {
-            $appliedAt = $today->modify('-' . (23 + $index % 12) . ' days')->format('Y-m-d');
+            $appliedAt = $applicationOpen->modify('+' . ($index % 18) . ' days')->format('Y-m-d');
             seedRun("INSERT INTO internship_applications (student_id, company_id, position, source, status, applied_at, offer_id, notes) VALUES (?, ?, ?, 'student', 'offered', ?, ?, ?)", [$studentId, $companyId, $position, $appliedAt, $offerId, 'Interview completed; the company issued a formal offer.']);
             $counts['applications']++;
         }
@@ -221,14 +226,14 @@ try {
             $secondOfferId = seedId('SELECT id FROM offers WHERE student_id = ? AND company_id = ? AND position = ? LIMIT 1', [$studentId, $otherCompanyId, $otherPosition]);
             if (!$secondOfferId) {
                 $secondStatus = $status === 'accepted' && $index % 2 === 0 ? 'pending' : 'rejected';
-                $responseDate = $secondStatus === 'pending' ? null : $today->modify('-2 days')->format('Y-m-d');
+                $responseDate = $secondStatus === 'pending' ? null : $placementDeadline->modify('-2 days')->format('Y-m-d');
                 $reason = $secondStatus === 'rejected' ? 'Thank you for considering me. I have selected a different internship placement.' : null;
-                seedRun('INSERT INTO offers (student_id, company_id, position, offer_date, deadline, status, response_date, reject_reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [$studentId, $otherCompanyId, $otherPosition, $today->modify('-6 days')->format('Y-m-d'), $today->modify('+8 days')->format('Y-m-d'), $secondStatus, $responseDate, $reason]);
+                seedRun('INSERT INTO offers (student_id, company_id, position, offer_date, deadline, internship_start_date, status, response_date, reject_reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [$studentId, $otherCompanyId, $otherPosition, '2026-12-10', '2027-01-05', $internshipStart->format('Y-m-d'), $secondStatus, $responseDate, $reason]);
                 $secondOfferId = (int)$db->insert_id;
                 $counts['offers']++;
             }
             if (!seedId('SELECT id FROM internship_applications WHERE student_id = ? AND company_id = ? AND position = ? LIMIT 1', [$studentId, $otherCompanyId, $otherPosition])) {
-                seedRun("INSERT INTO internship_applications (student_id, company_id, position, source, status, applied_at, offer_id, notes) VALUES (?, ?, ?, 'student', 'offered', ?, ?, ?)", [$studentId, $otherCompanyId, $otherPosition, $today->modify('-20 days')->format('Y-m-d'), $secondOfferId, 'Additional offer recorded for comparison.']);
+                seedRun("INSERT INTO internship_applications (student_id, company_id, position, source, status, applied_at, offer_id, notes) VALUES (?, ?, ?, 'student', 'offered', ?, ?, ?)", [$studentId, $otherCompanyId, $otherPosition, '2026-11-15', $secondOfferId, 'Additional offer recorded for comparison.']);
                 $counts['applications']++;
             }
         }
@@ -237,8 +242,8 @@ try {
         $pipelinePosition = 'Graduate Internship - ' . explode(' Intern', $position)[0];
         if (!seedId('SELECT id FROM internship_applications WHERE student_id = ? AND company_id = ? AND position = ? LIMIT 1', [$studentId, $pipelineCompanyId, $pipelinePosition])) {
             $pipelineStatus = ['submitted', 'shortlisted', 'interview', 'rejected', 'draft'][$index % 5];
-            $interviewAt = $pipelineStatus === 'interview' ? $today->modify('+4 days')->format('Y-m-d 10:00:00') : null;
-            seedRun("INSERT INTO internship_applications (student_id, company_id, position, source, status, applied_at, interview_at, notes) VALUES (?, ?, ?, 'student', ?, ?, ?, ?)", [$studentId, $pipelineCompanyId, $pipelinePosition, $pipelineStatus, $today->modify('-' . (7 + $index % 12) . ' days')->format('Y-m-d'), $interviewAt, 'Application tracked in the student portal.']);
+            $interviewAt = $pipelineStatus === 'interview' ? '2026-12-08 10:00:00' : null;
+            seedRun("INSERT INTO internship_applications (student_id, company_id, position, source, status, applied_at, interview_at, notes) VALUES (?, ?, ?, 'student', ?, ?, ?, ?)", [$studentId, $pipelineCompanyId, $pipelinePosition, $pipelineStatus, $applicationOpen->modify('+' . ($index % 20) . ' days')->format('Y-m-d'), $interviewAt, 'Application tracked in the student portal.']);
             $counts['applications']++;
         }
 
@@ -258,7 +263,7 @@ try {
                 ]);
                 if ($existingDocumentId) continue;
                 $reviewedBy = $docStatus === 'pending' ? null : $coordinatorId;
-                $reviewedAt = $docStatus === 'pending' ? null : $today->modify('-1 day')->format('Y-m-d 14:00:00');
+                $reviewedAt = $docStatus === 'pending' ? null : '2027-01-25 14:00:00';
                 $rejectReason = $docStatus === 'rejected' ? 'Please upload a clearer signed copy.' : null;
                 seedRun('INSERT INTO documents (student_id, offer_id, doc_type, file_name, status, reject_reason, reviewed_by, reviewed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [$studentId, $offerId, $type, $filename, $docStatus, $rejectReason, $reviewedBy, $reviewedAt]);
                 $counts['documents']++;
@@ -328,5 +333,5 @@ try {
 
 echo "Demo data ready (new rows only):\n";
 foreach ($counts as $table => $count) echo '  ' . $table . ': ' . $count . "\n";
-echo "Sample student login: 2026124101@student.uitm.edu.my / password123\n";
+echo "Sample student login: 2026124101 / password123\n";
 echo "Sample employer login: careers@meridiandatalabs.example.test / password123\n";

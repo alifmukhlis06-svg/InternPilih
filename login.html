@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -20,9 +20,14 @@
 .demo-accounts{background:#f8fafc;border:1px solid var(--border);border-radius:6px;}
 .demo-row{gap:12px;}
 .demo-row span{line-height:1.35;}
+.login-page{background:#05030b;padding:32px max(24px,calc((100vw - 1120px)/2));}
+.login-page::before{background:radial-gradient(circle at 74% 48%,rgba(124,58,237,.22),transparent 30%),rgba(5,3,11,.76);}
+.login-card{background:#0d0918;border-color:#342451;box-shadow:0 24px 70px rgba(0,0,0,.52);}
+.demo-accounts{background:#171029;border-color:#342451;}
+.demo-fill:hover{background:#24153f;}
 @media(max-width:720px){
-  .login-page{justify-content:center;padding:20px;background-position:66% center;}
-  .login-page::before{background:rgba(244,248,252,.84);}
+  .login-page{justify-content:center;padding:20px;}
+  .login-page::before{background:rgba(5,3,11,.84);}
   .login-card{padding:26px 22px;}
 }
 </style>
@@ -31,7 +36,10 @@
 <div class="login-page">
   <div class="login-card">
     <div class="login-logo">
-      <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+      <picture class="login-brand-animation">
+        <source media="(prefers-reduced-motion: reduce)" srcset="assets/images/internpilih-logo.png">
+        <img src="assets/images/internpilih-brand-animation.gif" alt="InternPilih animated logo">
+      </picture>
       <h1>InternPilih</h1>
       <p>UiTM Internship Post-Offer Management System</p>
     </div>
@@ -52,8 +60,8 @@
     </div>
 
     <div class="form-group">
-      <label class="form-label">Email Address</label>
-      <input type="email" class="form-control" id="email" placeholder="Enter your account email" autocomplete="username">
+      <label class="form-label" id="identifierLabel" for="identifier">Student ID</label>
+      <input type="text" class="form-control" id="identifier" placeholder="Enter your Student ID" autocomplete="username">
     </div>
     <div class="form-group">
       <label class="form-label">Password</label>
@@ -93,12 +101,16 @@ function setRole(r){
   currentRole=r;
   document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('role-'+r).classList.add('active');
+  const student=r==='student';
+  const label=student?'Student ID':r==='admin'?'Staff ID':'Email Address';
+  document.getElementById('identifierLabel').textContent=label;
+  document.getElementById('identifier').placeholder='Enter your '+label;
   const account=demoAccountsByRole[r]?.[0];
-  if(account) document.getElementById('email').value=account.email;
+  document.getElementById('identifier').value=account?.identifier||'';
 }
-function fillDemo(r,email){
+function fillDemo(r,identifier){
   setRole(r);
-  document.getElementById('email').value=email;
+  document.getElementById('identifier').value=identifier;
   document.getElementById('password').focus();
 }
 async function loadDemoAccounts(){
@@ -111,27 +123,27 @@ async function loadDemoAccounts(){
     const roleLabels={student:'Student',admin:'Coordinator',employer:'Employer'};
     const roleIcons={student:'fas fa-user-graduate',admin:'fas fa-user-shield',employer:'fas fa-building'};
     accounts.forEach(account=>{
-      if(!account||!roleLabels[account.role]||typeof account.email!=='string')return;
+      if(!account||!roleLabels[account.role]||typeof account.identifier!=='string')return;
       demoAccountsByRole[account.role].push(account);
       const row=document.createElement('div');
       row.className='demo-row';
       const description=document.createElement('span');
       const icon=document.createElement('i');
       icon.className=roleIcons[account.role];
-      description.append(icon,document.createTextNode(` ${roleLabels[account.role]} - ${account.email}`));
+      description.append(icon,document.createTextNode(` ${roleLabels[account.role]} - ${account.identifier}`));
       const button=document.createElement('button');
       button.type='button';
       button.className='demo-fill';
       button.textContent='Use';
-      button.addEventListener('click',()=>fillDemo(account.role,account.email));
+      button.addEventListener('click',()=>fillDemo(account.role,account.identifier));
       row.append(description,button);
       list.appendChild(row);
     });
     if(list.children.length){
       panel.hidden=false;
       const firstStudent=demoAccountsByRole.student[0];
-      if(firstStudent&&!document.getElementById('email').value){
-        document.getElementById('email').value=firstStudent.email;
+      if(firstStudent&&!document.getElementById('identifier').value){
+        document.getElementById('identifier').value=firstStudent.identifier;
       }
     }
   }catch(_){
@@ -145,11 +157,12 @@ function togglePwd(){
   else{inp.type='password';icon.className='fas fa-eye';}
 }
 async function doLogin(){
-  const email    = document.getElementById('email').value.trim();
+  const identifier = document.getElementById('identifier').value.trim();
   const password = document.getElementById('password').value;
   const btn      = document.querySelector('.btn-primary');
 
-  if (!email || !password) { showErr('Please enter email and password.'); return; }
+  const identifierLabel=currentRole==='student'?'Student ID':currentRole==='admin'?'Staff ID':'email';
+  if (!identifier || !password) { showErr(`Please enter ${identifierLabel} and password.`); return; }
 
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
@@ -158,12 +171,12 @@ async function doLogin(){
     const res  = await fetch(appPath('/api/auth.php'), {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ role: currentRole, identifier, password })
     });
     const data = await res.json();
 
     if (!res.ok || data.error) {
-      showErr(data.error || 'Invalid email or password.');
+      showErr(data.error || `Invalid ${identifierLabel} or password.`);
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
       return;
@@ -199,7 +212,7 @@ function showErr(msg) {
 document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 loadDemoAccounts();
 </script>
-<script src="assets/js/app.js"></script>
+<script src="assets/js/app.js?v=20261031-brand2"></script>
 </body>
 </html>
 

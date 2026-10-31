@@ -7,22 +7,21 @@
    verified both the session and the workspace role. */
 html[data-protected]:not([data-auth-ready]) body { visibility:hidden; }
 html[data-protected]:not([data-auth-ready])::before {
-  content:'Checking your InternPilih session\2026';
+  content:'';
   position:fixed;
   inset:0;
   z-index:99999;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:24px;
-  background:#f4f8fc;
-  color:#486078;
-  font:600 13px/1.5 'Inter',sans-serif;
+  padding:0;
+  background:#05030b url('../images/internpilih-brand-animation.gif') center / min(72vw,420px) no-repeat;
+  color:transparent;
   visibility:visible;
 }
 html[data-protected][data-load-error]:not([data-auth-ready])::before {
-  content:'InternPilih could not load this page safely. Refresh to try again.';
-  color:#a7352d;
+  content:'';
+  color:transparent;
 }
 
 :root {
@@ -404,6 +403,10 @@ textarea.form-control { resize:vertical; min-height:100px; }
 .profile-heading p { margin-top:3px; color:var(--text2); font-size:12px; }
 .profile-badges { display:flex; gap:7px; margin-top:9px; flex-wrap:wrap; }
 .profile-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; text-align:center; }
+.schedule-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; }
+.schedule-item { padding:14px; background:var(--bg3); border:1px solid var(--border); border-radius:7px; }
+.schedule-item span { display:block; color:var(--text2); font-size:10px; line-height:1.35; margin-bottom:5px; }
+.schedule-item strong { color:var(--uitm-blue); font-size:13px; }
 .profile-metric { padding:16px 10px; background:#f4f8f8; border:1px solid #dfe9e9; border-radius:6px; }
 .profile-metric strong { display:block; color:var(--uitm-blue); font-size:21px; line-height:1.15; }
 .profile-metric span { display:block; margin-top:5px; color:var(--text2); font-size:10px; }
@@ -459,8 +462,8 @@ textarea.form-control { resize:vertical; min-height:100px; }
 .record-actions .actions-row { justify-content:flex-end; }
 
 /* Role select (login page) */
-.role-select { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:22px; }
-.role-btn { padding:14px 8px; border-radius:8px; border:1px solid var(--border); background:#fff; cursor:pointer; text-align:center; transition:var(--transition); color:var(--text2); }
+.role-select { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:22px; }
+.role-btn { min-width:0; padding:14px 8px; border-radius:8px; border:1px solid var(--border); background:#fff; cursor:pointer; text-align:center; transition:var(--transition); color:var(--text2); }
 .role-btn:hover, .role-btn.active { border-color:#b7e4e0; background:#f4fbfa; color:var(--uitm-blue-2); }
 .role-btn i { font-size:20px; display:block; margin-bottom:6px; }
 .role-btn span { font-size:11px; font-weight:600; }
@@ -487,6 +490,7 @@ textarea.form-control { resize:vertical; min-height:100px; }
   .form-row { grid-template-columns:1fr; gap:0; }
   .page-grid, .page-grid.wide-aside, .split-grid { grid-template-columns:1fr; }
   .profile-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .schedule-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 
 @media (max-width:768px) {
@@ -558,6 +562,7 @@ textarea.form-control { resize:vertical; min-height:100px; }
   .dashboard-brief-copy { width:100%; }
   .dashboard-brief h2 { font-size:21px; }
   .profile-metrics { grid-template-columns:1fr; }
+  .schedule-grid { grid-template-columns:1fr; }
   .entity-meta-grid { grid-template-columns:1fr; }
   .verification-actions { align-items:flex-start; width:100%; }
   .verification-actions-row { justify-content:flex-start; }
@@ -573,7 +578,7 @@ textarea.form-control { resize:vertical; min-height:100px; }
 .login-page { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
 .login-card {
   background:var(--bg2); border:1px solid var(--border); border-radius:10px;
-  padding:32px; width:100%; max-width:420px;
+  padding:32px; width:100%; max-width:420px; min-width:0;
   position:relative; z-index:2;
   box-shadow:0 14px 34px rgba(16,24,40,.12);
 }
@@ -634,4 +639,116 @@ textarea.form-control { resize:vertical; min-height:100px; }
   [style*="grid-template-columns:repeat(4"] { grid-template-columns:1fr !important; }
   [style*="grid-template-columns:repeat(5"] { grid-template-columns:1fr !important; }
   [style*="grid-template-columns:1fr 1fr"] { grid-template-columns:1fr !important; }
+}
+
+/* InternPilih black + purple brand theme */
+:root,
+html[data-theme="dark"] {
+  color-scheme:dark;
+  --uitm-blue:#a78bfa;
+  --uitm-blue-2:#8b5cf6;
+  --uitm-purple:#8b5cf6;
+  --uitm-purple-2:#7c3aed;
+  --uitm-yellow:#c084fc;
+  --bg:#05030b;
+  --bg2:#0d0918;
+  --bg3:#171029;
+  --blue:#a78bfa;
+  --blue2:#8b5cf6;
+  --blue3:#a78bfa;
+  --purple:#c084fc;
+  --text:#f8f5ff;
+  --text2:#c5bdd2;
+  --text3:#e1d9ec;
+  --border:#342451;
+  --card:#0d0918;
+  --shadow-sm:0 3px 12px rgba(0,0,0,.3);
+  --shadow-md:0 14px 36px rgba(0,0,0,.42);
+}
+
+html[data-text-size="small"] body { zoom:.9; }
+html[data-text-size="normal"] body { zoom:1; }
+html[data-text-size="large"] body { zoom:1.1; }
+
+body,
+.sidebar,
+.topbar,
+.panel,
+.modal,
+.login-card,
+.recovery-card { background-color:var(--bg2); color:var(--text); }
+body { background:var(--bg); }
+.sidebar { border-color:var(--border); }
+.topbar,
+.panel-header,
+.data-table th,
+.data-table tbody tr:hover,
+.user-card,
+.notif-btn,
+.role-btn,
+.form-control,
+.search-input,
+.surface-box,
+.info-note,
+.profile-about,
+.profile-meta { background:var(--bg3); color:var(--text); border-color:var(--border); }
+.nav-item:hover,
+.nav-item.active,
+.role-btn:hover,
+.role-btn.active,
+.btn-outline:hover { background:#24153f; color:#d8c4ff; border-color:#6d42a8; }
+.panel-header { background:#120c20; }
+.data-table th { color:#cbbfe0; }
+.data-table td { color:var(--text3); }
+.form-label { color:#cbbfe0; }
+.form-control:focus,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible { outline:3px solid #a78bfa; outline-offset:2px; border-color:#a78bfa; box-shadow:0 0 0 4px rgba(139,92,246,.2); }
+.btn-primary { background:#7c3aed; }
+.btn-primary:hover { background:#8b5cf6; }
+.readonly-note { background:#1d132d; border-color:#624291; }
+.recovery-page { background:#05030b; }
+.recovery-page::before { background:radial-gradient(circle at 24% 48%,rgba(124,58,237,.2),transparent 34%),rgba(5,3,11,.82); }
+.recovery-status { background:var(--bg3); }
+.login-error,.recovery-status.error { background:#291116; }
+.recovery-status.success { background:#10251d; }
+
+.brand-logo-frame { position:relative; overflow:hidden; background:#05030b !important; border-color:#4b2e73 !important; }
+.brand-logo-image { position:absolute; width:300%; max-width:none; height:auto; left:50%; top:50%; transform:translate(-50%,-50%); }
+.sidebar-logo .icon.brand-logo-frame { border:1px solid #4b2e73; }
+.recovery-mark.brand-logo-frame { border:1px solid #4b2e73; }
+.login-brand-animation { display:block; width:168px; height:168px; margin:0 auto 10px; overflow:hidden; border-radius:18px; border:1px solid #342451; background:#05030b; }
+.login-brand-animation img { display:block; width:100%; height:100%; object-fit:cover; }
+
+html[data-protected]:not([data-auth-ready])::before {
+  content:'';
+  background:#05030b url('../images/internpilih-brand-animation.gif') center / min(72vw,420px) no-repeat;
+}
+html[data-protected][data-load-error]:not([data-auth-ready])::before {
+  content:'InternPilih could not load this page safely. Refresh to try again.';
+  padding-top:440px;
+  color:#d8c4ff;
+}
+
+.accessibility-launcher { background:#7c3aed; color:#fff; border-color:#a78bfa; }
+.accessibility-panel { background:#0d0918; border-color:#4b2e73; }
+.font-size-controls { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.font-size-controls button {
+  min-height:40px; border:1px solid var(--border); border-radius:6px;
+  background:var(--bg3); color:var(--text); font:700 13px 'Inter',sans-serif; cursor:pointer;
+}
+.font-size-controls button[aria-pressed="true"] { background:#7c3aed; color:#fff; border-color:#a78bfa; }
+
+@media (prefers-reduced-motion:reduce) {
+  *,*::before,*::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+  html[data-protected]:not([data-auth-ready])::before { background-image:url('../images/internpilih-logo.png'); background-size:min(72vw,420px); }
+}
+
+@media (max-width:600px) {
+  .login-brand-animation { width:132px; height:132px; }
+  .login-page { overflow-x:hidden; }
+  .login-card { max-width:100%; }
 }

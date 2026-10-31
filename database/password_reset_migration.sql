@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
     id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id       INT UNSIGNED NOT NULL,
     token_hash    CHAR(64) NOT NULL UNIQUE,
+    purpose       ENUM('password_reset','password_change') NOT NULL DEFAULT 'password_reset',
     expires_at    DATETIME NOT NULL,
     used_at       DATETIME NULL,
     requested_ip  VARCHAR(45) NULL,

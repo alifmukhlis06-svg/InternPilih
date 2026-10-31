@@ -1,15 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-protected data-required-role="student">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>My Offers - InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
-<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
+<link rel="stylesheet" href="../assets/css/style.css?v=20261031-brand2">
+<script src="../assets/js/auth-gate.js?v=20261031-brand2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
-  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div></div>
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon brand-logo-frame"><img class="brand-logo-image" src="../assets/images/internpilih-logo.png" alt="InternPilih"></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div></div>
   <nav>
     <div class="nav-section">Main</div>
     <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
@@ -323,7 +323,7 @@ function viewOffer(id) {
   document.getElementById('mAllowance').textContent = `RM ${o.allowance || '0'}/month`;
   document.getElementById('mLocation').textContent = o.location || 'N/A';
   document.getElementById('mMode').textContent = o.work_mode || 'N/A';
-  document.getElementById('mStartDate').textContent = o.offer_date || 'N/A';
+  document.getElementById('mStartDate').textContent = o.internship_start_date || 'N/A';
   document.getElementById('mDuration').textContent = o.duration || '6 Months';
 
   const footer = document.getElementById('mFooter');
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
-<script src="../assets/js/app.js?v=20261030-qa1"></script>
+<script src="../assets/js/app.js?v=20261031-brand2"></script>
 </body>
 </html>
 

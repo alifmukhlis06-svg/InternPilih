@@ -62,9 +62,13 @@ apply in this order to the staging project only:
    restricted `NOLOGIN` backend role, grants, and secure function path.
 4. `database/staging/004_qa_profile_phone.sql` — add the nullable profile phone
    field required for partial profile updates without changing existing rows.
-5. `php database/staging/enable-backend-role.php --execute` — privately set and
+5. `database/staging/005_campus_schedule_password_verification.sql` — add campus,
+   the March 2027 placement start, password-token purpose, and canonical cycle dates.
+6. `database/staging/006_normalize_synthetic_accounts.sql` — normalize academic
+   emails, phones, campuses, and unique six-digit coordinator staff IDs.
+7. `php database/staging/enable-backend-role.php --execute` — privately set and
    verify the restricted role password.
-6. `php database/staging/seed-synthetic.php --execute` — insert six fictional
+8. `php database/staging/seed-synthetic.php --execute` — insert six fictional
    test identities and synthetic workflow records.
 
 Do not run `post-import.sql` in staging; it is intended for migrated production

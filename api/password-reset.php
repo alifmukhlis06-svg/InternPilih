@@ -43,15 +43,26 @@ try {
     $data = body();
     $action = (string)($data['action'] ?? 'request');
 
-    if ($action === 'request') {
-        $email = strtolower(trim((string)($data['email'] ?? '')));
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            respond(['error' => 'Enter a valid email address.'], 422);
-        }
+    if (in_array($action, ['request', 'request_change'], true)) {
+        $isAuthenticatedChange = $action === 'request_change';
+        $purpose = $isAuthenticatedChange ? 'password_change' : 'password_reset';
+        $genericMessage = $isAuthenticatedChange
+            ? 'A verification link has been sent to your registered email address.'
+            : 'If that email belongs to an InternPilih account, a reset link has been sent.';
 
-        $genericMessage = 'If that email belongs to an InternPilih account, a reset link has been sent.';
-        $stmt = db()->prepare('SELECT id, name, email FROM users WHERE email = ? LIMIT 1');
-        $stmt->bind_param('s', $email);
+        if ($isAuthenticatedChange) {
+            $sessionUser = requireAuth();
+            $userId = (int)$sessionUser['id'];
+            $stmt = db()->prepare('SELECT id, name, email FROM users WHERE id = ? LIMIT 1');
+            $stmt->bind_param('i', $userId);
+        } else {
+            $email = strtolower(trim((string)($data['email'] ?? '')));
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                respond(['error' => 'Enter a valid email address.'], 422);
+            }
+            $stmt = db()->prepare('SELECT id, name, email FROM users WHERE email = ? LIMIT 1');
+            $stmt->bind_param('s', $email);
+        }
         $stmt->execute();
         $user = $stmt->get_result()->fetch_assoc();
 
@@ -63,10 +74,11 @@ try {
         $userId = (int)$user['id'];
         $recent = db()->prepare("
             SELECT id FROM password_reset_tokens
-            WHERE user_id = ? AND used_at IS NULL AND created_at > NOW() - INTERVAL '60 seconds'
+            WHERE user_id = ? AND purpose = ? AND used_at IS NULL
+              AND created_at > NOW() - INTERVAL '60 seconds'
             LIMIT 1
         ");
-        $recent->bind_param('i', $userId);
+        $recent->bind_param('is', $userId, $purpose);
         $recent->execute();
         if ($recent->get_result()->fetch_assoc()) {
             respond(['success' => true, 'message' => $genericMessage]);
@@ -81,16 +93,19 @@ try {
         $hash = hash('sha256', $token);
         $ip = substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45);
 
+        $expiry = $isAuthenticatedChange ? '15 minutes' : '1 hour';
         $insert = db()->prepare("
-            INSERT INTO password_reset_tokens (user_id, token_hash, expires_at, requested_ip)
-            VALUES (?, ?, NOW() + INTERVAL '1 hour', ?)
+            INSERT INTO password_reset_tokens (user_id, token_hash, purpose, expires_at, requested_ip)
+            VALUES (?, ?, ?, NOW() + INTERVAL '{$expiry}', ?)
         ");
-        $insert->bind_param('iss', $userId, $hash, $ip);
+        $insert->bind_param('isss', $userId, $hash, $purpose, $ip);
         $insert->execute();
         $tokenId = (int)db()->insert_id;
 
         $resetUrl = notificationUrl('reset-password.html?token=' . rawurlencode($token));
-        $delivery = sendPasswordResetEmail($user, $resetUrl);
+        $delivery = $isAuthenticatedChange
+            ? sendPasswordChangeVerificationEmail($user, $resetUrl)
+            : sendPasswordResetEmail($user, $resetUrl);
         if (!$delivery['sent']) {
             $delete = db()->prepare('DELETE FROM password_reset_tokens WHERE id = ?');
             $delete->bind_param('i', $tokenId);

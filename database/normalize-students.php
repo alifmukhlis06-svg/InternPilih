@@ -35,7 +35,7 @@ try {
         $updated++;
     }
     $contacts = [
-        'admin@uitm.edu.my' => ['admin', 'Dr. Siti Norzahra binti Mahmud'],
+        'sitinorzahra@uitm.edu.my' => ['admin', 'Dr. Siti Norzahra binti Mahmud'],
         'hr@techsolutions.com.my' => ['employer', 'Nadia Farzana binti Rahim'],
         'careers@meridiandatalabs.example.test' => ['employer', 'Amir Hakimi bin Sulaiman'],
         'people@sinarayahealth.example.test' => ['employer', 'Nur Syuhada binti Ibrahim'],

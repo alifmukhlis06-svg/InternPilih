@@ -10,12 +10,12 @@ if (PHP_SAPI !== 'cli') {
 require_once __DIR__ . '/StagingConnection.php';
 
 $accounts = [
-    ['Synthetic Coordinator Alpha', 'coordinator.alpha@example.test', 'admin'],
-    ['Synthetic Coordinator Beta', 'coordinator.beta@example.test', 'admin'],
-    ['Synthetic Employer Alpha', 'employer.alpha@example.test', 'employer'],
-    ['Synthetic Employer Beta', 'employer.beta@example.test', 'employer'],
-    ['Synthetic Student Alpha', 'student.alpha@example.test', 'student'],
-    ['Synthetic Student Beta', 'student.beta@example.test', 'student'],
+    ['Synthetic Coordinator Alpha', 'syntheticcoordinatoralpha@uitm.edu.my', 'admin', '+601100000001'],
+    ['Synthetic Coordinator Beta', 'syntheticcoordinatorbeta@uitm.edu.my', 'admin', '+601100000002'],
+    ['Synthetic Employer Alpha', 'employer.alpha@example.test', 'employer', '+601100000003'],
+    ['Synthetic Employer Beta', 'employer.beta@example.test', 'employer', '+601100000004'],
+    ['Synthetic Student Alpha', 'stg000001@student.uitm.edu.my', 'student', '+601100000005'],
+    ['Synthetic Student Beta', 'stg000002@student.uitm.edu.my', 'student', '+601100000006'],
 ];
 
 if (!in_array('--execute', $argv, true)) {
@@ -67,8 +67,8 @@ try {
     }
 
     $insertUser = $pdo->prepare("
-        INSERT INTO public.users (name, email, password, role)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO public.users (name, email, phone, password, role)
+        VALUES (?, ?, ?, ?, ?)
         RETURNING id
     ");
     $insertCompany = $pdo->prepare("
@@ -80,8 +80,8 @@ try {
 
     $pdo->beginTransaction();
     $ids = [];
-    foreach ($accounts as [$name, $email, $role]) {
-        $insertUser->execute([$name, $email, $hash, $role]);
+    foreach ($accounts as [$name, $email, $role, $phone]) {
+        $insertUser->execute([$name, $email, $phone, $hash, $role]);
         $ids[$email] = (int)$insertUser->fetchColumn();
     }
 
@@ -96,10 +96,10 @@ try {
     ]);
     $companyBeta = (int)$insertCompany->fetchColumn();
 
-    $pdo->prepare('INSERT INTO public.admins (user_id, faculty, programme) VALUES (?, ?, ?)')
-        ->execute([$ids['coordinator.alpha@example.test'], 'Synthetic Computing', 'Synthetic Software Engineering']);
-    $pdo->prepare('INSERT INTO public.admins (user_id, faculty, programme) VALUES (?, ?, ?)')
-        ->execute([$ids['coordinator.beta@example.test'], 'Synthetic Business', 'Synthetic Business Analytics']);
+    $pdo->prepare('INSERT INTO public.admins (user_id, staff_id, campus, faculty, programme) VALUES (?, ?, ?, ?, ?)')
+        ->execute([$ids['syntheticcoordinatoralpha@uitm.edu.my'], '100001', 'Arau', 'Synthetic Computing', 'Synthetic Software Engineering']);
+    $pdo->prepare('INSERT INTO public.admins (user_id, staff_id, campus, faculty, programme) VALUES (?, ?, ?, ?, ?)')
+        ->execute([$ids['syntheticcoordinatorbeta@uitm.edu.my'], '100002', 'Shah Alam', 'Synthetic Business', 'Synthetic Business Analytics']);
 
     $pdo->prepare('INSERT INTO public.employers (user_id, company_id) VALUES (?, ?)')
         ->execute([$ids['employer.alpha@example.test'], $companyAlpha]);
@@ -108,50 +108,50 @@ try {
 
     $insertStudent = $pdo->prepare("
         INSERT INTO public.students
-            (user_id, matric_id, faculty, programme, coordinator_id, cgpa)
-        VALUES (?, ?, ?, ?, ?, ?)
+            (user_id, matric_id, campus, faculty, programme, coordinator_id, cgpa)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ");
     $insertStudent->execute([
-        $ids['student.alpha@example.test'], 'STG000001', 'Synthetic Computing',
-        'Synthetic Software Engineering', $ids['coordinator.alpha@example.test'], '3.50',
+        $ids['stg000001@student.uitm.edu.my'], 'STG000001', 'Arau', 'Synthetic Computing',
+        'Synthetic Software Engineering', $ids['syntheticcoordinatoralpha@uitm.edu.my'], '3.50',
     ]);
     $insertStudent->execute([
-        $ids['student.beta@example.test'], 'STG000002', 'Synthetic Business',
-        'Synthetic Business Analytics', $ids['coordinator.beta@example.test'], '3.25',
+        $ids['stg000002@student.uitm.edu.my'], 'STG000002', 'Shah Alam', 'Synthetic Business',
+        'Synthetic Business Analytics', $ids['syntheticcoordinatorbeta@uitm.edu.my'], '3.25',
     ]);
 
     $insertApplication = $pdo->prepare("
         INSERT INTO public.internship_applications
             (student_id, company_id, position, source, status, applied_at, notes)
-        VALUES (?, ?, ?, 'student', ?, CURRENT_DATE, ?)
+        VALUES (?, ?, ?, 'student', ?, DATE '2026-11-02', ?)
         RETURNING id
     ");
     $insertApplication->execute([
-        $ids['student.alpha@example.test'], $companyAlpha,
+        $ids['stg000001@student.uitm.edu.my'], $companyAlpha,
         'Synthetic QA Intern', 'submitted', 'Synthetic staging application A',
     ]);
     $applicationAlpha = (int)$insertApplication->fetchColumn();
     $insertApplication->execute([
-        $ids['student.beta@example.test'], $companyBeta,
+        $ids['stg000002@student.uitm.edu.my'], $companyBeta,
         'Synthetic Data Intern', 'offered', 'Synthetic staging application B',
     ]);
     $applicationBeta = (int)$insertApplication->fetchColumn();
 
     $insertOffer = $pdo->prepare("
         INSERT INTO public.offers
-            (student_id, company_id, position, offer_date, deadline, status,
+            (student_id, company_id, position, offer_date, deadline, internship_start_date, status,
              response_date, application_id, placement_verification_status)
-        VALUES (?, ?, ?, CURRENT_DATE, CURRENT_DATE + 14, ?, ?, ?, ?)
+        VALUES (?, ?, ?, DATE '2026-11-20', DATE '2026-12-15', DATE '2027-03-01', ?, ?, ?, ?)
         RETURNING id
     ");
     $insertOffer->execute([
-        $ids['student.alpha@example.test'], $companyAlpha, 'Synthetic QA Intern',
+        $ids['stg000001@student.uitm.edu.my'], $companyAlpha, 'Synthetic QA Intern',
         'pending', null, $applicationAlpha, 'not_submitted',
     ]);
     $offerAlpha = (int)$insertOffer->fetchColumn();
     $insertOffer->execute([
-        $ids['student.beta@example.test'], $companyBeta, 'Synthetic Data Intern',
-        'accepted', date('Y-m-d'), $applicationBeta, 'not_submitted',
+        $ids['stg000002@student.uitm.edu.my'], $companyBeta, 'Synthetic Data Intern',
+        'accepted', '2027-01-10', $applicationBeta, 'not_submitted',
     ]);
     $offerBeta = (int)$insertOffer->fetchColumn();
 
@@ -165,18 +165,18 @@ try {
         VALUES (?, ?, 'system', ?, ?, 'student')
     ");
     $insertNotification->execute([
-        $ids['student.alpha@example.test'], $ids['coordinator.alpha@example.test'],
+        $ids['stg000001@student.uitm.edu.my'], $ids['syntheticcoordinatoralpha@uitm.edu.my'],
         'Synthetic staging notification A', 'Synthetic data only.',
     ]);
     $insertNotification->execute([
-        $ids['student.beta@example.test'], $ids['coordinator.beta@example.test'],
+        $ids['stg000002@student.uitm.edu.my'], $ids['syntheticcoordinatorbeta@uitm.edu.my'],
         'Synthetic staging notification B', 'Synthetic data only.',
     ]);
 
     $pdo->commit();
     echo "Synthetic staging data inserted successfully.\n";
-    foreach ($accounts as [, $email, $role]) {
-        echo $role . ': ' . $email . "\n";
+    foreach ($accounts as $account) {
+        echo $account[2] . ': ' . $account[1] . "\n";
     }
     echo "Passwords were read privately from the environment and were not printed.\n";
 } catch (Throwable $error) {

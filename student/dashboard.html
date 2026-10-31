@@ -1,16 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-protected data-required-role="student">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Student Dashboard - InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
-<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
+<link rel="stylesheet" href="../assets/css/style.css?v=20261031-brand2">
+<script src="../assets/js/auth-gate.js?v=20261031-brand2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
   <div class="sidebar-brand">
-    <div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div>
+    <div class="sidebar-logo"><div class="icon brand-logo-frame"><img class="brand-logo-image" src="../assets/images/internpilih-logo.png" alt="InternPilih"></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div>
   </div>
   <nav>
     <div class="nav-section">Main</div>
@@ -55,6 +55,17 @@
         <a class="dashboard-brief-link" href="record-offer.html">Record a new offer <i class="fas fa-arrow-right"></i></a>
       </div>
     </section>
+
+    <div class="panel" style="margin-bottom:18px;">
+      <div class="panel-header"><h3><i class="fas fa-calendar-check" style="color:var(--blue3);margin-right:8px;"></i>Internship Schedule</h3><span data-schedule-label="semester" style="font-size:12px;color:var(--text2);">March–August 2027</span></div>
+      <div class="panel-body schedule-grid">
+        <div class="schedule-item"><span>Application / offer preparation</span><strong data-schedule-key="internship_application_open">Loading</strong></div>
+        <div class="schedule-item"><span>Main company / offer deadline</span><strong data-schedule-key="main_offer_deadline">Loading</strong></div>
+        <div class="schedule-item"><span>Final placement confirmation</span><strong data-schedule-key="placement_confirmation_deadline">Loading</strong></div>
+        <div class="schedule-item"><span>Required documents complete</span><strong data-schedule-key="document_completion_deadline">Loading</strong></div>
+        <div class="schedule-item"><span>Internship begins</span><strong data-schedule-key="internship_start_date">Loading</strong></div>
+      </div>
+    </div>
 
     <!-- ALERT -->
     <div class="alert alert-warning" id="alert-bar" style="display:none;"><i class="fas fa-exclamation-triangle"></i><div id="alert-text"></div></div>
@@ -279,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
-  <script src="../assets/js/app.js?v=20261030-qa1"></script>
+  <script src="../assets/js/app.js?v=20261031-brand2"></script>
 </body>
 </html>
 

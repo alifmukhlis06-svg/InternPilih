@@ -1,15 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-protected data-required-role="student">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Profile – InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
-<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
+<link rel="stylesheet" href="../assets/css/style.css?v=20261031-brand2">
+<script src="../assets/js/auth-gate.js?v=20261031-brand2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
-  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div style="font-size:14px;font-weight:800;color:var(--text);">InternPilih</div><div style="font-size:10px;color:var(--text2);">Student Portal</div></div></div></div>
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon brand-logo-frame"><img class="brand-logo-image" src="../assets/images/internpilih-logo.png" alt="InternPilih"></div><div><div style="font-size:14px;font-weight:800;color:var(--text);">InternPilih</div><div style="font-size:10px;color:var(--text2);">Student Portal</div></div></div></div>
   <nav>
     <div class="nav-section">Main</div>
     <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
@@ -34,7 +34,7 @@
 <div class="main">
   <div class="topbar">
     <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
-    <div><h1>My Profile</h1><p style="font-size:12px;color:var(--text2);">Manage your personal information and account settings</p></div>
+    <div><h1>My Profile</h1><p style="font-size:12px;color:var(--text2);">View your registered information and manage password security</p></div>
   </div>
 
   <div class="content fade-in">
@@ -43,12 +43,8 @@
       <div class="panel" style="margin-bottom:24px;">
         <div class="panel-body">
           <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
-            <div style="position:relative;">
+            <div>
               <div class="profile-avatar">--</div>
-              <button onclick="document.getElementById('photoInput').click()" style="position:absolute;bottom:0;right:0;width:28px;height:28px;background:var(--blue2);border:none;border-radius:50%;cursor:pointer;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-camera"></i>
-              </button>
-              <input type="file" id="photoInput" style="display:none" accept="image/*">
             </div>
             <div style="flex:1;">
               <h2 id="studentProfileName" style="font-size:20px;font-weight:800;">Loading profile</h2>
@@ -59,7 +55,6 @@
                 <span class="badge badge-pending" id="placementBadge">Checking placement</span>
               </div>
             </div>
-            <button class="btn btn-primary" onclick="editMode()"><i class="fas fa-edit"></i> Edit Profile</button>
           </div>
         </div>
       </div>
@@ -71,7 +66,7 @@
           <div class="panel-body">
             <div class="form-group">
               <label class="form-label">Full Name</label>
-              <input type="text" class="form-control" value="" id="fullName">
+              <input type="text" class="form-control" value="" id="fullName" readonly>
             </div>
             <div class="form-group">
               <label class="form-label">Student ID / Matric No.</label>
@@ -83,11 +78,11 @@
             </div>
             <div class="form-group">
               <label class="form-label">Phone Number</label>
-              <input type="tel" class="form-control" value="" id="studentPhone" placeholder="+60 12-345 6789">
+              <input type="tel" class="form-control" value="" id="studentPhone" readonly>
             </div>
             <div class="form-group">
               <label class="form-label">CGPA</label>
-              <input type="number" min="0" max="4" step="0.01" class="form-control" value="" id="studentCgpa">
+              <input type="number" min="0" max="4" step="0.01" class="form-control" value="" id="studentCgpa" readonly>
             </div>
           </div>
         </div>
@@ -106,13 +101,11 @@
             </div>
             <div class="form-group">
               <label class="form-label">Campus</label>
-              <select class="form-control">
-                <option selected>Not recorded</option>
-              </select>
+              <input type="text" class="form-control" id="studentCampus" value="" readonly>
             </div>
             <div class="form-group">
               <label class="form-label">Internship Semester</label>
-              <input type="text" class="form-control" value="Not recorded" readonly style="opacity:.7;">
+              <input type="text" class="form-control" data-schedule-label="semester" value="March–August 2027" readonly style="opacity:.7;">
             </div>
             <div class="form-group">
               <label class="form-label">Coordinator</label>
@@ -126,46 +119,17 @@
       <div class="panel" style="margin-top:0;">
         <div class="panel-header"><h3><i class="fas fa-lock" style="color:var(--red);margin-right:8px;"></i>Change Password</h3></div>
         <div class="panel-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Current Password</label>
-              <input type="password" class="form-control" placeholder="••••••••">
-            </div>
-            <div class="form-group">
-              <label class="form-label">New Password</label>
-              <input type="password" class="form-control" placeholder="••••••••">
-            </div>
-          </div>
-          <div class="form-group" style="max-width:50%;">
-            <label class="form-label">Confirm New Password</label>
-            <input type="password" class="form-control" placeholder="••••••••">
-          </div>
-          <button class="btn btn-outline" onclick="updatePwd()"><i class="fas fa-key"></i> Update Password</button>
+          <p style="color:var(--text2);font-size:13px;margin-bottom:14px;">For your security, we will email a single-use verification link to your registered address. The link expires after 15 minutes.</p>
+          <button id="passwordVerificationButton" class="btn btn-outline" onclick="requestPasswordChange()"><i class="fas fa-envelope"></i> Send Verification Email</button>
+          <p id="passwordVerificationStatus" role="status" style="font-size:12px;margin-top:10px;color:var(--text2);"></p>
         </div>
       </div>
 
-      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:4px;">
-        <button class="btn btn-outline">Cancel</button>
-        <button class="btn btn-primary" onclick="saveProfile()"><i class="fas fa-save"></i> Save Changes</button>
-      </div>
     </div>
   </div>
 </div>
 
-<script>
-function saveProfile(){
-  const btn=event.target;
-  btn.innerHTML='<i class="fas fa-check"></i> Saved!';
-  btn.style.background='var(--green)';
-  setTimeout(()=>{btn.innerHTML='<i class="fas fa-save"></i> Save Changes';btn.style.background='';},2000);
-}
-function updatePwd(){
-  const btn=event.target;
-  btn.innerHTML='<i class="fas fa-check"></i> Password Updated!';
-  setTimeout(()=>{btn.innerHTML='<i class="fas fa-key"></i> Update Password';},2000);
-}
-</script>
-<script src="../assets/js/app.js?v=20261030-qa1"></script>
+<script src="../assets/js/app.js?v=20261031-brand2"></script>
 </body>
 </html>
 

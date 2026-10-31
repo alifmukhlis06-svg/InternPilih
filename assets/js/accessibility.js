@@ -3,10 +3,10 @@
   window.__internPilihAccessibilityInstalled = true;
 
   const storageKey = 'internpilih:accessibility';
-  const defaults = { theme: 'light', textSize: 'normal', vision: 'standard' };
+  const defaults = { theme: 'dark', textSize: 'normal', vision: 'standard' };
   const allowed = {
-    theme: ['light', 'dark'],
-    textSize: ['normal', 'large', 'larger'],
+    theme: ['dark'],
+    textSize: ['small', 'normal', 'large'],
     vision: ['standard', 'red-green', 'blue-yellow', 'contrast']
   };
 
@@ -61,18 +61,14 @@
         <strong>Accessibility</strong>
         <button type="button" id="accessibilityClose" aria-label="Close accessibility settings">&times;</button>
       </div>
-      <label class="accessibility-switch">
-        <span>Dark mode</span>
-        <input type="checkbox" id="accessibilityDark">
-      </label>
-      <label class="accessibility-field" for="accessibilityTextSize">
-        <span>Interface size</span>
-        <select id="accessibilityTextSize">
-          <option value="normal">Normal</option>
-          <option value="large">Large (115%)</option>
-          <option value="larger">Extra large (130%)</option>
-        </select>
-      </label>
+      <div class="accessibility-field">
+        <span>Font size</span>
+        <div class="font-size-controls" role="group" aria-label="Font size">
+          <button type="button" data-text-size="small" aria-label="Decrease font size">A&minus;</button>
+          <button type="button" data-text-size="normal" aria-label="Default font size">A</button>
+          <button type="button" data-text-size="large" aria-label="Increase font size">A+</button>
+        </div>
+      </div>
       <label class="accessibility-field" for="accessibilityVision">
         <span>Colour assistance</span>
         <select id="accessibilityVision">
@@ -85,12 +81,16 @@
       <button type="button" class="accessibility-reset" id="accessibilityReset">Reset settings</button>`;
 
     document.body.append(launcher, panel);
-    const dark = panel.querySelector('#accessibilityDark');
-    const textSize = panel.querySelector('#accessibilityTextSize');
+    const textSizeButtons = Array.from(panel.querySelectorAll('[data-text-size]'));
     const vision = panel.querySelector('#accessibilityVision');
-    dark.checked = settings.theme === 'dark';
-    textSize.value = settings.textSize;
     vision.value = settings.vision;
+
+    function syncTextSizeButtons() {
+      textSizeButtons.forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.textSize === settings.textSize));
+      });
+    }
+    syncTextSizeButtons();
 
     function setOpen(open) {
       panel.hidden = !open;
@@ -99,24 +99,39 @@
     }
     launcher.addEventListener('click', () => setOpen(panel.hidden));
     panel.querySelector('#accessibilityClose').addEventListener('click', () => setOpen(false));
-    dark.addEventListener('change', () => updateSetting('theme', dark.checked ? 'dark' : 'light'));
-    textSize.addEventListener('change', () => updateSetting('textSize', textSize.value));
+    textSizeButtons.forEach(button => button.addEventListener('click', () => {
+      updateSetting('textSize', button.dataset.textSize);
+      syncTextSizeButtons();
+    }));
     vision.addEventListener('change', () => updateSetting('vision', vision.value));
     panel.querySelector('#accessibilityReset').addEventListener('click', () => {
       settings = { ...defaults };
-      dark.checked = false;
-      textSize.value = defaults.textSize;
       vision.value = defaults.vision;
       applySettings();
+      syncTextSizeButtons();
     });
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape' && !panel.hidden) setOpen(false);
     });
   }
 
+  function installBrandAssets() {
+    const logoUrl = typeof window.appUrl === 'function'
+      ? window.appUrl('/assets/images/internpilih-logo.png')
+      : 'assets/images/internpilih-logo.png';
+    document.querySelectorAll('.sidebar-logo .icon, .recovery-mark').forEach(container => {
+      container.classList.add('brand-logo-frame');
+      container.innerHTML = `<img class="brand-logo-image" src="${logoUrl}" alt="InternPilih">`;
+    });
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', installControls, { once: true });
+    document.addEventListener('DOMContentLoaded', () => {
+      installBrandAssets();
+      installControls();
+    }, { once: true });
   } else {
+    installBrandAssets();
     installControls();
   }
 })();

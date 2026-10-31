@@ -125,7 +125,7 @@
 (function loadAccessibilityControls() {
   if (window.__internPilihAccessibilityInstalled) return;
   const script = document.createElement('script');
-  script.src = window.appUrl('/assets/js/accessibility.js?v=20261030-a11y1');
+  script.src = window.appUrl('/assets/js/accessibility.js?v=20261031-brand2');
   script.defer = true;
   document.head.appendChild(script);
 })();
@@ -872,6 +872,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;margin-bottom:16px;">
           <div><span style="color:var(--text2);">Faculty</span><br><strong>${esc(s.faculty || '-')}</strong></div>
           <div><span style="color:var(--text2);">Programme</span><br><strong>${esc(s.programme || '-')}</strong></div>
+          <div><span style="color:var(--text2);">Campus</span><br><strong>${esc(s.campus || '-')}</strong></div>
           <div><span style="color:var(--text2);">CGPA</span><br><strong>${esc(s.cgpa || '-')}</strong></div>
           <div><span style="color:var(--text2);">Total Offers</span><br><strong>${s.offers_count}</strong></div>
           <div><span style="color:var(--text2);">Pending Offers</span><br><strong>${s.pending_count}${s.overdue_pending_count ? ` (${s.overdue_pending_count} overdue)` : ''}</strong></div>
@@ -1250,11 +1251,8 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     };
   }
 
-  let studentProfileSnapshot = null;
-
   function applyStudentProfile(data) {
     const u = data.user;
-    studentProfileSnapshot = { ...u };
     updateIdentity(u);
     const fieldValues = {
       fullName: u.name || '',
@@ -1263,7 +1261,8 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       studentPhone: u.phone || '',
       studentCgpa: u.cgpa ?? '',
       studentProgramme: u.programme || '',
-      studentFaculty: u.faculty || ''
+      studentFaculty: u.faculty || '',
+      studentCampus: u.campus || 'Not recorded'
     };
     Object.entries(fieldValues).forEach(([id, value]) => {
       const field = document.getElementById(id);
@@ -1291,30 +1290,26 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     applyStudentProfile(await apiGet('/api/profile.php'));
   }
 
-  function hookStudentProfile() {
-    window.saveProfile = async function () {
-      const candidates = {
-        name: document.getElementById('fullName')?.value.trim() || '',
-        phone: document.getElementById('studentPhone')?.value.trim() || '',
-        cgpa: document.getElementById('studentCgpa')?.value.trim() || ''
-      };
-      const payload = {};
-      Object.entries(candidates).forEach(([field, value]) => {
-        if (String(studentProfileSnapshot?.[field] ?? '') !== String(value)) payload[field] = value;
-      });
-      if (!Object.keys(payload).length) {
-        showToast('No profile changes to save.', 'success');
-        return;
+  window.requestPasswordChange = async function () {
+    const button = document.getElementById('passwordVerificationButton');
+    const status = document.getElementById('passwordVerificationStatus');
+    if (button) button.disabled = true;
+    if (status) status.textContent = 'Sending verification email...';
+    try {
+      const result = await apiSend('/api/password-reset.php', 'POST', { action: 'request_change' });
+      if (status) {
+        status.style.color = 'var(--green)';
+        status.textContent = result.message || 'Verification email sent.';
       }
-      try {
-        const result = await apiSend('/api/profile.php', 'PUT', payload);
-        applyStudentProfile(result);
-        showToast('Profile saved!', 'success');
-      } catch (err) {
-        alert(err.message);
+    } catch (error) {
+      if (status) {
+        status.style.color = 'var(--red)';
+        status.textContent = error.message || 'Unable to send the verification email.';
       }
-    };
-  }
+    } finally {
+      if (button) button.disabled = false;
+    }
+  };
 
   async function renderStudentNotifications() {
     const list = document.getElementById('notifList');
@@ -1590,6 +1585,26 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     return `<div style="padding:16px;background:var(--bg3);border-radius:12px;"><div style="font-size:${size};font-weight:800;color:${color};">${esc(value)}</div><div style="font-size:11px;color:var(--text2);margin-top:4px;">${esc(label)}</div></div>`;
   }
 
+  async function renderInternshipSchedule() {
+    const textTargets = document.querySelectorAll('[data-schedule-key]');
+    const valueTargets = document.querySelectorAll('[data-schedule-value]');
+    const semesterTargets = document.querySelectorAll('[data-schedule-label="semester"]');
+    if (!textTargets.length && !valueTargets.length && !semesterTargets.length) return;
+    const data = await apiGet('/api/schedule.php');
+    textTargets.forEach(element => {
+      const value = data.schedule?.[element.dataset.scheduleKey];
+      element.textContent = value ? fmtDate(value) : 'Not configured';
+    });
+    valueTargets.forEach(element => {
+      const value = data.schedule?.[element.dataset.scheduleValue];
+      if (value) element.value = value;
+    });
+    semesterTargets.forEach(element => {
+      if ('value' in element) element.value = data.semester || '';
+      else element.textContent = data.semester || '';
+    });
+  }
+
   function renderCoordinatorProfile(data) {
     const u = data.user || {};
     const values = {
@@ -1599,7 +1614,8 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       coordinatorEmail: u.email || '',
       coordinatorStudentCount: String((data.students || []).length),
       coordinatorFaculty: u.faculty || '',
-      coordinatorProgramme: u.coordinator_programme || ''
+      coordinatorProgramme: u.coordinator_programme || '',
+      coordinatorCampus: u.campus || 'Not recorded'
     };
     Object.entries(values).forEach(([id, value]) => {
       const element = document.getElementById(id);
@@ -1609,28 +1625,20 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     if (title) title.textContent = u.name || '';
     const summary = document.getElementById('coordinatorCourseSummary');
     if (summary) summary.textContent = `Course Coordinator · ${u.coordinator_programme || ''}`;
+    const campusSummary = document.getElementById('coordinatorCampusSummary');
+    if (campusSummary) campusSummary.textContent = `Universiti Teknologi MARA (UiTM) · ${u.campus || 'Campus not recorded'}`;
     const avatar = document.querySelector('.profile-avatar');
     if (avatar) avatar.textContent = initials(u.name);
-    window.saveCoordinatorProfile = async function () {
-      try {
-        const result = await apiSend('/api/profile.php', 'PUT', {
-          name: document.getElementById('coordinatorFullName').value.trim(),
-          email: document.getElementById('coordinatorEmail').value.trim(),
-          staff_id: document.getElementById('coordinatorStaffId').value.trim()
-        });
-        updateIdentity(result.user);
-        title.textContent = result.user.name;
-        if (avatar) avatar.textContent = initials(result.user.name);
-        showToast('Profile saved!');
-      } catch (error) {
-        alert(error.message || 'Unable to save profile.');
-      }
-    };
   }
 
   async function initDatabaseBindings() {
     try {
       if (!section) return;
+      try {
+        await renderInternshipSchedule();
+      } catch (scheduleError) {
+        console.warn('Internship schedule binding skipped:', scheduleError.message);
+      }
       if (section === 'student' && page === 'communication.html') {
         return;
       }
@@ -1638,7 +1646,6 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
         return;
       }
       if (section === 'student' && page === 'profile.html') {
-        hookStudentProfile();
         await renderStudentProfile();
         window.addEventListener('storage', function (event) {
           if (event.key === 'internpilih:offers-updated') renderStudentProfile();

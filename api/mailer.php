@@ -177,10 +177,12 @@ function sendPlainTextEmail(string $email, string $subject, string $message, ?st
     }
     if (($transport['mode'] ?? '') === 'disabled') {
         $isStaging = strtolower(trim((string)(getenv('INTERNPILIH_ENVIRONMENT') ?: ''))) === 'staging';
-        $isReservedRecipient = str_ends_with(strtolower($email), '@example.test');
-        if ($isStaging && $isReservedRecipient) {
+        $normalizedEmail = strtolower($email);
+        $isSyntheticStagingRecipient = str_ends_with($normalizedEmail, '@example.test')
+            || preg_match('/^(?:stg[0-9]+@student\.uitm\.edu\.my|synthetic[a-z0-9]+@uitm\.edu\.my)$/', $normalizedEmail) === 1;
+        if ($isStaging && $isSyntheticStagingRecipient) {
             // Staging records the workflow result but deliberately performs no
-            // network delivery. Reserved example.test addresses cannot receive mail.
+            // network delivery for these isolated synthetic accounts.
             return [
                 'sent' => true,
                 'simulated' => true,
@@ -262,6 +264,21 @@ function sendPasswordResetEmail(array $recipient, string $resetUrl): array {
     return sendPlainTextEmail(
         (string)($recipient['email'] ?? ''),
         '[InternPilih] Reset your password',
+        $message
+    );
+}
+
+function sendPasswordChangeVerificationEmail(array $recipient, string $verificationUrl): array {
+    $name = trim((string)($recipient['name'] ?? '')) ?: 'there';
+    $message = "Hello {$name},\n\n"
+        . "Use the secure link below to verify your email address before changing your InternPilih password.\n\n"
+        . "Verify password change: {$verificationUrl}\n\n"
+        . "This link expires in 15 minutes and can only be used once. If you did not request this change, ignore this email and keep your current password.\n\n"
+        . "InternPilih";
+
+    return sendPlainTextEmail(
+        (string)($recipient['email'] ?? ''),
+        '[InternPilih] Verify your password change',
         $message
     );
 }

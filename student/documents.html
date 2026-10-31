@@ -1,15 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-protected data-required-role="student">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Upload Documents - InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
-<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
+<link rel="stylesheet" href="../assets/css/style.css?v=20261031-brand2">
+<script src="../assets/js/auth-gate.js?v=20261031-brand2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
-  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div></div>
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon brand-logo-frame"><img class="brand-logo-image" src="../assets/images/internpilih-logo.png" alt="InternPilih"></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div></div>
   <nav>
     <div class="nav-section">Main</div>
     <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
@@ -158,7 +158,7 @@ async function loadPage() {
     // Populate sidebar placement details
     document.getElementById('side-company').textContent = acceptedOffer.company_name;
     document.getElementById('side-position').textContent = `${acceptedOffer.position} - ${acceptedOffer.location || ''}`;
-    document.getElementById('side-start').textContent = acceptedOffer.offer_date || 'N/A';
+    document.getElementById('side-start').textContent = acceptedOffer.internship_start_date || 'N/A';
     document.getElementById('side-allowance').textContent = `RM ${acceptedOffer.allowance || '0'}/mo`;
     document.getElementById('side-mode').textContent = acceptedOffer.work_mode || 'N/A';
 
@@ -375,7 +375,7 @@ function submitDocs() {
 
 document.addEventListener('DOMContentLoaded', loadPage);
 </script>
-<script src="../assets/js/app.js?v=20261030-qa1"></script>
+<script src="../assets/js/app.js?v=20261031-brand2"></script>
 </body>
 </html>
 

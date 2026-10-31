@@ -247,3 +247,66 @@
   .landing-page .quick-login { overflow-x:auto; }
   .landing-page .qlogin-btns a { padding:8px 10px !important; }
 }
+
+/* Black + purple public brand theme */
+.landing-page {
+  --landing-navy:#f8f5ff;
+  --landing-blue:#a78bfa;
+  --landing-purple:#8b5cf6;
+  --landing-gold:#c084fc;
+  --landing-muted:#c5bdd2;
+  background:#05030b;
+  color:#f8f5ff;
+}
+.landing-page .nav { background:rgba(5,3,11,.94); border-top-color:#8b5cf6; border-bottom:1px solid #342451; backdrop-filter:blur(14px); }
+.landing-page .nav-logo span,
+.landing-page .nav-links a { color:#f8f5ff; }
+.landing-page .nav-links a:hover { color:#c4b5fd; }
+.landing-page .nav-links .nav-cta { background:#7c3aed; }
+.landing-page .nav-links .nav-cta:hover { background:#8b5cf6; }
+.landing-page .hero { background:#05030b; }
+.landing-page .hero::before { z-index:0; background:radial-gradient(circle at 76% 48%,rgba(124,58,237,.16),transparent 24%),#05030b; }
+.landing-page .hero::after {
+  content:""; position:absolute; z-index:1; right:max(7vw,42px); top:50%;
+  width:min(31vw,390px); aspect-ratio:1; transform:translateY(-50%);
+  border:1px solid #342451; border-radius:28px;
+  background:#05030b url('../images/internpilih-logo.png') center / 300% auto no-repeat;
+  box-shadow:0 24px 80px rgba(76,29,149,.22);
+}
+.landing-page .hero-content { z-index:2; }
+.landing-page .hero-title { color:#f8f5ff; }
+.landing-page .hero-title span,.landing-page .hero-badge { color:#a78bfa; }
+.landing-page .hero-sub { color:#c5bdd2; }
+.landing-page .btn-hero-primary,.landing-page .btn-hero-employer { background:#7c3aed; }
+.landing-page .btn-hero-primary:hover,.landing-page .btn-hero-employer:hover { background:#8b5cf6; }
+.landing-page .btn-hero-ghost { color:#f8f5ff; background:#120c20; border-color:#4b2e73; }
+.landing-page .btn-hero-ghost:hover { background:#24153f; }
+.landing-page .hero-stats,
+.landing-page .role-card,
+.landing-page .module-card,
+.landing-page #about > div > div > div,
+.landing-page .quick-login { background:#0d0918 !important; border-color:#342451 !important; }
+.landing-page .stat-item { border-color:#342451; }
+.landing-page .stat-item .num,
+.landing-page .section-title,
+.landing-page .role-card h3,
+.landing-page .module-card h4,
+.landing-page #about strong,
+.landing-page .quick-login p { color:#f8f5ff !important; }
+.landing-page .stat-item .lbl,
+.landing-page .section-sub,
+.landing-page .role-card p,
+.landing-page .role-features li,
+.landing-page .module-card p,
+.landing-page #about > div > p { color:#c5bdd2 !important; }
+.landing-page .section,
+.landing-page #modules { background:#05030b !important; border-color:#342451 !important; }
+.landing-page #roles { background:#090512; }
+.landing-page .footer { background:#05030b; border-bottom-color:#8b5cf6; }
+.landing-page .footer p { color:#b8aec6; }
+.landing-page .nav-logo .logo-box { background:#05030b; border:1px solid #4b2e73; }
+
+@media (max-width:760px) {
+  .landing-page .hero::before { background:rgba(5,3,11,.82); }
+  .landing-page .hero::after { right:-70px; width:300px; opacity:.18; }
+}

@@ -1,15 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-protected data-required-role="admin">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Admin Profile – InternPilih</title>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261030-qa1">
-<script src="../assets/js/auth-gate.js?v=20261030-qa1"></script>
+<link rel="stylesheet" href="../assets/css/style.css?v=20261031-brand2">
+<script src="../assets/js/auth-gate.js?v=20261031-brand2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
-  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-shield-alt"></i></div><div><div style="font-size:14px;font-weight:800;color:var(--text);">InternPilih</div><div style="font-size:10px;color:var(--text2);">Coordinator Panel</div></div></div></div>
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon brand-logo-frame"><img class="brand-logo-image" src="../assets/images/internpilih-logo.png" alt="InternPilih"></div><div><div style="font-size:14px;font-weight:800;color:var(--text);">InternPilih</div><div style="font-size:10px;color:var(--text2);">Coordinator Panel</div></div></div></div>
   <nav>
     <div class="nav-section">Overview</div>
     <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>Dashboard</a>
@@ -31,21 +31,19 @@
 
 <div class="main">
   <div class="topbar">
-    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button><div><h1>Coordinator Profile</h1><p style="font-size:12px;color:var(--text2);">Manage your account information</p></div></div>
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button><div><h1>Coordinator Profile</h1><p style="font-size:12px;color:var(--text2);">View your registered information and manage password security</p></div></div>
   <div class="content fade-in">
     <div style="max-width:760px;">
       <div class="panel" style="margin-bottom:24px;">
         <div class="panel-body">
           <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
-            <div style="position:relative;">
+            <div>
               <div class="profile-avatar admin">SN</div>
-              <button onclick="document.getElementById('photoInput').click()" style="position:absolute;bottom:0;right:0;width:28px;height:28px;background:var(--blue2);border:none;border-radius:50%;cursor:pointer;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-camera"></i></button>
-              <input type="file" id="photoInput" style="display:none">
             </div>
             <div style="flex:1;">
               <h2 id="coordinatorProfileName" style="font-size:20px;font-weight:800;">Coordinator</h2>
               <p id="coordinatorCourseSummary" style="color:var(--text2);font-size:13px;">Course coordinator</p>
-              <p style="color:var(--text2);font-size:13px;">Universiti Teknologi MARA (UiTM) Shah Alam</p>
+              <p id="coordinatorCampusSummary" style="color:var(--text2);font-size:13px;">Universiti Teknologi MARA</p>
               <div style="display:flex;gap:8px;margin-top:8px;"><span class="badge badge-verified">Coordinator</span><span class="badge" style="background:rgba(245,158,11,.1);color:var(--gold);">Admin Access</span></div>
             </div>
           </div>
@@ -55,10 +53,10 @@
         <div class="panel">
           <div class="panel-header"><h3><i class="fas fa-user-tie" style="color:var(--blue3);margin-right:8px;"></i>Personal Information</h3></div>
           <div class="panel-body">
-            <div class="form-group"><label class="form-label">Full Name</label><input id="coordinatorFullName" type="text" class="form-control"></div>
+            <div class="form-group"><label class="form-label">Full Name</label><input id="coordinatorFullName" type="text" class="form-control" readonly></div>
             <div class="form-group"><label class="form-label">Account ID</label><input id="coordinatorAccountId" type="text" class="form-control" readonly style="opacity:.6;"></div>
-            <div class="form-group"><label class="form-label">Staff ID</label><input id="coordinatorStaffId" type="text" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" class="form-control" placeholder="e.g. 234156"></div>
-            <div class="form-group"><label class="form-label">Email Address</label><input id="coordinatorEmail" type="email" class="form-control"></div>
+            <div class="form-group"><label class="form-label">Staff ID</label><input id="coordinatorStaffId" type="text" class="form-control" readonly></div>
+            <div class="form-group"><label class="form-label">Email Address</label><input id="coordinatorEmail" type="email" class="form-control" readonly></div>
             <div class="form-group"><label class="form-label">Assigned Students</label><input id="coordinatorStudentCount" type="text" class="form-control" readonly style="opacity:.6;"></div>
           </div>
         </div>
@@ -67,6 +65,7 @@
           <div class="panel-body">
             <div class="form-group"><label class="form-label">Faculty</label><input id="coordinatorFaculty" type="text" class="form-control" readonly style="opacity:.6;"></div>
             <div class="form-group"><label class="form-label">Course</label><input id="coordinatorProgramme" type="text" class="form-control" readonly style="opacity:.6;"></div>
+            <div class="form-group"><label class="form-label">Campus</label><input id="coordinatorCampus" type="text" class="form-control" readonly style="opacity:.7;"></div>
             <div class="form-group"><label class="form-label">Institution</label><input type="text" class="form-control" value="Universiti Teknologi MARA" readonly style="opacity:.6;"></div>
             <div class="form-group"><label class="form-label">Role</label><input type="text" class="form-control" value="Course Coordinator" readonly style="opacity:.6;"></div>
           </div>
@@ -75,15 +74,10 @@
       <div class="panel" style="margin-top:0;">
         <div class="panel-header"><h3><i class="fas fa-lock" style="color:var(--red);margin-right:8px;"></i>Change Password</h3></div>
         <div class="panel-body">
-          <div class="form-row">
-            <div class="form-group"><label class="form-label">Current Password</label><input type="password" class="form-control" placeholder="••••••••"></div>
-            <div class="form-group"><label class="form-label">New Password</label><input type="password" class="form-control" placeholder="••••••••"></div>
-          </div>
-          <button class="btn btn-outline" disabled><i class="fas fa-key"></i> Contact administrator to change password</button>
+          <p style="color:var(--text2);font-size:13px;margin-bottom:14px;">For your security, we will email a single-use verification link to your registered address. The link expires after 15 minutes.</p>
+          <button id="passwordVerificationButton" class="btn btn-outline" onclick="requestPasswordChange()"><i class="fas fa-envelope"></i> Send Verification Email</button>
+          <p id="passwordVerificationStatus" role="status" style="font-size:12px;margin-top:10px;color:var(--text2);"></p>
         </div>
-      </div>
-      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:4px;">
-        <button class="btn btn-primary" onclick="saveCoordinatorProfile()"><i class="fas fa-save"></i> Save Changes</button>
       </div>
     </div>
   </div>
@@ -92,7 +86,7 @@
 <script>
 function showToast(msg){const t=document.getElementById('toast');document.getElementById('toastMsg').textContent=msg;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',3000);}
 </script>
-  <script src="../assets/js/app.js?v=20261030-qa1"></script>
+  <script src="../assets/js/app.js?v=20261031-brand2"></script>
 </body>
 </html>
 

@@ -39,7 +39,7 @@ if ($role === 'admin') {
 
 $students = summaryRows("
     SELECT
-        u.id, u.name, u.email, sp.matric_id, sp.faculty, sp.programme,
+        u.id, u.name, u.email, sp.matric_id, sp.campus, sp.faculty, sp.programme,
         sp.coordinator_id, coordinator.name AS coordinator_name, sp.cgpa,
         COUNT(o.id) AS offers_count,
         COUNT(o.id) FILTER (WHERE o.status = 'pending') AS pending_count,
@@ -80,7 +80,7 @@ $offers = summaryRows("
         o.offer_date + {$responsePeriodDays} AS configured_response_deadline,
         (o.status = 'pending' AND CURRENT_DATE - o.offer_date > {$responsePeriodDays}) AS response_period_exceeded,
         u.name AS student_name, sp.matric_id, u.email AS student_email,
-        sp.faculty, sp.programme, sp.cgpa,
+        sp.campus, sp.faculty, sp.programme, sp.cgpa,
         c.name AS company_name, c.industry, c.location, c.allowance, c.work_mode, c.hr_email
     FROM offers o
     JOIN users u ON u.id = o.student_id

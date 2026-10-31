@@ -1,7 +1,7 @@
 <?php
 /** Fictional student profiles keyed by matric number. */
 $fixtureStudents = [
-    '2025161705' => ['Alif Mukhlis bin Ahmad', 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours (Netcentric Computing)', 3.67],
+    '2025161705' => ['Alif Mukhlis bin Mohd Tarmizi', 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours (Netcentric Computing)', 3.67],
     '2025161708' => ['Nurul Aisyah binti Hassan', 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours', 3.55],
     '2025161712' => ['Muhammad Faris bin Abdullah', 'Faculty of Computer and Mathematical Sciences', 'Bachelor of Computer Science with Honours', 3.40],
     '2026124101' => ['Aina Sofea binti Rahman', 'Faculty of Accountancy', 'Bachelor of Accountancy with Honours', 3.82],
