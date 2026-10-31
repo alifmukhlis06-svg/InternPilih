@@ -720,13 +720,14 @@ textarea:focus-visible { outline:3px solid #a78bfa; outline-offset:2px; border-c
 .brand-logo-image { position:absolute; width:300%; max-width:none; height:auto; left:50%; top:50%; transform:translate(-50%,-50%); }
 .sidebar-logo .icon.brand-logo-frame { border:1px solid #4b2e73; }
 .recovery-mark.brand-logo-frame { border:1px solid #4b2e73; }
-.login-brand-animation { display:block; width:168px; height:168px; margin:0 auto 10px; overflow:hidden; border-radius:18px; border:1px solid #342451; background:#05030b; }
-.login-brand-animation img { display:block; width:100%; height:100%; object-fit:cover; }
+.login-brand-static { width:72px; height:72px; margin:0 auto 14px; border:1px solid #4b2e73; border-radius:14px; }
 
 html[data-protected]:not([data-auth-ready])::before {
   content:'';
   background:#05030b url('../images/internpilih-brand-animation.gif') center / min(72vw,420px) no-repeat;
 }
+html[data-protected][data-auth-ready] body { animation:internpilihPageReveal .2s ease-out both; }
+@keyframes internpilihPageReveal { from { opacity:0; } to { opacity:1; } }
 html[data-protected][data-load-error]:not([data-auth-ready])::before {
   content:'InternPilih could not load this page safely. Refresh to try again.';
   padding-top:440px;
@@ -744,11 +745,10 @@ html[data-protected][data-load-error]:not([data-auth-ready])::before {
 
 @media (prefers-reduced-motion:reduce) {
   *,*::before,*::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
-  html[data-protected]:not([data-auth-ready])::before { background-image:url('../images/internpilih-logo.png'); background-size:min(72vw,420px); }
 }
 
 @media (max-width:600px) {
-  .login-brand-animation { width:132px; height:132px; }
+  .login-brand-static { width:64px; height:64px; }
   .login-page { overflow-x:hidden; }
   .login-card { max-width:100%; }
 }

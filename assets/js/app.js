@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Shared browser helpers.
  */
 
@@ -42,7 +42,6 @@
   let authSucceeded = !protectedPage;
   let domReady = document.readyState !== 'loading';
   let initialRequests = 0;
-  let initialLoadFailed = false;
   let revealTimer = null;
 
   window.authReady = protectedPage
@@ -73,10 +72,7 @@
     window.clearTimeout(revealTimer);
     revealTimer = window.setTimeout(function () {
       if (initialRequests !== 0) return;
-      if (initialLoadFailed) {
-        root.setAttribute('data-load-error', '');
-        return;
-      }
+      root.removeAttribute('data-load-error');
       root.setAttribute('data-auth-ready', '');
     }, 0);
   }
@@ -100,12 +96,8 @@
         window.location.replace(window.appUrl('/login.html'));
         return response;
       }
-      if (!response.ok && !root.hasAttribute('data-auth-ready')) {
-        initialLoadFailed = true;
-      }
       return response;
     } catch (error) {
-      if (!root.hasAttribute('data-auth-ready')) initialLoadFailed = true;
       throw error;
     } finally {
       initialRequests--;
@@ -125,7 +117,7 @@
 (function loadAccessibilityControls() {
   if (window.__internPilihAccessibilityInstalled) return;
   const script = document.createElement('script');
-  script.src = window.appUrl('/assets/js/accessibility.js?v=20261031-brand2');
+  script.src = window.appUrl('/assets/js/accessibility.js?v=20261031-brand3');
   script.defer = true;
   document.head.appendChild(script);
 })();

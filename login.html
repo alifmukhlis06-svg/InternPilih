@@ -20,7 +20,7 @@
 .demo-accounts{background:#f8fafc;border:1px solid var(--border);border-radius:6px;}
 .demo-row{gap:12px;}
 .demo-row span{line-height:1.35;}
-.login-page{background:#05030b;padding:32px max(24px,calc((100vw - 1120px)/2));}
+.login-page{justify-content:center;align-items:center;background:#05030b;padding:32px 20px;}
 .login-page::before{background:radial-gradient(circle at 74% 48%,rgba(124,58,237,.22),transparent 30%),rgba(5,3,11,.76);}
 .login-card{background:#0d0918;border-color:#342451;box-shadow:0 24px 70px rgba(0,0,0,.52);}
 .demo-accounts{background:#171029;border-color:#342451;}
@@ -36,10 +36,9 @@
 <div class="login-page">
   <div class="login-card">
     <div class="login-logo">
-      <picture class="login-brand-animation">
-        <source media="(prefers-reduced-motion: reduce)" srcset="assets/images/internpilih-logo.png">
-        <img src="assets/images/internpilih-brand-animation.gif" alt="InternPilih animated logo">
-      </picture>
+      <div class="login-brand-static brand-logo-frame">
+        <img class="brand-logo-image" src="assets/images/internpilih-logo.png" alt="InternPilih">
+      </div>
       <h1>InternPilih</h1>
       <p>UiTM Internship Post-Offer Management System</p>
     </div>
@@ -212,7 +211,7 @@ function showErr(msg) {
 document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 loadDemoAccounts();
 </script>
-<script src="assets/js/app.js?v=20261031-brand2"></script>
+<script src="assets/js/app.js?v=20261031-brand3"></script>
 </body>
 </html>
 

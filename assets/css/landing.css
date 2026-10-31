@@ -265,14 +265,8 @@
 .landing-page .nav-links .nav-cta { background:#7c3aed; }
 .landing-page .nav-links .nav-cta:hover { background:#8b5cf6; }
 .landing-page .hero { background:#05030b; }
-.landing-page .hero::before { z-index:0; background:radial-gradient(circle at 76% 48%,rgba(124,58,237,.16),transparent 24%),#05030b; }
-.landing-page .hero::after {
-  content:""; position:absolute; z-index:1; right:max(7vw,42px); top:50%;
-  width:min(31vw,390px); aspect-ratio:1; transform:translateY(-50%);
-  border:1px solid #342451; border-radius:28px;
-  background:#05030b url('../images/internpilih-logo.png') center / 300% auto no-repeat;
-  box-shadow:0 24px 80px rgba(76,29,149,.22);
-}
+.landing-page .hero::before { z-index:0; background:radial-gradient(circle at 76% 48%,rgba(124,58,237,.14),transparent 24%),#05030b; }
+.landing-page .hero::after { display:none; }
 .landing-page .hero-content { z-index:2; }
 .landing-page .hero-title { color:#f8f5ff; }
 .landing-page .hero-title span,.landing-page .hero-badge { color:#a78bfa; }
@@ -305,8 +299,16 @@
 .landing-page .footer { background:#05030b; border-bottom-color:#8b5cf6; }
 .landing-page .footer p { color:#b8aec6; }
 .landing-page .nav-logo .logo-box { background:#05030b; border:1px solid #4b2e73; }
+.landing-page .role-icon,
+.landing-page .module-icon,
+.landing-page .qlogin-btns a {
+  color:#c4b5fd !important;
+  background:#1b1030 !important;
+  border-color:#4b2e73 !important;
+}
+.landing-page .role-features li::before { background:#8b5cf6 !important; }
 
 @media (max-width:760px) {
   .landing-page .hero::before { background:rgba(5,3,11,.82); }
-  .landing-page .hero::after { right:-70px; width:300px; opacity:.18; }
+  .landing-page .hero::after { display:none; }
 }

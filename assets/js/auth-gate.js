@@ -19,7 +19,6 @@
   let authSucceeded = !protectedPage;
   let domReady = document.readyState !== 'loading';
   let initialRequests = 0;
-  let initialLoadFailed = false;
   let revealTimer = null;
 
   window.appUrl = function (path) {
@@ -55,11 +54,8 @@
     window.clearTimeout(revealTimer);
     revealTimer = window.setTimeout(function () {
       if (initialRequests !== 0) return;
-      if (initialLoadFailed) {
-        root.setAttribute('data-load-error', '');
-      } else {
-        root.setAttribute('data-auth-ready', '');
-      }
+      root.removeAttribute('data-load-error');
+      root.setAttribute('data-auth-ready', '');
     }, 0);
   }
 
@@ -98,12 +94,9 @@
       const response = await nativeFetch(resolved, init);
       if (response.status === 401) {
         window.location.replace(window.appUrl('/login.html'));
-      } else if (!response.ok && !root.hasAttribute('data-auth-ready')) {
-        initialLoadFailed = true;
       }
       return response;
     } catch (error) {
-      if (!root.hasAttribute('data-auth-ready')) initialLoadFailed = true;
       throw error;
     } finally {
       initialRequests--;
