@@ -5,10 +5,11 @@
 <title>Student Dashboard - InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261031-classic1"></script>
 <link rel="stylesheet" href="../assets/css/style.css?v=20261031-classic1">
+<link rel="stylesheet" href="../assets/css/student-dashboard.css?v=20261104-antislop1">
 <script src="../assets/js/auth-gate.js?v=20261031-classic1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
-<body>
+<body class="student-dashboard">
 <div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
   <div class="sidebar-brand">
     <div class="sidebar-logo"><div class="icon"><i class="fas fa-graduation-cap"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Student Portal</div></div></div>
@@ -38,27 +39,27 @@
 </div>
 
 <div class="main">
-  <div class="topbar">
+  <header class="topbar">
     <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
     <div><h1>Dashboard</h1><p class="topbar-sub">Welcome back, <span class="user-name">Alif</span>! Here's your internship overview.</p></div>
     <div class="topbar-right">
-      <a href="notifications.html" class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></a>
-      <a href="profile.html" class="user-avatar">AM</a>
+      <a href="notifications.html" class="notif-btn" aria-label="Open notifications"><i class="fas fa-bell" aria-hidden="true"></i><span class="notif-dot" aria-hidden="true"></span></a>
+      <a href="profile.html" class="user-avatar" aria-label="Open student profile">AM</a>
     </div>
-  </div>
+  </header>
 
-  <div class="content fade-in">
+  <main class="content fade-in student-dashboard-content">
     <section class="dashboard-brief" aria-labelledby="student-brief-title">
       <div class="dashboard-brief-copy">
         <span class="dashboard-brief-kicker">Current semester</span>
         <h2 id="student-brief-title">Keep your internship decisions moving.</h2>
         <p>Review new offers, record each response, and keep your placement documents ready for coordinator verification.</p>
-        <a class="dashboard-brief-link" href="record-offer.html">Record a new offer <i class="fas fa-arrow-right"></i></a>
+        <a class="dashboard-brief-link" href="record-offer.html">Record a new offer <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
       </div>
     </section>
 
-    <div class="panel" style="margin-bottom:18px;">
-      <div class="panel-header"><h3><i class="fas fa-calendar-check" style="color:var(--blue3);margin-right:8px;"></i>Internship Schedule</h3><span data-schedule-label="semester" style="font-size:12px;color:var(--text2);">March–August 2027</span></div>
+    <section class="panel student-schedule-panel" aria-labelledby="student-schedule-title">
+      <div class="panel-header"><h3 id="student-schedule-title"><i class="fas fa-calendar-check" aria-hidden="true"></i>Internship Schedule</h3><span class="student-semester" data-schedule-label="semester">March–August 2027</span></div>
       <div class="panel-body schedule-grid">
         <div class="schedule-item"><span>Application / offer preparation</span><strong data-schedule-key="internship_application_open">15 Nov 2026</strong></div>
         <div class="schedule-item"><span>Main company / offer deadline</span><strong data-schedule-key="main_offer_deadline">15 Dec 2026</strong></div>
@@ -67,14 +68,14 @@
         <div class="schedule-item"><span>Internship begins</span><strong data-schedule-key="internship_start_date">15 Mar 2027</strong></div>
         <div class="schedule-item"><span>Internship ends</span><strong data-schedule-key="internship_end_date">31 Aug 2027</strong></div>
       </div>
-    </div>
+    </section>
 
     <!-- ALERT -->
-    <div class="alert alert-warning" id="alert-bar" style="display:none;"><i class="fas fa-exclamation-triangle"></i><div id="alert-text"></div></div>
+    <div class="alert alert-warning student-dashboard-alert" id="alert-bar" role="status" style="display:none;"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><div id="alert-text"></div></div>
 
     <!-- STATS -->
-    <div class="stats-grid">
-      <div class="stat-card gold">
+    <section class="stats-grid student-stats-grid" aria-label="Offer summary">
+      <div class="stat-card gold student-stat-priority">
         <div class="stat-icon gold"><i class="fas fa-hourglass-half"></i></div>
         <div><div class="stat-val" id="stat-pending">0</div><div class="stat-label">Pending Offers</div><div class="stat-change down">Action needed</div></div>
       </div>
@@ -90,27 +91,27 @@
         <div class="stat-icon red"><i class="fas fa-times-circle"></i></div>
         <div><div class="stat-val" id="stat-rejected">0</div><div class="stat-label">Rejected</div><div class="stat-change">Replies sent</div></div>
       </div>
-    </div>
+    </section>
 
-    <div class="page-grid">
-      <div class="panel">
+    <div class="page-grid student-dashboard-grid">
+      <section class="panel student-offers-panel" aria-labelledby="student-offers-title">
         <div class="panel-header">
-          <h3 class="icon-heading"><i class="fas fa-briefcase"></i>Current Internship Offers</h3>
+          <h3 class="icon-heading" id="student-offers-title"><i class="fas fa-briefcase" aria-hidden="true"></i>Current Internship Offers</h3>
           <a href="record-offer.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add Offer</a>
         </div>
         <div class="table-wrap">
-          <table class="data-table">
-            <thead><tr><th>Company</th><th>Position</th><th>Deadline</th><th>Status</th><th>Action</th></tr></thead>
+          <table class="data-table" aria-label="Current internship offers">
+            <thead><tr><th scope="col">Company</th><th scope="col">Position</th><th scope="col">Deadline</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
             <tbody id="offers-tbody">
               <!-- Dynamically populated -->
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      <div>
-        <div class="panel">
-          <div class="panel-header"><h3>Placement Status</h3></div>
+      <aside class="student-dashboard-aside" aria-label="Placement and notification summary">
+        <section class="panel student-placement-panel" aria-labelledby="student-placement-title">
+          <div class="panel-header"><h3 id="student-placement-title">Placement Status</h3></div>
           <div class="panel-body">
             <div style="margin-bottom:14px;">
               <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Offers Recorded</span><strong id="placement-sent">0</strong></div>
@@ -133,15 +134,15 @@
               <span>Please accept an offer or record a new one to proceed with verification documents.</span>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div class="panel">
-          <div class="panel-header"><h3>Notifications</h3><a href="notifications.html" class="panel-link">View all</a></div>
+        <section class="panel student-notifications-panel" aria-labelledby="student-notifications-title">
+          <div class="panel-header"><h3 id="student-notifications-title">Notifications</h3><a href="notifications.html" class="panel-link">View all</a></div>
           <div class="panel-section" id="dashboardNotifications"><div class="empty-state" style="padding:24px;"><i class="fas fa-spinner fa-spin"></i><p>Loading notifications...</p></div></div>
-        </div>
-      </div>
+        </section>
+      </aside>
     </div>
-  </div>
+  </main>
 </div>
 
 <script>
