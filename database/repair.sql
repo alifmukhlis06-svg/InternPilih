@@ -243,11 +243,12 @@ CREATE TABLE system_settings (
 INSERT INTO system_settings (setting_key, setting_value)
 VALUES ('offer_response_period_days', '14');
 INSERT INTO system_settings (setting_key, setting_value) VALUES
-('internship_application_open', '2026-11-02'),
+('internship_application_open', '2026-11-15'),
 ('main_offer_deadline', '2026-12-15'),
 ('placement_confirmation_deadline', '2027-01-15'),
-('document_completion_deadline', '2027-01-31'),
-('internship_start_date', '2027-03-01');
+('document_completion_deadline', '2027-02-15'),
+('internship_start_date', '2027-03-15'),
+('internship_end_date', '2027-08-31');
 
 -- ============================================================
 -- SEED: Companies
@@ -287,12 +288,12 @@ INSERT INTO employers (user_id, company_id) VALUES (5, 2);
 -- SEED: Offers
 -- ============================================================
 INSERT INTO offers (student_id, company_id, position, offer_date, deadline, internship_start_date, status, response_date) VALUES
-(1, 1, 'Data Analytics Intern',        '2026-11-20', '2026-12-15', '2027-03-01', 'accepted', '2027-01-10'),
-(1, 2, 'Cybersecurity Intern',         '2026-11-25', '2026-12-20', '2027-03-01', 'pending',  NULL),
-(1, 3, 'Network Engineering Intern',   '2026-12-01', '2027-01-10', '2027-03-01', 'pending',  NULL),
-(2, 2, 'Software Development Intern',  '2026-11-22', '2026-12-18', '2027-03-01', 'accepted', '2027-01-12'),
-(2, 3, 'Mobile Development Intern',    '2026-12-05', '2027-01-15', '2027-03-01', 'pending',  NULL),
-(3, 2, 'Cloud Operations Intern',      '2026-11-18', '2026-12-15', '2027-03-01', 'rejected', '2026-12-10');
+(1, 1, 'Data Analytics Intern',        '2026-11-20', '2026-12-15', '2027-03-15', 'accepted', '2026-12-15'),
+(1, 2, 'Cybersecurity Intern',         '2026-11-25', '2026-12-20', '2027-03-15', 'pending',  NULL),
+(1, 3, 'Network Engineering Intern',   '2026-12-01', '2027-01-10', '2027-03-15', 'pending',  NULL),
+(2, 2, 'Software Development Intern',  '2026-11-22', '2026-12-18', '2027-03-15', 'accepted', '2026-12-18'),
+(2, 3, 'Mobile Development Intern',    '2026-12-05', '2027-01-15', '2027-03-15', 'pending',  NULL),
+(3, 2, 'Cloud Operations Intern',      '2026-11-18', '2026-12-15', '2027-03-15', 'rejected', '2026-12-10');
 
 -- ============================================================
 -- SEED: Documents
@@ -303,9 +304,9 @@ INSERT INTO documents (student_id, offer_id, doc_type, file_name, status) VALUES
 (1, 1, 'agreement',    'agreement_alif.pdf',         'pending');
 
 INSERT INTO internship_applications (student_id, company_id, position, source, status, applied_at, offer_id, notes) VALUES
-(1, 1, 'Data Analytics Intern', 'student', 'offered', '2026-11-02', 1, 'Converted into accepted offer.'),
-(1, 2, 'Cybersecurity Intern', 'student', 'offered', '2026-11-08', 2, 'Offer received and awaiting student response.'),
-(2, 3, 'Network Engineering Intern', 'student', 'submitted', '2026-11-12', NULL, 'Awaiting employer response.');
+(1, 1, 'Data Analytics Intern', 'student', 'offered', '2026-11-15', 1, 'Converted into accepted offer.'),
+(1, 2, 'Cybersecurity Intern', 'student', 'offered', '2026-11-16', 2, 'Offer received and awaiting student response.'),
+(2, 3, 'Network Engineering Intern', 'student', 'submitted', '2026-11-17', NULL, 'Awaiting employer response.');
 
 INSERT INTO announcements (created_by, type, recipient_group, title, body, link_url, recipient_count, email_sent_count, email_failed_count) VALUES
 (4, 'urgent', 'all', 'Document submission reminder', 'Please upload your internship agreement and remaining placement documents for coordinator verification.', 'documents.html', 1, 0, 0),

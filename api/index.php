@@ -20,6 +20,7 @@ $handlers = [
     'placement-changes' => 'placement-changes.php',
     'profile' => 'profile.php',
     'reports' => 'reports.php',
+    'schedule' => 'schedule.php',
     'settings' => 'settings.php',
     'summary' => 'summary.php',
     'telegram-status' => 'telegram-status.php',

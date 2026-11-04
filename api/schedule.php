@@ -14,6 +14,7 @@ $keys = [
     'placement_confirmation_deadline',
     'document_completion_deadline',
     'internship_start_date',
+    'internship_end_date',
 ];
 $quoted = implode(', ', array_map(static fn(string $key): string => "'{$key}'", $keys));
 $result = db()->query("

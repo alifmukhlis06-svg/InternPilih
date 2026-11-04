@@ -131,10 +131,10 @@ $employerContactNames = [
 $additionalCompanies = [];
 $counts = ['students' => 0, 'coordinators' => 0, 'companies' => 0, 'employers' => 0, 'offers' => 0, 'applications' => 0, 'documents' => 0, 'announcements' => 0, 'notifications' => 0, 'activity' => 0, 'change_requests' => 0];
 $today = new DateTimeImmutable('today');
-$applicationOpen = new DateTimeImmutable('2026-11-02');
+$applicationOpen = new DateTimeImmutable('2026-11-15');
 $mainOfferDeadline = new DateTimeImmutable('2026-12-15');
 $placementDeadline = new DateTimeImmutable('2027-01-15');
-$internshipStart = new DateTimeImmutable('2027-03-01');
+$internshipStart = new DateTimeImmutable('2027-03-15');
 $password = password_hash('password123', PASSWORD_DEFAULT);
 
 $db->begin_transaction();

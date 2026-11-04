@@ -213,11 +213,12 @@ CREATE TABLE IF NOT EXISTS public.system_settings (
 CREATE INDEX IF NOT EXISTS idx_system_settings_updated_by ON public.system_settings(updated_by);
 
 INSERT INTO public.system_settings (setting_key, setting_value) VALUES
-    ('internship_application_open', '2026-11-02'),
+    ('internship_application_open', '2026-11-15'),
     ('main_offer_deadline', '2026-12-15'),
     ('placement_confirmation_deadline', '2027-01-15'),
-    ('document_completion_deadline', '2027-01-31'),
-    ('internship_start_date', '2027-03-01')
+    ('document_completion_deadline', '2027-02-15'),
+    ('internship_start_date', '2027-03-15'),
+    ('internship_end_date', '2027-08-31')
 ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value;
 
 CREATE OR REPLACE FUNCTION public.set_updated_at()

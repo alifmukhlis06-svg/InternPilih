@@ -37,7 +37,7 @@
       "continue": true
     },
     {
-      "src": "/api/(?<endpoint>auth|applications|companies|document-file|documents|gemini|mail-status|notifications|offer-risk-ai|offers|password-reset|placement-changes|profile|reports|settings|summary|telegram-status)\\.php",
+      "src": "/api/(?<endpoint>auth|applications|companies|document-file|documents|gemini|mail-status|notifications|offer-risk-ai|offers|password-reset|placement-changes|profile|reports|schedule|settings|summary|telegram-status)\\.php",
       "dest": "/api/index?endpoint=$endpoint"
     },
     { "src": "/api/.*", "status": 404 },

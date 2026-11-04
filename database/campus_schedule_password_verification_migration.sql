@@ -35,13 +35,13 @@ JOIN users u ON u.id = s.user_id
 SET a.campus = 'Arau'
 WHERE s.matric_id = '2025161705' OR u.name LIKE 'Alif Mukhlis%';
 
-UPDATE offers SET internship_start_date = '2027-03-01'
-WHERE internship_start_date IS NULL;
+UPDATE offers SET internship_start_date = '2027-03-15';
 
 INSERT INTO system_settings (setting_key, setting_value) VALUES
-('internship_application_open', '2026-11-02'),
+('internship_application_open', '2026-11-15'),
 ('main_offer_deadline', '2026-12-15'),
 ('placement_confirmation_deadline', '2027-01-15'),
-('document_completion_deadline', '2027-01-31'),
-('internship_start_date', '2027-03-01')
+('document_completion_deadline', '2027-02-15'),
+('internship_start_date', '2027-03-15'),
+('internship_end_date', '2027-08-31')
 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
