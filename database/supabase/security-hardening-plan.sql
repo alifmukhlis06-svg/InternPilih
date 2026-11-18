@@ -48,7 +48,7 @@ REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated
 --     public.app_sessions, public.login_rate_limits TO internpilih_app;
 -- GRANT DELETE ON public.offers, public.password_reset_tokens,
 --     public.app_sessions, public.login_rate_limits TO internpilih_app;
--- GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO internpilih_app;
+-- GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO internpilih_app;
 --
 -- Preferred future state: migrate application identity to Supabase Auth or expose
 -- narrowly scoped SECURITY DEFINER functions, then change this role to NOBYPASSRLS

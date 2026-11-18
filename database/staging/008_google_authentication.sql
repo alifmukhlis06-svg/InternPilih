@@ -36,13 +36,17 @@ REVOKE ALL PRIVILEGES ON SEQUENCE public.authentication_audit_logs_id_seq FROM P
 
 DO $$
 BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'internpilih_app') THEN
+        GRANT INSERT ON public.authentication_audit_logs TO internpilih_app;
+        GRANT USAGE ON SEQUENCE public.authentication_audit_logs_id_seq TO internpilih_app;
+    END IF;
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'internpilih_backend') THEN
-        GRANT SELECT, INSERT ON public.authentication_audit_logs TO internpilih_backend;
-        GRANT USAGE, SELECT ON SEQUENCE public.authentication_audit_logs_id_seq TO internpilih_backend;
+        GRANT INSERT ON public.authentication_audit_logs TO internpilih_backend;
+        GRANT USAGE ON SEQUENCE public.authentication_audit_logs_id_seq TO internpilih_backend;
     END IF;
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'internpilih_staging_app') THEN
-        GRANT SELECT, INSERT ON public.authentication_audit_logs TO internpilih_staging_app;
-        GRANT USAGE, SELECT ON SEQUENCE public.authentication_audit_logs_id_seq TO internpilih_staging_app;
+        GRANT INSERT ON public.authentication_audit_logs TO internpilih_staging_app;
+        GRANT USAGE ON SEQUENCE public.authentication_audit_logs_id_seq TO internpilih_staging_app;
     END IF;
 END
 $$;

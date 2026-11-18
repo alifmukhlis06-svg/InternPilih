@@ -84,13 +84,17 @@ REVOKE ALL PRIVILEGES ON public.placement_change_documents
 
 DO $$
 BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'internpilih_app') THEN
+        GRANT SELECT, INSERT, UPDATE ON public.placement_change_documents TO internpilih_app;
+        GRANT USAGE ON SEQUENCE public.placement_change_documents_id_seq TO internpilih_app;
+    END IF;
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'internpilih_backend') THEN
-        GRANT SELECT, INSERT, UPDATE, DELETE ON public.placement_change_documents TO internpilih_backend;
-        GRANT USAGE, SELECT ON SEQUENCE public.placement_change_documents_id_seq TO internpilih_backend;
+        GRANT SELECT, INSERT, UPDATE ON public.placement_change_documents TO internpilih_backend;
+        GRANT USAGE ON SEQUENCE public.placement_change_documents_id_seq TO internpilih_backend;
     END IF;
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'internpilih_staging_app') THEN
-        GRANT SELECT, INSERT, UPDATE, DELETE ON public.placement_change_documents TO internpilih_staging_app;
-        GRANT USAGE, SELECT ON SEQUENCE public.placement_change_documents_id_seq TO internpilih_staging_app;
+        GRANT SELECT, INSERT, UPDATE ON public.placement_change_documents TO internpilih_staging_app;
+        GRANT USAGE ON SEQUENCE public.placement_change_documents_id_seq TO internpilih_staging_app;
     END IF;
 END
 $$;
