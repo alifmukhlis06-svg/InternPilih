@@ -12,7 +12,7 @@ require_once __DIR__ . '/../config/db.php';
 $expectedTables = [
     'users', 'companies', 'admins', 'students', 'employers', 'offers',
     'documents', 'internship_applications', 'announcements', 'notifications',
-    'activity_logs', 'placement_change_requests', 'password_reset_tokens',
+    'activity_logs', 'authentication_audit_logs', 'placement_change_requests', 'placement_change_documents', 'password_reset_tokens',
     'system_settings',
 ];
 

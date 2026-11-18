@@ -18,6 +18,8 @@ CREATE TABLE users (
     phone       VARCHAR(30)   NULL,
     password    VARCHAR(255)  NOT NULL,
     role        ENUM('student','admin','employer') NOT NULL DEFAULT 'student',
+    google_auth_user_id VARCHAR(100) NULL UNIQUE,
+    last_login_at DATETIME NULL,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -169,6 +171,16 @@ CREATE TABLE activity_logs (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
+CREATE TABLE authentication_audit_logs (
+    id                    BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id               INT UNSIGNED NULL,
+    action                ENUM('google_login_success','password_login_success','login_failure','logout','unauthorized_access_attempt') NOT NULL,
+    authentication_method ENUM('google','password','session') NOT NULL,
+    created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_authentication_audit_user_created (user_id, created_at),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
 -- ============================================================
 -- TABLE 8: internship_applications
 -- ============================================================
@@ -216,10 +228,14 @@ CREATE TABLE placement_change_requests (
     current_offer_id   INT UNSIGNED NOT NULL,
     requested_offer_id INT UNSIGNED NOT NULL,
     reason             TEXT NOT NULL,
-    status             ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+    status             ENUM('preparing_request','documents_complete','request_submitted','coordinator_review','revision_required','approved','rejected') NOT NULL DEFAULT 'preparing_request',
     reviewed_by        INT UNSIGNED NULL,
     review_note        VARCHAR(500) NULL,
     reviewed_at        DATETIME NULL,
+    submitted_at       DATETIME NULL,
+    revision_requested_at DATETIME NULL,
+    revision_deadline  DATETIME NULL,
+    final_decision_at  DATETIME NULL,
     created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_pcr_student_status (student_id, status),
     INDEX idx_pcr_status_created (status, created_at),
@@ -227,6 +243,31 @@ CREATE TABLE placement_change_requests (
     FOREIGN KEY (current_offer_id)   REFERENCES offers(id) ON DELETE CASCADE,
     FOREIGN KEY (requested_offer_id) REFERENCES offers(id) ON DELETE CASCADE,
     FOREIGN KEY (reviewed_by)        REFERENCES users(id)  ON DELETE SET NULL
+);
+
+CREATE TABLE placement_change_documents (
+    id                 BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    request_id         BIGINT UNSIGNED NOT NULL,
+    document_type      ENUM('proof_of_sending','placement_change_letter','company_response') NOT NULL,
+    status             ENUM('missing','uploaded','verified','rejected') NOT NULL DEFAULT 'missing',
+    file_name          VARCHAR(255) NULL,
+    storage_bucket     VARCHAR(100) NULL,
+    storage_object_path VARCHAR(500) NULL,
+    content_type       VARCHAR(100) NULL,
+    byte_size          BIGINT UNSIGNED NULL,
+    sha256             CHAR(64) NULL,
+    uploaded_at        DATETIME NULL,
+    replaced_at        DATETIME NULL,
+    last_submitted_at  DATETIME NULL,
+    verified_at        DATETIME NULL,
+    rejected_at        DATETIME NULL,
+    reviewed_by        INT UNSIGNED NULL,
+    rejection_reason   VARCHAR(500) NULL,
+    created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_change_document_type (request_id, document_type),
+    FOREIGN KEY (request_id) REFERENCES placement_change_requests(id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- ============================================================

@@ -34,6 +34,7 @@ INTERNPILIH_STAGING_APP_USER
 INTERNPILIH_STAGING_APP_PASSWORD
 INTERNPILIH_STAGING_TEST_PASSWORD
 INTERNPILIH_STAGING_SUPABASE_URL
+INTERNPILIH_SUPABASE_PUBLISHABLE_KEY
 INTERNPILIH_STAGING_SUPABASE_STORAGE_SECRET
 ```
 
@@ -65,6 +66,7 @@ apply in this order to the staging project only:
 5. `database/staging/005_campus_schedule_password_verification.sql` — add campus,
    the March 2027 placement start, password-token purpose, and canonical cycle dates.
 6. `database/staging/006_normalize_synthetic_accounts.sql` — normalize academic
+7. `database/staging/007_placement_change_document_workflow.sql` — add the three-document placement-change review workflow, revision deadlines, and active-request uniqueness guard.
    emails, phones, campuses, and unique six-digit coordinator staff IDs.
 7. `php database/staging/enable-backend-role.php --execute` — privately set and
    verify the restricted role password.
@@ -113,6 +115,7 @@ INTERNPILIH_APP_URL
 INTERNPILIH_ENVIRONMENT=staging
 INTERNPILIH_STORAGE_DRIVER=supabase
 INTERNPILIH_SUPABASE_URL
+INTERNPILIH_SUPABASE_PUBLISHABLE_KEY
 INTERNPILIH_SUPABASE_STORAGE_SECRET
 INTERNPILIH_STORAGE_BUCKET=documents
 INTERNPILIH_MAIL_DRIVER=disabled

@@ -21,5 +21,6 @@ return [
     'test_password' => 'YOUR_UNIQUE_SYNTHETIC_TEST_PASSWORD',
 
     'project_url' => 'https://YOUR_STAGING_PROJECT_REF.supabase.co',
+    'publishable_key' => 'YOUR_STAGING_SUPABASE_PUBLISHABLE_KEY',
     'storage_secret' => 'YOUR_STAGING_SUPABASE_SECRET_KEY',
 ];

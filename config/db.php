@@ -125,7 +125,9 @@ final class DatabaseConnection
         'announcements',
         'notifications',
         'activity_logs',
+        'authentication_audit_logs',
         'placement_change_requests',
+        'placement_change_documents',
         'password_reset_tokens',
     ];
 

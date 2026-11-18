@@ -150,6 +150,24 @@
 .student-dashboard .data-table th { background:#f1f6f3; color:#4c6258; }
 .student-dashboard .data-table td { color:var(--text3); }
 .student-dashboard .data-table tbody tr:hover { background:#f6faf8; }
+.student-dashboard .student-offers-panel .data-table { width:100%; border-collapse:collapse; table-layout:auto; }
+.student-dashboard .student-offers-panel .data-table th,
+.student-dashboard .student-offers-panel .data-table td {
+  padding:13px 14px;
+  vertical-align:middle;
+  border-bottom:1px solid var(--border);
+}
+.student-dashboard .student-offers-panel .data-table td { height:66px; }
+.student-dashboard .student-offers-panel .data-table tbody tr:last-child td { border-bottom:0; }
+.student-dashboard .student-offers-panel .offer-actions-cell { min-width:190px; }
+.student-dashboard .student-offers-panel .offer-actions {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-height:32px;
+  flex-wrap:wrap;
+}
+.student-dashboard .student-offers-panel .offer-action-text { color:var(--text3); font-size:12px; }
 .student-dashboard .progress-bar { height:6px; background:#e3ece7; }
 .student-dashboard .notif-dot-icon { background:#e2f1e9 !important; color:#145c43 !important; border-radius:6px; }
 .student-dashboard .notif-item { gap:11px; }
@@ -232,6 +250,8 @@ html[data-theme="dark"] .student-dashboard .data-table tbody tr:hover { backgrou
     display:grid !important;
     grid-template-columns:minmax(78px,.4fr) minmax(0,1fr);
     gap:10px;
+    height:auto;
+    min-width:0;
     padding:7px 0 !important;
     border:0;
     overflow-wrap:anywhere;
@@ -241,9 +261,10 @@ html[data-theme="dark"] .student-dashboard .data-table tbody tr:hover { backgrou
   .student-dashboard .student-offers-panel .data-table td:nth-child(2)::before { content:'Position'; }
   .student-dashboard .student-offers-panel .data-table td:nth-child(3)::before { content:'Deadline'; }
   .student-dashboard .student-offers-panel .data-table td:nth-child(4)::before { content:'Status'; }
-  .student-dashboard .student-offers-panel .data-table td:nth-child(5) { display:flex !important; flex-wrap:wrap; gap:8px; padding-top:10px !important; }
-  .student-dashboard .student-offers-panel .data-table td:nth-child(5)::before { width:100%; content:'Action'; }
-  .student-dashboard .student-offers-panel .data-table td:nth-child(5) .btn { flex:1 1 132px; justify-content:center; white-space:normal; }
+  .student-dashboard .student-offers-panel .data-table td:nth-child(5) { padding-top:10px !important; }
+  .student-dashboard .student-offers-panel .data-table td:nth-child(5)::before { content:'Action'; }
+  .student-dashboard .student-offers-panel .offer-actions { min-width:0; gap:8px; }
+  .student-dashboard .student-offers-panel .offer-actions .btn { flex:1 1 132px; justify-content:center; white-space:normal; }
 }
 
 @media (max-width:520px) {

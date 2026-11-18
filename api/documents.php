@@ -12,18 +12,75 @@ $id     = (int)($_GET['id'] ?? 0);
 
 $uploadDir = __DIR__ . '/../uploads/';
 
+/**
+ * Return the student's one active accepted placement.
+ *
+ * @return array<string,mixed>|null
+ */
+function currentAcceptedPlacement(int $studentId): ?array {
+    $stmt = db()->prepare("
+        SELECT o.id, o.company_id, o.position, o.placement_verification_status,
+               c.name AS company_name
+        FROM offers o
+        JOIN companies c ON c.id = o.company_id
+        WHERE o.student_id = ? AND o.status = 'accepted'
+        ORDER BY COALESCE(o.response_date, o.offer_date) DESC, o.id DESC
+        LIMIT 2
+    ");
+    $stmt->bind_param('i', $studentId);
+    $stmt->execute();
+    $placements = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    if (count($placements) > 1) {
+        respondError(
+            'Multiple active placements were found. Please contact your internship coordinator.',
+            409,
+            'multiple_active_placements'
+        );
+    }
+    return $placements[0] ?? null;
+}
+
 // ── GET — list documents ──────────────────────────────────────
 if ($method === 'GET') {
     if ($user['role'] === 'student') {
-        $stmt = db()->prepare("
-            SELECT d.*, c.name AS company_name, o.placement_verification_status
-            FROM documents d
-            LEFT JOIN offers o ON o.id = d.offer_id
-            LEFT JOIN companies c ON c.id = o.company_id
-            WHERE d.student_id = ?
-            ORDER BY d.uploaded_at DESC
-        ");
-        $stmt->bind_param('i', $user['id']);
+        $placement = currentAcceptedPlacement((int)$user['id']);
+        $placementId = (int)($placement['id'] ?? 0);
+        header('X-InternPilih-Placement-Offer-Id: ' . $placementId);
+        $scope = strtolower(trim((string)($_GET['scope'] ?? 'current')));
+        if (!in_array($scope, ['current', 'history'], true)) {
+            respondError('Invalid document scope.', 422, 'invalid_document_scope');
+        }
+
+        if ($scope === 'history') {
+            $stmt = db()->prepare("
+                SELECT d.*, c.name AS company_name, o.position,
+                       o.status AS offer_status, o.placement_verification_status
+                FROM documents d
+                LEFT JOIN offers o ON o.id = d.offer_id
+                LEFT JOIN companies c ON c.id = o.company_id
+                WHERE d.student_id = ?
+                  AND (d.offer_id IS NULL OR d.offer_id <> ?)
+                ORDER BY d.uploaded_at DESC, d.id DESC
+            ");
+            $stmt->bind_param('ii', $user['id'], $placementId);
+        } elseif ($placement === null) {
+            respond([]);
+        } else {
+            // Upload Docs is placement-scoped: never mix documents from an old
+            // withdrawn placement into the current accepted placement.
+            $stmt = db()->prepare("
+                SELECT d.*, c.name AS company_name, o.position,
+                       o.status AS offer_status, o.placement_verification_status
+                FROM documents d
+                JOIN offers o ON o.id = d.offer_id
+                JOIN companies c ON c.id = o.company_id
+                WHERE d.student_id = ? AND d.offer_id = ?
+                  AND o.student_id = ? AND o.status = 'accepted'
+                ORDER BY d.uploaded_at DESC, d.id DESC
+            ");
+            $studentId = (int)$user['id'];
+            $stmt->bind_param('iii', $studentId, $placementId, $studentId);
+        }
     } elseif ($user['role'] === 'admin') {
         // Coordinator sees documents for their assigned students.
         $stmt = db()->prepare("
@@ -79,20 +136,33 @@ if ($method === 'POST') {
         respondError('The uploaded file content does not match its extension.', 422, 'file_content_mismatch');
     }
 
-    $offerId  = (int)($_POST['offer_id'] ?? 0) ?: null;
+    $requestedOfferId = (int)($_POST['offer_id'] ?? 0) ?: null;
+    $offerId = null;
     $docType  = $_POST['doc_type'] ?? 'other';
     $allowedDocTypes = ['offer_letter', 'agreement', 'student_id', 'supervisor_letter', 'other'];
     if (!in_array($docType, $allowedDocTypes, true)) respondError('Invalid document type', 422, 'invalid_document_type');
 
-    if ($offerId !== null) {
-        $offerStmt = db()->prepare("SELECT id FROM offers WHERE id = ? AND student_id = ? AND status = 'accepted' LIMIT 1");
-        $offerStmt->bind_param('ii', $offerId, $user['id']);
-        $offerStmt->execute();
-        if (!$offerStmt->get_result()->fetch_assoc()) {
+    $placementDocumentTypes = ['offer_letter', 'agreement', 'student_id', 'supervisor_letter'];
+    if (in_array($docType, $placementDocumentTypes, true)) {
+        $placement = currentAcceptedPlacement((int)$user['id']);
+        if ($placement === null) {
+            respondError('Accept a placement before uploading placement documents.', 409, 'accepted_placement_required');
+        }
+        $offerId = (int)$placement['id'];
+        if ($requestedOfferId !== null && $requestedOfferId !== $offerId) {
+            respondError(
+                'Your placement changed before this upload completed. Refresh the page and try again.',
+                409,
+                'placement_changed',
+                ['current_offer_id' => $offerId]
+            );
+        }
+    } elseif ($requestedOfferId !== null) {
+        $placement = currentAcceptedPlacement((int)$user['id']);
+        if ($placement === null || (int)$placement['id'] !== $requestedOfferId) {
             respondError('Documents can only be linked to your accepted placement.', 409, 'accepted_placement_required');
         }
-    } elseif (in_array($docType, REQUIRED_PLACEMENT_DOCUMENT_TYPES, true)) {
-        respondError('Select an accepted placement for this required document.', 409, 'accepted_placement_required');
+        $offerId = $requestedOfferId;
     }
 
     error_log('InternPilih document upload started; request=' . INTERNPILIH_REQUEST_ID
@@ -107,9 +177,12 @@ if ($method === 'POST') {
         if ($storage['driver'] === 'supabase') {
             $sha256 = hash_file('sha256', $file['tmp_name']);
             if ($sha256 === false) throw new RuntimeException('Could not checksum the uploaded file.');
+            $objectPrefix = $offerId !== null
+                ? sprintf('students/%d/offers/%d', (int)$user['id'], (int)$offerId)
+                : sprintf('students/%d/unassigned', (int)$user['id']);
             $objectPath = sprintf(
-                'students/%d/%s-%s.%s',
-                (int)$user['id'],
+                '%s/%s-%s.%s',
+                $objectPrefix,
                 bin2hex(random_bytes(12)),
                 substr($sha256, 0, 16),
                 $ext
@@ -193,6 +266,7 @@ if ($method === 'POST') {
     respond([
         'success' => true,
         'document_id' => $docId,
+        'offer_id' => $offerId,
         'file' => $fileName,
         'status' => 'pending',
         'placement_verification_status' => $placement['status'],

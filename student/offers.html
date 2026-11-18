@@ -119,7 +119,27 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="document.getElementById('changeModal').classList.remove('open')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitPlacementChange()"><i class="fas fa-paper-plane"></i> Submit Request</button>
+      <button class="btn btn-primary" onclick="submitPlacementChange()"><i class="fas fa-folder-open"></i> Start Preparing</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLACEMENT CHANGE DOCUMENT WORKFLOW -->
+<div class="modal-overlay" id="changeWorkflowModal">
+  <div class="modal" style="max-width:760px;">
+    <div class="modal-header"><h3>Placement Change Documents</h3><button class="modal-close" onclick="document.getElementById('changeWorkflowModal').classList.remove('open')">x</button></div>
+    <div class="modal-body">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+        <span class="badge badge-pending" id="changeWorkflowStatus">Preparing Request</span>
+        <strong id="changeWorkflowProgress">0/3 documents uploaded</strong>
+      </div>
+      <div class="alert alert-warning" id="changeRevisionAlert" style="display:none;margin-bottom:14px;"></div>
+      <div id="changeWorkflowDocuments" style="display:grid;gap:10px;"></div>
+      <p style="color:var(--text2);font-size:12px;margin-top:12px;">The Company Response can be added later, but all three documents are required before submission.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('changeWorkflowModal').classList.remove('open')">Close</button>
+      <button class="btn btn-primary" id="submitChangeWorkflow" onclick="submitPreparedPlacementChange()"><i class="fas fa-paper-plane"></i> Submit to Coordinator</button>
     </div>
   </div>
 </div>
@@ -129,6 +149,23 @@ let allOffers = [];
 let placementRequests = [];
 let currentFilter = 'all';
 let selectedChangeOfferId = null;
+let selectedPlacementRequestId = null;
+
+const activeChangeStatuses = ['preparing_request', 'documents_complete', 'request_submitted', 'coordinator_review', 'revision_required'];
+const changeStatusLabels = {
+  preparing_request: 'Preparing Request',
+  documents_complete: 'Documents Complete',
+  request_submitted: 'Request Submitted',
+  coordinator_review: 'Coordinator Review',
+  revision_required: 'Revision Required',
+  approved: 'Approved',
+  rejected: 'Rejected'
+};
+const changeDocumentLabels = {
+  proof_of_sending: 'Proof of Sending Placement Change Request',
+  placement_change_letter: 'Placement Change Request Letter',
+  company_response: 'Company Response'
+};
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({
@@ -150,11 +187,19 @@ function statusLabel(status) {
 }
 
 function pendingChangeForOffer(offerId) {
-  return placementRequests.find(r => Number(r.requested_offer_id) === Number(offerId) && r.status === 'pending');
+  return placementRequests.find(r => Number(r.requested_offer_id) === Number(offerId));
 }
 
 function anyPendingChange() {
-  return placementRequests.find(r => r.status === 'pending');
+  return placementRequests.find(r => activeChangeStatuses.includes(r.status));
+}
+
+function requestStatusButton(request, style = 'flex:1;justify-content:center;') {
+  const label = request.is_revision_overdue ? 'Revision Overdue' : (changeStatusLabels[request.status] || request.status);
+  const editable = ['preparing_request', 'documents_complete', 'revision_required'].includes(request.status);
+  return editable
+    ? `<button class="btn btn-outline btn-sm" style="${style}" onclick="openPlacementChangeWorkflow(${request.id})"><i class="fas fa-folder-open"></i> ${escapeHtml(label)}</button>`
+    : `<button class="btn btn-outline btn-sm" style="${style}" disabled><i class="fas fa-clock"></i> ${escapeHtml(label)}</button>`;
 }
 
 async function loadOffers() {
@@ -228,12 +273,12 @@ function renderOffers() {
     if (o.status === 'accepted') card.style.borderColor = 'rgba(16,185,129,.3)';
 
     let buttonsHtml = '';
+    const changeForThisOffer = pendingChangeForOffer(o.id);
     if (o.status === 'pending') {
-      const changeForThisOffer = pendingChangeForOffer(o.id);
       if (acceptedOffer) {
         if (changeForThisOffer) {
           buttonsHtml = `
-            <button class="btn btn-outline btn-sm" disabled style="flex:1;justify-content:center;"><i class="fas fa-clock"></i> Request Pending</button>
+            ${requestStatusButton(changeForThisOffer)}
             <a href="communication.html" class="btn btn-danger btn-sm" style="flex:1;justify-content:center;"><i class="fas fa-times"></i> Reject</a>
           `;
         } else if (openChange) {
@@ -256,6 +301,7 @@ function renderOffers() {
     } else if (o.status === 'accepted') {
       buttonsHtml = `
         <a href="documents.html" class="btn btn-primary btn-sm" style="flex:1;justify-content:center;"><i class="fas fa-upload"></i> Upload Docs</a>
+        ${changeForThisOffer ? requestStatusButton(changeForThisOffer) : ''}
       `;
     }
 
@@ -334,7 +380,7 @@ function viewOffer(id) {
     const acceptedOffer = allOffers.find(item => item.status === 'accepted');
     const changeForThisOffer = pendingChangeForOffer(o.id);
     if (acceptedOffer && changeForThisOffer) {
-      footer.innerHTML += `<button class="btn btn-outline" disabled><i class="fas fa-clock"></i> Request Pending</button>`;
+      footer.innerHTML += requestStatusButton(changeForThisOffer, '');
     } else if (acceptedOffer && anyPendingChange()) {
       footer.innerHTML += `<button class="btn btn-outline" disabled><i class="fas fa-clock"></i> Change Pending</button>`;
     } else if (acceptedOffer) {
@@ -343,6 +389,9 @@ function viewOffer(id) {
       footer.innerHTML += `<a href="acceptance.html?offer=${o.id}" class="btn btn-success"><i class="fas fa-check"></i> Accept</a>`;
     }
     footer.innerHTML += `<a href="communication.html" class="btn btn-danger"><i class="fas fa-times"></i> Reject</a>`;
+  } else if (o.status === 'accepted') {
+    const changeForThisOffer = pendingChangeForOffer(o.id);
+    if (changeForThisOffer) footer.innerHTML += requestStatusButton(changeForThisOffer, '');
   }
 
   document.getElementById('viewModal').classList.add('open');
@@ -364,6 +413,89 @@ window.openPlacementChange = function(offerId) {
   document.getElementById('changeModal').classList.add('open');
 }
 
+window.openPlacementChangeWorkflow = function(requestId) {
+  const request = placementRequests.find(item => Number(item.id) === Number(requestId));
+  if (!request) return;
+  selectedPlacementRequestId = Number(request.id);
+  const label = request.is_revision_overdue ? 'Revision Overdue' : (changeStatusLabels[request.status] || request.status);
+  document.getElementById('changeWorkflowStatus').textContent = label;
+  document.getElementById('changeWorkflowProgress').textContent = `${Number(request.document_progress || 0)}/3 documents uploaded`;
+  const revision = document.getElementById('changeRevisionAlert');
+  if (request.status === 'revision_required') {
+    const deadline = request.revision_deadline ? new Date(request.revision_deadline).toLocaleString('en-MY') : 'Not set';
+    revision.style.display = 'flex';
+    revision.innerHTML = `<i class="fas fa-triangle-exclamation"></i><div><strong>${request.is_revision_overdue ? 'Revision overdue' : 'Revision required'}</strong><br>Resubmit rejected documents by ${escapeHtml(deadline)}.${request.review_note ? `<br>${escapeHtml(request.review_note)}` : ''}</div>`;
+  } else {
+    revision.style.display = 'none';
+    revision.innerHTML = '';
+  }
+  const docs = Array.isArray(request.documents) ? request.documents : [];
+  document.getElementById('changeWorkflowDocuments').innerHTML = docs.map(doc => {
+    const uploadAllowed = ['preparing_request', 'documents_complete'].includes(request.status)
+      || (request.status === 'revision_required' && doc.status === 'rejected');
+    const statusLabel = doc.status === 'missing' ? 'Missing' : doc.status.charAt(0).toUpperCase() + doc.status.slice(1);
+    return `<div style="border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div><strong>${escapeHtml(changeDocumentLabels[doc.document_type] || doc.document_type)}</strong><br>
+        <span style="font-size:12px;color:var(--text2);">${escapeHtml(statusLabel)}${doc.rejection_reason ? ` - ${escapeHtml(doc.rejection_reason)}` : ''}</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        ${doc.file_name ? `<a class="btn btn-outline btn-sm" href="../api/placement-change-document-file.php?id=${doc.id}" target="_blank" rel="noopener"><i class="fas fa-eye"></i> View</a>` : ''}
+        ${uploadAllowed ? `<label class="btn btn-primary btn-sm" style="cursor:pointer;"><i class="fas fa-upload"></i> ${doc.file_name ? 'Replace' : 'Upload'}<input type="file" accept=".pdf,.jpg,.jpeg,.png" hidden onchange="uploadPlacementChangeDocument(${request.id}, '${doc.document_type}', this)"></label>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  const submit = document.getElementById('submitChangeWorkflow');
+  submit.style.display = ['preparing_request', 'documents_complete', 'revision_required'].includes(request.status) ? '' : 'none';
+  submit.disabled = Number(request.document_progress || 0) !== 3;
+  submit.innerHTML = `<i class="fas fa-paper-plane"></i> ${request.status === 'revision_required' ? 'Resubmit to Coordinator' : 'Submit to Coordinator'}`;
+  document.getElementById('changeWorkflowModal').classList.add('open');
+}
+
+window.uploadPlacementChangeDocument = async function(requestId, documentType, input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const form = new FormData();
+  form.append('request_id', String(requestId));
+  form.append('document_type', documentType);
+  form.append('file', file);
+  input.disabled = true;
+  try {
+    const res = await fetch('../api/placement-change-documents.php', { method: 'POST', body: form });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error) throw new Error(data.error || 'Document upload failed');
+    localStorage.setItem('internpilih:offers-updated', String(Date.now()));
+    await loadOffers();
+    openPlacementChangeWorkflow(requestId);
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    input.disabled = false;
+  }
+}
+
+window.submitPreparedPlacementChange = async function() {
+  const requestId = selectedPlacementRequestId;
+  if (!requestId) return;
+  const button = document.getElementById('submitChangeWorkflow');
+  button.disabled = true;
+  try {
+    const res = await fetch(`../api/placement-changes.php?id=${requestId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'submit' })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error) throw new Error(data.error || 'Request submission failed');
+    localStorage.setItem('internpilih:offers-updated', String(Date.now()));
+    await loadOffers();
+    openPlacementChangeWorkflow(requestId);
+    alert('Placement change request submitted to the coordinator.');
+  } catch (err) {
+    alert(err.message);
+    button.disabled = false;
+  }
+}
+
 window.submitPlacementChange = async function() {
   const reason = document.getElementById('changeReason').value.trim();
   if (!reason) {
@@ -382,8 +514,10 @@ window.submitPlacementChange = async function() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.error) throw new Error(data.error || 'Failed to submit request');
     document.getElementById('changeModal').classList.remove('open');
-    alert('Placement change request submitted. Your current placement stays active until coordinator approval.');
+    localStorage.setItem('internpilih:offers-updated', String(Date.now()));
+    alert('Placement change request started. Upload all 3 supporting documents before submitting it to the coordinator.');
     await loadOffers();
+    openPlacementChangeWorkflow(data.id);
   } catch (err) {
     alert(err.message);
   }
@@ -399,7 +533,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
-<script src="../assets/js/app.js?v=20261031-classic1"></script>
+<script src="../assets/js/app.js?v=20261119-auth1"></script>
 </body>
 </html>
 

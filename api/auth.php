@@ -209,23 +209,204 @@ function checkedLoginRateLimit(string $email, bool $recordFailure = false, bool 
 }
 
 // POST /api/auth.php  → login
+function normalizedEmail(string $email): string {
+    return strtolower(trim($email));
+}
+
+function isAllowedUitmEmail(string $email): bool {
+    $normalized = normalizedEmail($email);
+    $separator = strrpos($normalized, '@');
+    if ($separator === false || $separator === 0) return false;
+    return in_array(substr($normalized, $separator + 1), ['student.uitm.edu.my', 'uitm.edu.my'], true);
+}
+
+function oauthConfiguration(): array {
+    $localFile = __DIR__ . '/../config/supabase.local.php';
+    $local = is_file($localFile) ? require $localFile : [];
+    $url = rtrim(trim((string)(getenv('INTERNPILIH_SUPABASE_URL') ?: ($local['project_url'] ?? ''))), '/');
+    $publishableKey = trim((string)(getenv('INTERNPILIH_SUPABASE_PUBLISHABLE_KEY') ?: ($local['publishable_key'] ?? '')));
+    return [
+        'enabled' => $url !== '' && $publishableKey !== '',
+        'project_url' => $url,
+        'publishable_key' => $publishableKey,
+    ];
+}
+
+function fetchSupabaseGoogleIdentity(string $accessToken): ?array {
+    $configuration = oauthConfiguration();
+    if (!$configuration['enabled'] || $accessToken === '' || strlen($accessToken) > 8192) return null;
+
+    $url = $configuration['project_url'] . '/auth/v1/user';
+    $headers = [
+        'Accept: application/json',
+        'Authorization: Bearer ' . $accessToken,
+        'apikey: ' . $configuration['publishable_key'],
+    ];
+    $responseBody = false;
+    $status = 0;
+
+    if (function_exists('curl_init')) {
+        $handle = curl_init($url);
+        curl_setopt_array($handle, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_FOLLOWLOCATION => false,
+        ]);
+        $responseBody = curl_exec($handle);
+        $status = (int)curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
+        curl_close($handle);
+    } else {
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => implode("\r\n", $headers),
+                'timeout' => 10,
+                'ignore_errors' => true,
+            ],
+        ]);
+        $responseBody = @file_get_contents($url, false, $context);
+        foreach ($http_response_header ?? [] as $header) {
+            if (preg_match('/^HTTP\/\S+\s+(\d{3})/', $header, $matches)) {
+                $status = (int)$matches[1];
+                break;
+            }
+        }
+    }
+
+    if ($status !== 200 || !is_string($responseBody)) return null;
+    $identity = json_decode($responseBody, true);
+    if (!is_array($identity)) return null;
+    $providers = $identity['app_metadata']['providers'] ?? [];
+    $provider = $identity['app_metadata']['provider'] ?? '';
+    if ($provider !== 'google' && (!is_array($providers) || !in_array('google', $providers, true))) return null;
+    return $identity;
+}
+
+function loadInternPilihUserByEmail(string $email, bool $forUpdate = false): ?array {
+    $lockingClause = $forUpdate ? ' FOR UPDATE OF u' : '';
+    $stmt = db()->prepare("
+        SELECT u.id, u.name, u.email, to_jsonb(u)->>'phone' AS phone, u.role,
+               to_jsonb(u)->>'google_auth_user_id' AS google_auth_user_id,
+               s.matric_id, COALESCE(s.faculty, a.faculty) AS faculty,
+               COALESCE(s.campus, a.campus) AS campus,
+               s.programme, s.cgpa, s.coordinator_id, coordinator.name AS coordinator_name,
+               a.programme AS coordinator_programme, a.staff_id, e.company_id
+        FROM users u
+        LEFT JOIN students s ON s.user_id = u.id
+        LEFT JOIN employers e ON e.user_id = u.id
+        LEFT JOIN admins a ON a.user_id = u.id
+        LEFT JOIN users coordinator ON coordinator.id = s.coordinator_id
+        WHERE LOWER(TRIM(u.email)) = ?
+        LIMIT 1{$lockingClause}
+    ");
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc() ?: null;
+}
+
+function dashboardForRole(string $role): ?string {
+    return match ($role) {
+        'student' => '/student/dashboard.html',
+        'admin' => '/admin/dashboard.html',
+        default => null,
+    };
+}
+
+$action = strtolower(trim((string)($_GET['action'] ?? '')));
+
+if ($method === 'GET' && $action === 'oauth-config') {
+    $configuration = oauthConfiguration();
+    if (!$configuration['enabled']) respond(['error' => 'Google sign-in is temporarily unavailable.'], 503);
+    respond($configuration);
+}
+
+if ($method === 'POST' && $action === 'google') {
+    resetApplicationSessionForAuthentication();
+    $data = body();
+    $identity = fetchSupabaseGoogleIdentity(trim((string)($data['access_token'] ?? '')));
+    $email = normalizedEmail((string)($identity['email'] ?? ''));
+    $googleUserId = trim((string)($identity['id'] ?? ''));
+    $emailVerified = !empty($identity['email_confirmed_at'])
+        || ($identity['user_metadata']['email_verified'] ?? false) === true;
+
+    if (!$identity || $email === '' || $googleUserId === '' || !$emailVerified) {
+        recordAuthenticationAudit(null, 'login_failure', 'google');
+        respondError('Google sign-in could not be completed. Please try again.', 401, 'invalid_oauth_response');
+    }
+    if (!isAllowedUitmEmail($email)) {
+        recordAuthenticationAudit(null, 'login_failure', 'google');
+        respondError('Please use an approved UiTM email account.', 403, 'unsupported_email_domain');
+    }
+
+    $database = db();
+    $database->begin_transaction();
+    try {
+        $user = loadInternPilihUserByEmail($email, true);
+        if (!$user) {
+            $database->rollback();
+            recordAuthenticationAudit(null, 'login_failure', 'google');
+            respondError(
+                'Your UiTM account is valid, but you are not yet registered for InternPilih. Please contact your internship coordinator.',
+                403,
+                'registration_required'
+            );
+        }
+
+        $redirect = dashboardForRole((string)$user['role']);
+        if ($redirect === null) {
+            $database->rollback();
+            recordAuthenticationAudit((int)$user['id'], 'login_failure', 'google');
+            respondError('This account cannot use UiTM Google sign-in.', 403, 'invalid_account');
+        }
+
+        $linkedGoogleUserId = trim((string)($user['google_auth_user_id'] ?? ''));
+        if ($linkedGoogleUserId !== '' && !hash_equals($linkedGoogleUserId, $googleUserId)) {
+            $database->rollback();
+            recordAuthenticationAudit((int)$user['id'], 'login_failure', 'google');
+            respondError('Google sign-in could not be completed. Please contact your internship coordinator.', 403, 'account_link_mismatch');
+        }
+
+        $userId = (int)$user['id'];
+        $update = $database->prepare('UPDATE users SET google_auth_user_id = ?, last_login_at = CURRENT_TIMESTAMP WHERE id = ?');
+        $update->bind_param('si', $googleUserId, $userId);
+        $update->execute();
+        $database->commit();
+
+        unset($user['google_auth_user_id']);
+        establishAuthenticatedSession($user, 'google');
+        recordAuthenticationAudit($userId, 'google_login_success', 'google');
+        respond(['success' => true, 'user' => $user, 'redirect' => $redirect]);
+    } catch (Throwable $error) {
+        if ($database->inTransaction()) $database->rollback();
+        recordAuthenticationAudit(null, 'login_failure', 'google');
+        error_log('InternPilih Google account linking failed.');
+        respondError('Google sign-in is temporarily unavailable. Please try again.', 503, 'google_login_unavailable');
+    }
+}
+
 if ($method === 'POST') {
+    resetApplicationSessionForAuthentication();
     $data  = body();
     $role = strtolower(trim((string)($data['role'] ?? 'student')));
     $identifier = trim((string)($data['identifier'] ?? ''));
     $pass  = $data['password'] ?? '';
 
     if (!in_array($role, ['student', 'admin', 'employer'], true)) {
+        recordAuthenticationAudit(null, 'login_failure', 'password');
         respond(['error' => 'Select a valid account role.'], 422);
     }
     $identifierLabel = $role === 'student' ? 'Student ID' : ($role === 'admin' ? 'Staff ID' : 'Email');
     if ($identifier === '' || $pass === '') {
+        recordAuthenticationAudit(null, 'login_failure', 'password');
         respond(['error' => $identifierLabel . ' and password are required.'], 422);
     }
 
     $rateLimitIdentity = $role . ':' . strtolower($identifier);
     $limit = checkedLoginRateLimit($rateLimitIdentity);
     if ($limit['failures'] >= LOGIN_RATE_LIMIT_MAX_FAILURES) {
+        recordAuthenticationAudit(null, 'login_failure', 'password');
         header('Retry-After: ' . max(1, $limit['retry_after']));
         respond(['error' => 'Too many login attempts. Please wait and try again.'], 429);
     }
@@ -255,21 +436,30 @@ if ($method === 'POST') {
 
     if (!$user || !password_verify($pass, $user['password'])) {
         checkedLoginRateLimit($rateLimitIdentity, true);
+        recordAuthenticationAudit($user ? (int)$user['id'] : null, 'login_failure', 'password');
         usleep(random_int(150000, 350000));
         respond(['error' => 'Invalid ' . $identifierLabel . ' or password.'], 401);
     }
 
     unset($user['password']);
     checkedLoginRateLimit($rateLimitIdentity, false, true);
-    session_regenerate_id(true);
-    $_SESSION['user'] = $user;
+    $userId = (int)$user['id'];
+    $updateLogin = db()->prepare('UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?');
+    $updateLogin->bind_param('i', $userId);
+    $updateLogin->execute();
+    establishAuthenticatedSession($user, 'password');
+    recordAuthenticationAudit($userId, 'password_login_success', 'password');
 
     respond(['success' => true, 'user' => $user]);
 }
 
 // DELETE /api/auth.php  → logout
 if ($method === 'DELETE') {
-    session_destroy();
+    $sessionUser = currentUser();
+    if ($sessionUser) {
+        recordAuthenticationAudit((int)$sessionUser['id'], 'logout', (string)($_SESSION['auth_method'] ?? 'session'));
+    }
+    clearApplicationSession();
     respond(['success' => true]);
 }
 

@@ -59,17 +59,17 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO internpilih_staging_app;
 GRANT INSERT ON public.companies, public.offers, public.documents,
     public.internship_applications, public.announcements,
     public.notifications, public.activity_logs,
-    public.placement_change_requests, public.password_reset_tokens,
+    public.placement_change_requests, public.placement_change_documents, public.password_reset_tokens,
     public.system_settings, public.app_sessions, public.login_rate_limits
     TO internpilih_staging_app;
 GRANT UPDATE ON public.users, public.companies, public.admins,
     public.students, public.offers, public.documents,
     public.internship_applications, public.announcements,
-    public.notifications, public.placement_change_requests,
+    public.notifications, public.placement_change_requests, public.placement_change_documents,
     public.password_reset_tokens, public.system_settings,
     public.app_sessions, public.login_rate_limits
     TO internpilih_staging_app;
-GRANT DELETE ON public.offers, public.password_reset_tokens,
+GRANT DELETE ON public.offers, public.placement_change_documents, public.password_reset_tokens,
     public.app_sessions, public.login_rate_limits
     TO internpilih_staging_app;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public

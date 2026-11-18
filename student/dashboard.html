@@ -5,7 +5,7 @@
 <title>Student Dashboard - InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261031-classic1"></script>
 <link rel="stylesheet" href="../assets/css/style.css?v=20261031-classic1">
-<link rel="stylesheet" href="../assets/css/student-dashboard.css?v=20261104-antislop1">
+<link rel="stylesheet" href="../assets/css/student-dashboard.css?v=20261119-table1">
 <script src="../assets/js/auth-gate.js?v=20261031-classic1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -133,6 +133,7 @@
               <strong>No Placement Confirmed</strong><br>
               <span>Please accept an offer or record a new one to proceed with verification documents.</span>
             </div>
+            <div id="placement-change-block" class="info-note warning" style="display:none;margin-top:12px;"></div>
           </div>
         </section>
 
@@ -146,14 +147,34 @@
 </div>
 
 <script>
+const dashboardActiveChangeStatuses = ['preparing_request', 'documents_complete', 'request_submitted', 'coordinator_review', 'revision_required'];
+const dashboardChangeLabels = {
+  preparing_request: 'Preparing Request',
+  documents_complete: 'Documents Complete',
+  request_submitted: 'Request Submitted',
+  coordinator_review: 'Coordinator Review',
+  revision_required: 'Revision Required',
+  approved: 'Approved',
+  rejected: 'Rejected'
+};
+
 async function loadDashboard() {
   try {
-    const res = await fetch('../api/offers.php');
+    const [res, changeRes] = await Promise.all([
+      fetch('../api/offers.php'),
+      fetch('../api/placement-changes.php')
+    ]);
     const offersPayload = await res.json().catch(() => ({}));
+    const changesPayload = await changeRes.json().catch(() => ({}));
     if (!res.ok || !Array.isArray(offersPayload)) {
       throw new Error(offersPayload.error || 'Unable to load dashboard offers.');
     }
+    if (!changeRes.ok || !Array.isArray(changesPayload)) {
+      throw new Error(changesPayload.error || 'Unable to load placement changes.');
+    }
     const offers = offersPayload;
+    const activeChange = changesPayload.find(request => dashboardActiveChangeStatuses.includes(request.status));
+    const currentChange = activeChange || changesPayload[0] || null;
 
     const pending = offers.filter(o => o.status === 'pending');
     const accepted = offers.filter(o => o.status === 'accepted');
@@ -192,6 +213,17 @@ async function loadDashboard() {
       acceptedBlock.style.display = 'none';
       noAcceptedBlock.style.display = 'block';
     }
+    const changeBlock = document.getElementById('placement-change-block');
+    if (currentChange) {
+      const changeLabel = currentChange.is_revision_overdue ? 'Revision Overdue' : (dashboardChangeLabels[currentChange.status] || currentChange.status);
+      const deadline = currentChange.status === 'revision_required' && currentChange.revision_deadline
+        ? `<br><span>Revision deadline: ${new Date(currentChange.revision_deadline).toLocaleString('en-MY')}</span>` : '';
+      changeBlock.style.display = 'block';
+      changeBlock.innerHTML = `<strong>Placement Change: ${escapeDashboardHtml(changeLabel)}</strong><br><span>${Number(currentChange.document_progress || 0)}/3 documents uploaded</span>${deadline}`;
+    } else {
+      changeBlock.style.display = 'none';
+      changeBlock.innerHTML = '';
+    }
 
     // Populate table
     const tbody = document.getElementById('offers-tbody');
@@ -205,7 +237,20 @@ async function loadDashboard() {
       const tr = document.createElement('tr');
       let actionHtml = '';
       if (o.status === 'pending') {
-        actionHtml = accepted.length > 0 ? `
+        const changeForThisOffer = changesPayload.find(request => Number(request.requested_offer_id) === Number(o.id));
+        const requestLabel = changeForThisOffer
+          ? (changeForThisOffer.is_revision_overdue ? 'Revision Overdue' : (dashboardChangeLabels[changeForThisOffer.status] || changeForThisOffer.status))
+          : '';
+        const requestEditable = changeForThisOffer && ['preparing_request', 'documents_complete', 'revision_required'].includes(changeForThisOffer.status);
+        actionHtml = accepted.length > 0 && changeForThisOffer ? `
+          ${requestEditable
+            ? `<a href="offers.html" class="btn btn-outline btn-sm"><i class="fas fa-folder-open"></i> ${escapeDashboardHtml(requestLabel)}</a>`
+            : `<button class="btn btn-outline btn-sm" disabled><i class="fas fa-clock"></i> ${escapeDashboardHtml(requestLabel)}</button>`}
+          <a href="communication.html" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</a>
+        ` : accepted.length > 0 && activeChange ? `
+          <button class="btn btn-outline btn-sm" disabled><i class="fas fa-clock"></i> ${escapeDashboardHtml(dashboardChangeLabels[activeChange.status] || activeChange.status)}</button>
+          <a href="communication.html" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</a>
+        ` : accepted.length > 0 ? `
           <a href="offers.html" class="btn btn-primary btn-sm"><i class="fas fa-right-left"></i> Request Change</a>
           <a href="communication.html" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</a>
         ` : `
@@ -213,11 +258,12 @@ async function loadDashboard() {
           <a href="communication.html" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</a>
         `;
       } else if (o.status === 'accepted') {
-        actionHtml = `<a href="documents.html" class="btn btn-outline btn-sm"><i class="fas fa-upload"></i> Docs</a>`;
+        const approvedChange = changesPayload.find(request => Number(request.requested_offer_id) === Number(o.id));
+        actionHtml = `<a href="documents.html" class="btn btn-outline btn-sm"><i class="fas fa-upload"></i> Docs</a>${approvedChange ? ` <button class="btn btn-outline btn-sm" disabled><i class="fas fa-check"></i> ${escapeDashboardHtml(dashboardChangeLabels[approvedChange.status] || approvedChange.status)}</button>` : ''}`;
       } else if (o.status === 'withdrawn') {
-        actionHtml = `<span style="color:var(--text3);font-size:12px;">Changed placement</span>`;
+        actionHtml = `<span class="offer-action-text">Changed placement</span>`;
       } else {
-        actionHtml = `<span style="color:var(--text3);font-size:12px;">Notice sent</span>`;
+        actionHtml = `<span class="offer-action-text">Notice sent</span>`;
       }
 
       const statusBadges = {
@@ -232,7 +278,7 @@ async function loadDashboard() {
         <td>${o.position}</td>
         <td><span style="${o.status === 'pending' ? 'color:var(--red);font-weight:600;' : ''}">${o.deadline || 'N/A'}</span></td>
         <td>${statusBadges[o.status] || o.status}</td>
-        <td style="display:flex;gap:6px;flex-wrap:wrap;padding-top:14px;">${actionHtml}</td>
+        <td class="offer-actions-cell"><div class="offer-actions">${actionHtml}</div></td>
       `;
       tbody.appendChild(tr);
     });
@@ -293,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
-  <script src="../assets/js/app.js?v=20261031-classic1"></script>
+<script src="../assets/js/app.js?v=20261119-auth1"></script>
 </body>
 </html>
 

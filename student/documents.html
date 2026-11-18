@@ -123,6 +123,7 @@
 <script>
 let acceptedOffer = null;
 let uploadedDocs = [];
+let pageLoadGeneration = 0;
 
 const docTypes = [
   { key: 'offer_letter', name: 'Offer Letter / Acceptance Confirmation', required: true, icon: 'fa-file-contract', color: 'var(--blue3)' },
@@ -131,7 +132,8 @@ const docTypes = [
   { key: 'agreement', name: 'Internship Agreement Form', required: true, icon: 'fa-file-signature', color: 'var(--blue3)' }
 ];
 
-async function loadPage() {
+async function loadPage(retryCount = 0) {
+  const generation = ++pageLoadGeneration;
   try {
     const resOffers = await fetch('../api/offers.php');
     const offersPayload = await resOffers.json().catch(() => ({}));
@@ -140,7 +142,10 @@ async function loadPage() {
     }
     const offers = offersPayload;
 
-    acceptedOffer = offers.find(o => o.status === 'accepted');
+    const currentOffer = offers.find(o => o.status === 'accepted') || null;
+    if (generation !== pageLoadGeneration) return;
+    acceptedOffer = currentOffer;
+    uploadedDocs = [];
 
     if (!acceptedOffer) {
       document.getElementById('no-placement-panel').style.display = 'block';
@@ -164,10 +169,16 @@ async function loadPage() {
     document.getElementById('side-mode').textContent = acceptedOffer.work_mode || 'N/A';
 
     // Fetch documents
-    const resDocs = await fetch('../api/documents.php');
+    const resDocs = await fetch('../api/documents.php?scope=current&fresh=' + Date.now(), { cache: 'no-store' });
     const documentsPayload = await resDocs.json().catch(() => ({}));
     if (!resDocs.ok || !Array.isArray(documentsPayload)) {
       throw new Error(documentsPayload.error || 'Unable to load uploaded documents.');
+    }
+    if (generation !== pageLoadGeneration) return;
+    const documentPlacementId = Number(resDocs.headers.get('X-InternPilih-Placement-Offer-Id') || 0);
+    if (documentPlacementId !== Number(acceptedOffer.id)) {
+      if (retryCount < 1) return loadPage(retryCount + 1);
+      throw new Error('The active placement changed while documents were loading.');
     }
     uploadedDocs = documentsPayload;
 
@@ -374,9 +385,24 @@ function submitDocs() {
   document.getElementById('submitModal').classList.add('open');
 }
 
-document.addEventListener('DOMContentLoaded', loadPage);
+document.addEventListener('DOMContentLoaded', function () {
+  loadPage();
+  window.setInterval(function () {
+    if (document.visibilityState === 'visible') loadPage();
+  }, 15000);
+});
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible') loadPage();
+});
+window.addEventListener('focus', function () { loadPage(); });
+window.addEventListener('pageshow', function (event) {
+  if (event.persisted) loadPage();
+});
+window.addEventListener('storage', function (event) {
+  if (event.key === 'internpilih:offers-updated' || event.key === 'internpilih:placement-changed') loadPage();
+});
 </script>
-<script src="../assets/js/app.js?v=20261031-classic1"></script>
+<script src="../assets/js/app.js?v=20261119-auth1"></script>
 </body>
 </html>
 

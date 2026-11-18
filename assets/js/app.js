@@ -197,9 +197,35 @@
 })();
 
 // Logout
+async function loadGoogleAuthHelper() {
+  if (window.InternPilihGoogleAuth) return window.InternPilihGoogleAuth;
+  await new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-internpilih-google-auth]');
+    if (existing) {
+      existing.addEventListener('load', resolve, { once: true });
+      existing.addEventListener('error', reject, { once: true });
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = window.appUrl('/assets/js/google-auth.js?v=20261119-auth1');
+    script.dataset.internpilihGoogleAuth = 'true';
+    script.addEventListener('load', resolve, { once: true });
+    script.addEventListener('error', reject, { once: true });
+    document.head.appendChild(script);
+  });
+  return window.InternPilihGoogleAuth;
+}
+
 async function doLogout() {
-  await fetch('/api/auth.php', { method: 'DELETE' });
+  try {
+    const googleAuth = await loadGoogleAuthHelper();
+    await googleAuth.signOut();
+  } catch (_) {
+    // Continue clearing the InternPilih session if Supabase is unavailable.
+  }
+  await fetch('/api/auth.php', { method: 'DELETE' }).catch(() => {});
   sessionStorage.removeItem('user');
+  sessionStorage.removeItem('internpilih:access-pending');
   window.location.href = window.appUrl('/login.html');
 }
 
@@ -594,6 +620,26 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     if (change[3]) change[3].textContent = risk ? 'High risk' : 'Clear';
     if (change[4]) change[4].textContent = docs ? 'Review needed' : 'All reviewed';
 
+    const placementChangeList = document.getElementById('dashboardPlacementChangeList');
+    if (placementChangeList) {
+      apiGet('/api/placement-changes.php').then(requests => {
+        const activeStatuses = ['preparing_request', 'documents_complete', 'request_submitted', 'coordinator_review', 'revision_required'];
+        const labels = {
+          preparing_request: 'Preparing Request', documents_complete: 'Documents Complete',
+          request_submitted: 'Request Submitted', coordinator_review: 'Coordinator Review',
+          revision_required: 'Revision Required'
+        };
+        const active = requests.filter(request => activeStatuses.includes(request.status));
+        placementChangeList.innerHTML = active.length ? active.slice(0, 5).map(request => `
+          <div class="notif-item" style="padding:9px 0;">
+            <div class="notif-dot-icon"><i class="fas fa-right-left"></i></div>
+            <div style="flex:1;"><p style="font-size:13px;font-weight:700;">${esc(request.student_name)}</p><p style="font-size:11px;color:var(--text2);">${esc(request.requested_company_name)} - ${Number(request.document_progress || 0)}/3 documents</p></div>
+            ${badge(request.is_revision_overdue ? 'risk' : request.status, request.is_revision_overdue ? 'Revision Overdue' : labels[request.status])}
+          </div>
+        `).join('') : 'No active placement change requests.';
+      }).catch(() => { placementChangeList.textContent = 'Placement change requests could not be loaded.'; });
+    }
+
     const topbarSub = document.querySelector('.topbar p');
     if (topbarSub) {
       topbarSub.textContent = `Live database - ${total} students, ${data.companies.length} active companies`;
@@ -791,18 +837,31 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     const count = document.getElementById('placementChangeCount');
     if (!list) return;
 
-    const pending = placementChangeRows.filter(request => request.status === 'pending');
-    if (count) count.textContent = pending.length + ' pending';
+    const labels = {
+      preparing_request: 'Preparing Request', documents_complete: 'Documents Complete',
+      request_submitted: 'Request Submitted', coordinator_review: 'Coordinator Review',
+      revision_required: 'Revision Required', approved: 'Approved', rejected: 'Rejected'
+    };
+    const documentLabels = {
+      proof_of_sending: 'Proof of Sending Placement Change Request',
+      placement_change_letter: 'Placement Change Request Letter',
+      company_response: 'Company Response'
+    };
+    const active = placementChangeRows.filter(request => !['approved', 'rejected'].includes(request.status));
+    if (count) count.textContent = active.length + ' active';
 
     list.innerHTML = placementChangeRows.length ? placementChangeRows.map(request => {
-      const isPending = request.status === 'pending';
+      const reviewable = ['request_submitted', 'coordinator_review', 'revision_required'].includes(request.status);
+      const allVerified = Number(request.verified_count || 0) === 3;
+      const requestLabel = request.is_revision_overdue ? 'Revision Overdue' : (labels[request.status] || request.status);
+      const documents = Array.isArray(request.documents) ? request.documents : [];
       return `
         <div class="notif-item" style="align-items:flex-start;padding:16px 0;border-bottom:1px solid var(--border);">
           <div class="notif-dot-icon" style="background:rgba(59,130,246,.12);color:var(--blue3);"><i class="fas fa-right-left"></i></div>
           <div style="flex:1;min-width:220px;">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <p style="font-size:14px;font-weight:700;">${esc(request.student_name)}</p>
-              ${badge(request.status, request.status)}
+              ${badge(request.status, requestLabel)}
             </div>
             <p style="font-size:12px;color:var(--text2);margin-top:3px;">${esc(request.matric_id || '-')} - requested ${fmtDate(String(request.created_at || '').slice(0, 10))}</p>
             <div style="margin-top:10px;display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;font-size:12px;">
@@ -811,13 +870,24 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
               <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;"><strong>${esc(request.requested_company_name)}</strong><br><span style="color:var(--text2);">${esc(request.requested_position)}</span></div>
             </div>
             <p style="font-size:13px;color:var(--text3);line-height:1.6;margin-top:10px;">${esc(request.reason)}</p>
+            <p style="font-size:12px;font-weight:700;margin-top:8px;">Documents: ${Number(request.document_progress || 0)}/3 uploaded - ${Number(request.verified_count || 0)}/3 verified</p>
+            ${request.status === 'revision_required' ? `<p style="font-size:12px;color:${request.is_revision_overdue ? 'var(--red)' : 'var(--gold)'};margin-top:4px;"><strong>${request.is_revision_overdue ? 'Revision overdue' : 'Revision deadline'}:</strong> ${esc(request.revision_deadline ? new Date(request.revision_deadline).toLocaleString('en-MY') : 'Not set')}</p>` : ''}
+            <div style="display:grid;gap:7px;margin-top:10px;">
+              ${documents.map(document => `<div style="border:1px solid var(--border);border-radius:6px;padding:9px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div><strong style="font-size:12px;">${esc(documentLabels[document.document_type] || document.document_type)}</strong><br><span style="font-size:11px;color:var(--text2);">${esc(document.status)}${document.rejection_reason ? ` - ${esc(document.rejection_reason)}` : ''}</span></div>
+                <div style="display:flex;gap:5px;">
+                  ${document.file_name ? `<a class="btn btn-outline btn-sm" href="../api/placement-change-document-file.php?id=${document.id}" target="_blank" rel="noopener"><i class="fas fa-download"></i> View</a>` : ''}
+                  ${reviewable && document.status === 'uploaded' && document.last_submitted_at ? `<button class="btn btn-success btn-sm" onclick="reviewPlacementChangeDocument(${document.id}, 'verified')"><i class="fas fa-check"></i> Verify</button><button class="btn btn-danger btn-sm" onclick="reviewPlacementChangeDocument(${document.id}, 'rejected')"><i class="fas fa-times"></i> Reject</button>` : ''}
+                </div>
+              </div>`).join('')}
+            </div>
             ${request.review_note ? `<p style="font-size:12px;color:var(--text2);margin-top:6px;"><strong>Review note:</strong> ${esc(request.review_note)}</p>` : ''}
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-            ${isPending ? `
-              <button class="btn btn-success btn-sm" onclick="reviewPlacementChange(${request.id}, 'approved')"><i class="fas fa-check"></i> Approve</button>
+            ${['request_submitted', 'coordinator_review'].includes(request.status) ? `
+              <button class="btn btn-success btn-sm" ${allVerified ? '' : 'disabled title="Verify all 3 documents first"'} onclick="reviewPlacementChange(${request.id}, 'approved')"><i class="fas fa-check"></i> Final Approve</button>
               <button class="btn btn-danger btn-sm" onclick="reviewPlacementChange(${request.id}, 'rejected')"><i class="fas fa-times"></i> Reject</button>
-            ` : `<span style="font-size:12px;color:var(--text2);">Reviewed ${fmtDate(String(request.reviewed_at || '').slice(0, 10))}</span>`}
+            ` : ['approved', 'rejected'].includes(request.status) ? `<span style="font-size:12px;color:var(--text2);">Decided ${fmtDate(String(request.final_decision_at || request.reviewed_at || '').slice(0, 10))}</span>` : ''}
           </div>
         </div>
       `;
@@ -832,10 +902,28 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     if (note === null) return;
     try {
       await apiSend('/api/placement-changes.php?id=' + id, 'PUT', {
+        action: 'final_decision',
         status,
         review_note: note
       });
       showToast(status === 'approved' ? 'Placement changed successfully.' : 'Change request rejected.', 'success');
+      await renderMonitoring(await getSummary());
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  window.reviewPlacementChangeDocument = async function (id, status) {
+    const reason = status === 'rejected'
+      ? window.prompt('Provide a short reason for rejecting this document:')
+      : '';
+    if (status === 'rejected' && (reason === null || !reason.trim())) {
+      if (reason !== null) alert('A rejection reason is required.');
+      return;
+    }
+    try {
+      await apiSend('/api/placement-change-documents.php?id=' + id, 'PUT', { status, reason });
+      showToast(status === 'verified' ? 'Document verified.' : 'Document returned for revision.', 'success');
       await renderMonitoring(await getSummary());
     } catch (err) {
       alert(err.message);

@@ -36,14 +36,14 @@ REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated
 -- GRANT SELECT ON ALL TABLES IN SCHEMA public TO internpilih_app;
 -- GRANT INSERT ON public.companies, public.offers, public.documents,
 --     public.internship_applications, public.announcements,
---     public.notifications, public.activity_logs,
---     public.placement_change_requests, public.password_reset_tokens,
+--     public.notifications, public.activity_logs, public.authentication_audit_logs,
+--     public.placement_change_requests, public.placement_change_documents, public.password_reset_tokens,
 --     public.system_settings, public.app_sessions,
 --     public.login_rate_limits TO internpilih_app;
 -- GRANT UPDATE ON public.users, public.companies, public.admins,
 --     public.students, public.offers, public.documents,
 --     public.internship_applications, public.announcements,
---     public.notifications, public.placement_change_requests,
+--     public.notifications, public.placement_change_requests, public.placement_change_documents,
 --     public.password_reset_tokens, public.system_settings,
 --     public.app_sessions, public.login_rate_limits TO internpilih_app;
 -- GRANT DELETE ON public.offers, public.password_reset_tokens,

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Google Sign-In - InternPilih</title>
+<script src="assets/js/theme-init.js?v=20261031-classic1"></script>
+<link rel="stylesheet" href="assets/css/style.css?v=20261119-auth1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<main class="login-page">
+  <section class="login-card" aria-live="polite">
+    <div class="login-logo">
+      <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+      <h1>InternPilih</h1>
+      <p id="oauth-status">Completing UiTM Google sign-in...</p>
+    </div>
+    <div id="oauth-spinner" style="text-align:center;padding:12px;"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i></div>
+    <div id="oauth-actions" hidden>
+      <a class="btn btn-primary login-submit" href="login.html">Return to login</a>
+    </div>
+  </section>
+</main>
+<script src="assets/js/google-auth.js?v=20261119-auth1"></script>
+<script>
+(async function completeGoogleLogin(){
+  const status=document.getElementById('oauth-status');
+  const spinner=document.getElementById('oauth-spinner');
+  const actions=document.getElementById('oauth-actions');
+  try{
+    const session=await window.InternPilihGoogleAuth.exchangeCallback();
+    history.replaceState({},document.title,window.InternPilihGoogleAuth.appPath('/oauth-callback.html'));
+    const response=await fetch(window.InternPilihGoogleAuth.appPath('/api/auth.php?action=google'),{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({access_token:session.access_token})
+    });
+    const payload=await response.json().catch(()=>({}));
+    if(!response.ok||payload.error){
+      if(payload.code==='registration_required'){
+        sessionStorage.setItem('internpilih:access-pending','1');
+        window.location.replace(window.InternPilihGoogleAuth.appPath('/access-pending.html'));
+        return;
+      }
+      throw new Error(payload.error||'Google sign-in could not be completed. Please try again.');
+    }
+    sessionStorage.setItem('user',JSON.stringify(payload.user));
+    window.location.replace(window.InternPilihGoogleAuth.appPath(payload.redirect||'/login.html'));
+  }catch(error){
+    history.replaceState({},document.title,window.InternPilihGoogleAuth.appPath('/oauth-callback.html'));
+    await window.InternPilihGoogleAuth.signOut();
+    await fetch(window.InternPilihGoogleAuth.appPath('/api/auth.php'),{method:'DELETE'}).catch(()=>{});
+    sessionStorage.removeItem('user');
+    status.textContent=error.message||'Google sign-in could not be completed. Please try again.';
+    spinner.hidden=true;
+    actions.hidden=false;
+  }
+})();
+</script>
+</body>
+</html>

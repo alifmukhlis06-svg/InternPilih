@@ -49,7 +49,7 @@
         <i class="fas fa-search"></i>
         <input class="search-input" placeholder="Search company, location or industry..." id="compSearch" oninput="searchCompanies()">
       </div>
-      <div id="industry-chips" style="display:flex;gap:8px;">
+      <div id="industry-chips" style="display:flex;flex:1 1 480px;min-width:0;max-width:100%;flex-wrap:wrap;align-items:center;gap:8px;">
         <span class="chip active" onclick="filterChip('all', this)">All</span>
       </div>
     </div>
@@ -211,7 +211,7 @@ function formatPositions(value, emptyLabel = 'Positions added with each offer') 
 
 document.addEventListener('DOMContentLoaded', loadCompanies);
 </script>
-  <script src="../assets/js/app.js?v=20261031-classic1"></script>
+<script src="../assets/js/app.js?v=20261119-auth1"></script>
 </body>
 </html>
 

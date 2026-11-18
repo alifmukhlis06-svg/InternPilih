@@ -9,6 +9,16 @@ define('INTERNPILIH_REQUEST_ID', $requestId);
 
 // JSON response helper
 function respond(mixed $data, int $code = 200): never {
+    if ($code === 403
+        && session_status() === PHP_SESSION_ACTIVE
+        && isset($_SESSION['user']['id'])
+        && function_exists('recordAuthenticationAudit')) {
+        recordAuthenticationAudit(
+            (int)$_SESSION['user']['id'],
+            'unauthorized_access_attempt',
+            (string)($_SESSION['auth_method'] ?? 'session')
+        );
+    }
     if (is_array($data) && isset($data['error'])) {
         $data['code'] ??= 'request_failed';
         $data['request_id'] ??= INTERNPILIH_REQUEST_ID;
@@ -84,11 +94,13 @@ ini_set('session.use_strict_mode', '1');
 ini_set('session.use_only_cookies', '1');
 ini_set('session.cookie_httponly', '1');
 session_name('internpilih_session');
+$configuredSessionLifetime = (int)(getenv('INTERNPILIH_SESSION_LIFETIME_SECONDS') ?: 7200);
+$configuredSessionLifetime = max(300, $configuredSessionLifetime);
+ini_set('session.gc_maxlifetime', (string)$configuredSessionLifetime);
 $sessionDriver = strtolower(trim((string)(getenv('INTERNPILIH_SESSION_DRIVER') ?: ($isServerless ? 'database' : 'files'))));
 if ($sessionDriver === 'database') {
     require_once __DIR__ . '/../config/DatabaseSessionHandler.php';
-    $lifetime = (int)(getenv('INTERNPILIH_SESSION_LIFETIME_SECONDS') ?: 7200);
-    session_set_save_handler(new DatabaseSessionHandler(db(), $lifetime), true);
+    session_set_save_handler(new DatabaseSessionHandler(db(), $configuredSessionLifetime), true);
 } elseif ($sessionDriver === 'files' && !$isServerless) {
     $sessionPath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'internpilih_sessions';
     if (!is_dir($sessionPath)) {
@@ -109,9 +121,79 @@ session_set_cookie_params([
     'samesite' => 'Lax',
 ]);
 session_start();
+
+function authenticationSessionLifetime(): int {
+    $configured = (int)(getenv('INTERNPILIH_SESSION_LIFETIME_SECONDS') ?: 7200);
+    return max(300, $configured);
+}
+
+function recordAuthenticationAudit(?int $userId, string $action, string $method): void {
+    $allowedActions = [
+        'google_login_success',
+        'password_login_success',
+        'login_failure',
+        'logout',
+        'unauthorized_access_attempt',
+    ];
+    $allowedMethods = ['google', 'password', 'session'];
+    if (!in_array($action, $allowedActions, true) || !in_array($method, $allowedMethods, true)) {
+        return;
+    }
+
+    try {
+        $stmt = db()->prepare('INSERT INTO authentication_audit_logs (user_id, action, authentication_method) VALUES (?, ?, ?)');
+        $stmt->bind_param('iss', $userId, $action, $method);
+        $stmt->execute();
+    } catch (Throwable $error) {
+        // Authentication remains available if the audit sink is temporarily
+        // unavailable. Never include identity, token, or request data in logs.
+        error_log('InternPilih authentication audit write failed.');
+    }
+}
+
+function clearApplicationSession(): void {
+    $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', [
+            'expires' => time() - 42000,
+            'path' => $params['path'] ?: '/',
+            'domain' => $params['domain'] ?? '',
+            'secure' => (bool)($params['secure'] ?? false),
+            'httponly' => true,
+            'samesite' => $params['samesite'] ?? 'Lax',
+        ]);
+    }
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_destroy();
+    }
+}
+
+function establishAuthenticatedSession(array $user, string $method): void {
+    session_regenerate_id(true);
+    $_SESSION['user'] = $user;
+    $_SESSION['auth_method'] = $method;
+    $_SESSION['auth_expires_at'] = time() + authenticationSessionLifetime();
+}
+
+function resetApplicationSessionForAuthentication(): void {
+    $_SESSION = [];
+    session_regenerate_id(true);
+}
+
 function currentUser(): ?array {
     $sessionUser = $_SESSION['user'] ?? null;
     if (!$sessionUser) return null;
+    $expiresAt = (int)($_SESSION['auth_expires_at'] ?? 0);
+    if ($expiresAt <= 0 || time() >= $expiresAt) {
+        recordAuthenticationAudit(
+            isset($sessionUser['id']) ? (int)$sessionUser['id'] : null,
+            'unauthorized_access_attempt',
+            (string)($_SESSION['auth_method'] ?? 'session')
+        );
+        clearApplicationSession();
+        return null;
+    }
     $id = (int)$sessionUser['id'];
     $stmt = db()->prepare("
         SELECT u.id, u.name, u.email, to_jsonb(u)->>'phone' AS phone, u.role, s.matric_id,
@@ -135,7 +217,10 @@ function currentUser(): ?array {
 }
 function requireAuth(): array {
     $u = currentUser();
-    if (!$u) respond(['error' => 'Unauthenticated'], 401);
+    if (!$u) {
+        recordAuthenticationAudit(null, 'unauthorized_access_attempt', 'session');
+        respond(['error' => 'Unauthenticated'], 401);
+    }
     return $u;
 }
 

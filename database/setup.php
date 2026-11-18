@@ -58,8 +58,10 @@ try {
     echo "  - notifications\n";
     echo "  - announcements\n";
     echo "  - activity_logs\n";
+    echo "  - authentication_audit_logs\n";
     echo "  - password_reset_tokens\n";
     echo "  - placement_change_requests\n";
+    echo "  - placement_change_documents\n";
     echo "  - system_settings\n";
 
     $conn->close();

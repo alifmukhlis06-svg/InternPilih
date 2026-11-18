@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>InternPilih - UiTM Internship Post-Offer System</title>
 <script src="assets/js/theme-init.js?v=20261031-classic1"></script>
-<link rel="stylesheet" href="assets/css/style.css?v=20261031-classic1">
+<link rel="stylesheet" href="assets/css/style.css?v=20261119-auth1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -53,6 +53,11 @@
       <i class="fas fa-sign-in-alt"></i> Sign In
     </button>
 
+    <div class="oauth-divider" aria-hidden="true"><span>or</span></div>
+    <button type="button" class="btn btn-outline login-submit google-login-btn" onclick="startGoogleLogin()">
+      <i class="fab fa-google"></i> Continue with UiTM Google
+    </button>
+
     <div class="demo-accounts" id="staging-demo-accounts" hidden>
       <p><i class="fas fa-key"></i> Staging Demo Accounts</p>
       <div id="staging-demo-list"></div>
@@ -61,6 +66,7 @@
   </div>
 </div>
 
+<script src="assets/js/google-auth.js?v=20261119-auth1"></script>
 <script>
 let currentRole='student';
 const demoAccountsByRole={student:[],admin:[],employer:[]};
@@ -170,6 +176,19 @@ async function doLogin(){
   }
 }
 
+async function startGoogleLogin(){
+  const button=document.querySelector('.google-login-btn');
+  button.disabled=true;
+  button.innerHTML='<i class="fas fa-spinner fa-spin"></i> Opening Google...';
+  try{
+    await window.InternPilihGoogleAuth.signIn();
+  }catch(_){
+    showErr('Google sign-in could not be started. Please try again.');
+    button.disabled=false;
+    button.innerHTML='<i class="fab fa-google"></i> Continue with UiTM Google';
+  }
+}
+
 function showErr(msg) {
   let el = document.getElementById('login-error');
   if (!el) {
@@ -185,7 +204,7 @@ function showErr(msg) {
 document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 loadDemoAccounts();
 </script>
-<script src="assets/js/app.js?v=20261031-classic1"></script>
+<script src="assets/js/app.js?v=20261119-auth1"></script>
 </body>
 </html>
 

@@ -16,6 +16,8 @@ $steps = [
     'profile-phone' => __DIR__ . '/004_qa_profile_phone.sql',
     'campus-schedule-password' => __DIR__ . '/005_campus_schedule_password_verification.sql',
     'account-normalization' => __DIR__ . '/006_normalize_synthetic_accounts.sql',
+    'placement-change-workflow' => __DIR__ . '/007_placement_change_document_workflow.sql',
+    'google-authentication' => __DIR__ . '/008_google_authentication.sql',
 ];
 
 $step = '';
@@ -26,7 +28,7 @@ foreach ($argv as $argument) {
 }
 
 if (!isset($steps[$step])) {
-    fwrite(STDERR, "Choose --step=schema, --step=serverless-storage, --step=security, --step=profile-phone, --step=campus-schedule-password, or --step=account-normalization.\n");
+    fwrite(STDERR, "Choose --step=schema, --step=serverless-storage, --step=security, --step=profile-phone, --step=campus-schedule-password, --step=account-normalization, --step=placement-change-workflow, or --step=google-authentication.\n");
     exit(2);
 }
 
@@ -47,7 +49,7 @@ try {
     }
 
     if ($step === 'serverless-storage') {
-        if ($publicTableCount !== 14
+        if (!in_array($publicTableCount, [15, 16], true)
             || !stagingPgBool($pdo->query("SELECT to_regclass('public.users') IS NOT NULL")->fetchColumn())
             || !stagingPgBool($pdo->query("SELECT to_regclass('public.documents') IS NOT NULL")->fetchColumn())
             || !stagingPgBool($pdo->query("SELECT to_regclass('public.system_settings') IS NOT NULL")->fetchColumn())
@@ -63,14 +65,14 @@ try {
     }
 
     if ($step === 'security') {
-        if ($publicTableCount !== 16) {
+        if (!in_array($publicTableCount, [17, 18], true)) {
             throw new RuntimeException('The security migration is out of order.');
         }
         assertStagingMarker($pdo);
     }
 
     if ($step === 'profile-phone') {
-        if ($publicTableCount !== 16
+        if (!in_array($publicTableCount, [17, 18], true)
             || !stagingPgBool($pdo->query("SELECT to_regclass('public.users') IS NOT NULL")->fetchColumn())) {
             throw new RuntimeException('The profile phone migration is out of order.');
         }
@@ -78,7 +80,7 @@ try {
     }
 
     if ($step === 'campus-schedule-password') {
-        if ($publicTableCount !== 16
+        if (!in_array($publicTableCount, [17, 18], true)
             || !stagingPgBool($pdo->query("SELECT to_regclass('public.students') IS NOT NULL")->fetchColumn())
             || !stagingPgBool($pdo->query("SELECT to_regclass('public.password_reset_tokens') IS NOT NULL")->fetchColumn())) {
             throw new RuntimeException('The campus/schedule/password migration is out of order.');
@@ -87,10 +89,26 @@ try {
     }
 
     if ($step === 'account-normalization') {
-        if ($publicTableCount !== 16
+        if (!in_array($publicTableCount, [17, 18], true)
             || !stagingPgBool($pdo->query("SELECT to_regclass('public.admins') IS NOT NULL")->fetchColumn())
             || !stagingPgBool($pdo->query("SELECT to_regclass('public.students') IS NOT NULL")->fetchColumn())) {
             throw new RuntimeException('The account normalization migration is out of order.');
+        }
+        assertStagingMarker($pdo);
+    }
+
+    if ($step === 'placement-change-workflow') {
+        if (!in_array($publicTableCount, [16, 17, 18], true)
+            || !stagingPgBool($pdo->query("SELECT to_regclass('public.placement_change_requests') IS NOT NULL")->fetchColumn())) {
+            throw new RuntimeException('The placement-change workflow migration is out of order.');
+        }
+        assertStagingMarker($pdo);
+    }
+
+    if ($step === 'google-authentication') {
+        if (!in_array($publicTableCount, [17, 18], true)
+            || !stagingPgBool($pdo->query("SELECT to_regclass('public.users') IS NOT NULL")->fetchColumn())) {
+            throw new RuntimeException('The Google authentication migration is out of order.');
         }
         assertStagingMarker($pdo);
     }
@@ -112,7 +130,12 @@ try {
     $newPublicTableCount = (int)$pdo->query("
         SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public'
     ")->fetchColumn();
-    $expectedCount = $step === 'schema' ? 14 : 16;
+    $expectedCount = match ($step) {
+        'schema' => 16,
+        'serverless-storage' => $publicTableCount + 2,
+        'google-authentication' => 18,
+        default => $publicTableCount,
+    };
     if ($newPublicTableCount !== $expectedCount) {
         throw new RuntimeException('The post-migration table count is unexpected.');
     }
@@ -171,6 +194,30 @@ try {
         ")->fetchColumn();
         if ($requiredColumns !== 4 || $scheduleCount !== 5) {
             throw new RuntimeException('The campus/schedule/password verification failed.');
+        }
+    }
+
+    if ($step === 'placement-change-workflow') {
+        $requiredColumns = (int)$pdo->query("
+            SELECT COUNT(*) FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'placement_change_requests'
+              AND column_name IN ('submitted_at','revision_requested_at','revision_deadline','final_decision_at')
+        ")->fetchColumn();
+        $documentTable = stagingPgBool($pdo->query("SELECT to_regclass('public.placement_change_documents') IS NOT NULL")->fetchColumn());
+        if ($requiredColumns !== 4 || !$documentTable) {
+            throw new RuntimeException('The placement-change workflow verification failed.');
+        }
+    }
+
+    if ($step === 'google-authentication') {
+        $requiredColumns = (int)$pdo->query("
+            SELECT COUNT(*) FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'users'
+              AND column_name IN ('google_auth_user_id','last_login_at')
+        ")->fetchColumn();
+        $auditTable = stagingPgBool($pdo->query("SELECT to_regclass('public.authentication_audit_logs') IS NOT NULL")->fetchColumn());
+        if ($requiredColumns !== 2 || !$auditTable) {
+            throw new RuntimeException('The Google authentication verification failed.');
         }
     }
 
