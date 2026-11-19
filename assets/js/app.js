@@ -2,6 +2,14 @@
  * Shared browser helpers.
  */
 
+window.internPilihDisplayName = window.internPilihDisplayName || function (name) {
+  const fullName = String(name || '').trim().replace(/\s+/g, ' ');
+  const patronymic = fullName.match(/\s+(?:bin|binti)(?=\s|$)/i);
+  return patronymic && patronymic.index > 0
+    ? fullName.slice(0, patronymic.index).trim()
+    : fullName;
+};
+
 // Resolve app-root URLs and hold protected API work until authorization has
 // completed. Protected HTML is hidden by CSS until its initial live data has
 // loaded, so static fallback markup can never flash another account's data.
@@ -148,10 +156,11 @@
       window.location.replace(window.appUrl(roleHome[u.role] || '/login.html'));
       return;
     }
-    const initials = u.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    const displayName = window.internPilihDisplayName(u.name) || 'User';
+    const initials = displayName.split(/\s+/).filter(Boolean).map(w => w[0]).join('').substring(0, 2).toUpperCase();
 
     document.querySelectorAll('.user-avatar').forEach(el => { el.textContent = initials; });
-    document.querySelectorAll('.user-name,  [data-user-name]').forEach(el  => { el.textContent = u.name; });
+    document.querySelectorAll('.user-name,  [data-user-name]').forEach(el  => { el.textContent = displayName; });
     document.querySelectorAll('.user-matric,[data-user-matric]').forEach(el => { el.textContent = u.matric_id || u.email; });
 
     sessionStorage.setItem('user', JSON.stringify(u));
@@ -468,8 +477,12 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     }[c]));
   }
 
+  function displayName(name) {
+    return window.internPilihDisplayName(name);
+  }
+
   function initials(name) {
-    return String(name || 'User').split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    return String(displayName(name) || 'User').split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   }
 
   function money(value) {
@@ -560,9 +573,9 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
   function updateIdentity(user) {
     if (!user) return;
     document.querySelectorAll('.user-avatar').forEach(el => { el.textContent = initials(user.name); });
-    document.querySelectorAll('.user-name, [data-user-name]').forEach(el => { el.textContent = user.name; });
+    document.querySelectorAll('.user-name, [data-user-name]').forEach(el => { el.textContent = displayName(user.name); });
     document.querySelectorAll('.user-matric, [data-user-matric]').forEach(el => { el.textContent = user.matric_id || user.email; });
-    document.querySelectorAll('.sidebar-footer .user-info p').forEach(el => { el.textContent = user.name; });
+    document.querySelectorAll('.sidebar-footer .user-info p').forEach(el => { el.textContent = displayName(user.name); });
     document.querySelectorAll('.sidebar-footer .user-info span').forEach(el => {
       el.textContent = user.role === 'admin' ? 'Coordinator' : user.role === 'employer' ? 'Employer Account' : (user.matric_id || user.email);
     });
@@ -638,7 +651,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
         placementChangeList.innerHTML = active.length ? active.slice(0, 5).map(request => `
           <div class="notif-item" style="padding:9px 0;">
             <div class="notif-dot-icon"><i class="fas fa-right-left"></i></div>
-            <div style="flex:1;"><p style="font-size:13px;font-weight:700;">${esc(request.student_name)}</p><p style="font-size:11px;color:var(--text2);">${esc(request.requested_company_name)} - ${Number(request.document_progress || 0)}/3 documents</p></div>
+            <div style="flex:1;"><p style="font-size:13px;font-weight:700;">${esc(displayName(request.student_name))}</p><p style="font-size:11px;color:var(--text2);">${esc(request.requested_company_name)} - ${Number(request.document_progress || 0)}/3 documents</p></div>
             ${badge(request.is_revision_overdue ? 'risk' : request.status, request.is_revision_overdue ? 'Revision Overdue' : labels[request.status])}
           </div>
         `).join('') : 'No active placement change requests.';
@@ -658,7 +671,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     if (tbody) {
       tbody.innerHTML = data.offers.slice(0, 6).map(o => `
         <tr>
-          <td><strong>${esc(o.student_name)}</strong><br><small style="color:var(--text2);">${esc(o.matric_id)}</small></td>
+          <td><strong>${esc(displayName(o.student_name))}</strong><br><small style="color:var(--text2);">${esc(o.matric_id)}</small></td>
           <td>${badge(o.status, o.status)}</td>
           <td>${esc(o.company_name)}</td>
           <td>${o.status === 'accepted' ? badge('verified', 'Placement') : badge(o.status, o.status)}</td>
@@ -722,7 +735,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
         body.innerHTML = riskStudents.length ? riskStudents.map(s => `
           <div class="notif-item">
             <div class="notif-dot-icon" style="background:rgba(239,68,68,.12);color:var(--red);font-size:13px;font-weight:800;">${s.pending_count}</div>
-            <div><p style="font-size:13px;font-weight:600;">${esc(s.name)}</p><p style="font-size:11px;color:var(--text2);">${esc(flagReasonText(s))} - ${esc(s.matric_id || '-')}</p></div>
+            <div><p style="font-size:13px;font-weight:600;">${esc(displayName(s.name))}</p><p style="font-size:11px;color:var(--text2);">${esc(flagReasonText(s))} - ${esc(s.matric_id || '-')}</p></div>
             <a href="monitoring.html" class="btn btn-danger btn-sm">Review</a>
           </div>
         `).join('') : '<div style="padding:16px 0;color:var(--text2);font-size:13px;">No students are currently flagged for pending-offer issues.</div>';
@@ -1447,7 +1460,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
         <div style="flex:1;">
           <p style="font-size:14px;font-weight:600;">${esc(note.title)}</p>
           <p style="font-size:13px;color:var(--text3);margin-top:3px;">${esc(note.body)}</p>
-          <p class="notif-meta" style="margin-top:6px;"><i class="fas fa-clock"></i> ${fmtDate(String(note.created_at || '').slice(0, 10))} - ${esc(note.sender_name || 'System')}</p>
+          <p class="notif-meta" style="margin-top:6px;"><i class="fas fa-clock"></i> ${fmtDate(String(note.created_at || '').slice(0, 10))} - ${esc(note.sender_name ? displayName(note.sender_name) : 'System')}</p>
           ${note.link_url ? `<div style="margin-top:10px;display:flex;gap:8px;"><a href="${esc(note.link_url)}" class="btn btn-outline btn-sm"><i class="fas fa-arrow-right"></i> Open</a></div>` : ''}
         </div>
         ${unread ? '<div class="unread-marker"></div>' : ''}
@@ -1479,7 +1492,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     const confirmedPlacements = Number(company.confirmed_placements || accepted.length || 0);
     const verifiedDocs = accepted.filter(o => placementVerificationStatus(o, data.documents) === 'verified').length;
     const pendingDocs = accepted.filter(o => placementVerificationStatus(o, data.documents) !== 'verified').length;
-    const companyName = company.name || data.user.name;
+    const companyName = company.name || displayName(data.user.name);
     document.querySelectorAll('.sidebar-footer .user-info p').forEach(el => { el.textContent = companyName; });
     document.querySelectorAll('.sidebar-footer .user-avatar').forEach(el => { el.textContent = initials(companyName); });
     const briefKicker = document.querySelector('.dashboard-brief-kicker');
@@ -1487,12 +1500,12 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
 
     const topbarSub = document.querySelector('.topbar p');
     if (topbarSub && page === 'dashboard.html') {
-      topbarSub.textContent = `${company.name || data.user.name} - ${offers.length} offer response${offers.length === 1 ? '' : 's'}`;
+      topbarSub.textContent = `${company.name || displayName(data.user.name)} - ${offers.length} offer response${offers.length === 1 ? '' : 's'}`;
     }
 
     const infoAlert = document.querySelector('.content > .alert-info');
     if (infoAlert && page === 'dashboard.html') {
-      infoAlert.innerHTML = `<i class="fas fa-info-circle"></i>Viewing live offer responses for <strong>${esc(company.name || data.user.name)}</strong>. ${pending.length} response${pending.length === 1 ? '' : 's'} awaiting student action.`;
+      infoAlert.innerHTML = `<i class="fas fa-info-circle"></i>Viewing live offer responses for <strong>${esc(company.name || displayName(data.user.name))}</strong>. ${pending.length} response${pending.length === 1 ? '' : 's'} awaiting student action.`;
     }
 
     const vals = document.querySelectorAll('.stat-val');
@@ -1525,7 +1538,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       const body = document.querySelector('.data-table tbody');
       if (body) body.innerHTML = offers.slice(0, 6).map(o => `
         <tr>
-          <td><strong>${esc(o.student_name)}</strong><br><small style="color:var(--text2);">${esc(o.matric_id)}</small></td>
+          <td><strong>${esc(displayName(o.student_name))}</strong><br><small style="color:var(--text2);">${esc(o.matric_id)}</small></td>
           <td>${esc(o.position)}</td>
           <td>${badge(o.status, o.status)}</td>
           <td style="color:var(--text2);">${fmtDate(o.response_date || o.offer_date)}</td>
@@ -1540,7 +1553,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
           return `
             <div class="notif-item">
               <div class="notif-dot-icon" style="background:rgba(16,185,129,.12);color:var(--green);">${initials(o.student_name)}</div>
-              <div><p style="font-size:13px;font-weight:600;">${esc(o.student_name)}</p><p style="font-size:12px;color:var(--text2);">${esc(o.position)} - Accepted ${fmtDate(o.response_date || o.offer_date)}</p>${placementVerificationBadge(o, data.documents)}</div>
+              <div><p style="font-size:13px;font-weight:600;">${esc(displayName(o.student_name))}</p><p style="font-size:12px;color:var(--text2);">${esc(o.position)} - Accepted ${fmtDate(o.response_date || o.offer_date)}</p>${placementVerificationBadge(o, data.documents)}</div>
             </div>
           `;
         }).join('') : '<div style="padding:16px 0;color:var(--text2);font-size:13px;">No accepted placements yet.</div>';
@@ -1570,7 +1583,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       const body = document.querySelector('#offersTable tbody');
       if (body) body.innerHTML = offers.map(o => `
         <tr data-fstatus="${esc(o.status)}">
-          <td><strong>${esc(o.student_name)}</strong></td>
+          <td><strong>${esc(displayName(o.student_name))}</strong></td>
           <td style="color:var(--text2);">${esc(o.matric_id)}</td>
           <td>${esc(o.position)}</td>
           <td>${fmtDate(o.offer_date)}</td>
@@ -1590,7 +1603,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       if (body) body.innerHTML = accepted.map(o => {
         return `
           <tr>
-            <td><div style="display:flex;align-items:center;gap:10px;"><div class="avatar-initial">${initials(o.student_name)}</div><div><strong>${esc(o.student_name)}</strong></div></div></td>
+            <td><div style="display:flex;align-items:center;gap:10px;"><div class="avatar-initial">${initials(o.student_name)}</div><div><strong>${esc(displayName(o.student_name))}</strong></div></div></td>
             <td style="color:var(--text2);">${esc(o.matric_id)}</td>
             <td>${esc(o.position)}</td>
             <td>UiTM</td>
@@ -1613,7 +1626,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
             <div class="panel" style="margin-bottom:0;">
               <div style="padding:24px;text-align:center;">
                 <div style="width:64px;height:64px;background:#dbeafe;color:#1e40af;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;margin:0 auto 12px;">${initials(o.student_name)}</div>
-                <h3 style="font-size:15px;font-weight:700;">${esc(o.student_name)}</h3>
+                <h3 style="font-size:15px;font-weight:700;">${esc(displayName(o.student_name))}</h3>
                 <p style="font-size:12px;color:var(--text2);">${esc(o.matric_id || '-')} - UiTM</p>
                 <p style="font-size:12px;color:var(--blue3);margin-top:4px;">${esc(o.position)}</p>
                 <div style="display:flex;justify-content:center;gap:6px;margin:12px 0;">${placementVerificationBadge(o, data.documents)}${badge('accepted', 'Active')}</div>
@@ -1681,11 +1694,11 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     window.viewEmployerOffer = function (id) {
       const o = offers.find(item => Number(item.id) === Number(id));
       if (!o) return;
-      setText('#msgTitle, #respModalTitle', o.student_name + ' - Response Detail');
+      setText('#msgTitle, #respModalTitle', displayName(o.student_name) + ' - Response Detail');
       const target = document.getElementById('msgBody') || document.getElementById('respModalBody');
       if (target) target.innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;">
-          <div><span style="color:var(--text2);">Student</span><br><strong>${esc(o.student_name)}</strong></div>
+          <div><span style="color:var(--text2);">Student</span><br><strong>${esc(displayName(o.student_name))}</strong></div>
           <div><span style="color:var(--text2);">Status</span><br>${badge(o.status, o.status)}</div>
           <div><span style="color:var(--text2);">Position</span><br><strong>${esc(o.position)}</strong></div>
           <div><span style="color:var(--text2);">Offer Date</span><br><strong>${fmtDate(o.offer_date)}</strong></div>

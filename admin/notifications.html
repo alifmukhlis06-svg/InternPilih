@@ -5,7 +5,7 @@
 <title>Announcements – InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261031-classic1"></script>
 <link rel="stylesheet" href="../assets/css/style.css?v=20261031-classic1">
-<script src="../assets/js/auth-gate.js?v=20261031-classic1"></script>
+<script src="../assets/js/auth-gate.js?v=20261120-name1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -192,7 +192,7 @@ function renderStudentResults(){
     String(student.matric_id||'').toLowerCase().includes(query)
   ).slice(0,10);
   results.innerHTML=matches.map(student=>`<button type="button" onclick="selectIndividualStudent(${Number(student.id)})" style="display:block;width:100%;padding:10px 12px;border:0;border-bottom:1px solid var(--border);background:transparent;text-align:left;cursor:pointer;color:var(--text);">
-    <strong>${escText(student.name)}</strong><br><span style="font-size:11px;color:var(--text2);">Student ID: ${escText(student.matric_id||'Not assigned')} · ${selectedStudents.has(Number(student.id))?'Selected':'Add student'}</span>
+    <strong>${escText(window.internPilihDisplayName(student.name))}</strong><br><span style="font-size:11px;color:var(--text2);">Student ID: ${escText(student.matric_id||'Not assigned')} · ${selectedStudents.has(Number(student.id))?'Selected':'Add student'}</span>
   </button>`).join('')||'<div style="padding:12px;color:var(--text2);font-size:12px;">No assigned student found.</div>';
   results.style.display='block';
 }
@@ -212,7 +212,7 @@ function renderSelectedStudents(){
   const selected=document.getElementById('selectedStudents');
   const students=Array.from(selectedStudents.values());
   selected.innerHTML=students.map(student=>`<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:5px 0;">
-    <span><strong>${escText(student.name)}</strong> · Student ID: ${escText(student.matric_id||'Not assigned')}</span>
+    <span><strong>${escText(window.internPilihDisplayName(student.name))}</strong> · Student ID: ${escText(student.matric_id||'Not assigned')}</span>
     <button type="button" class="btn btn-outline" style="padding:3px 8px;font-size:11px;" onclick="removeIndividualStudent(${Number(student.id)})">Remove</button>
   </div>`).join('');
   selected.style.display=students.length?'block':'none';
@@ -298,7 +298,7 @@ async function loadSentHistory(){
       const icon=notificationIcon(n.type);
       const group=n.recipient_group==='individual'
         ? (Number(n.recipient_count)===1&&n.recipient_name
-          ? `${n.recipient_name}${n.recipient_matric_id?' ('+n.recipient_matric_id+')':''}`
+          ? `${window.internPilihDisplayName(n.recipient_name)}${n.recipient_matric_id?' ('+n.recipient_matric_id+')':''}`
           : `${n.recipient_count} selected students`)
         : `${(n.recipient_group||'all').replace(/^./,c=>c.toUpperCase())} Students`;
       return `<div class="notif-item">
@@ -321,7 +321,7 @@ toggleSchedule();
 loadNotificationMeta();
 loadSentHistory();
 </script>
-<script src="../assets/js/app.js?v=20261119-auth1"></script>
+<script src="../assets/js/app.js?v=20261120-name1"></script>
 </body>
 </html>
 

@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="../assets/css/style.css?v=20261031-classic1">
 <link rel="stylesheet" href="../assets/css/student-dashboard.css?v=20261119-table1">
 <link rel="stylesheet" href="../assets/css/dashboard-system.css?v=20261120-color3">
-<script src="../assets/js/auth-gate.js?v=20261031-classic1"></script>
+<script src="../assets/js/auth-gate.js?v=20261120-name1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="dashboard-shell student-dashboard">
@@ -372,7 +372,7 @@ async function loadDashboardNotifications() {
     const icons = { urgent: 'fa-triangle-exclamation', reminder: 'fa-bell', general: 'fa-bullhorn', system: 'fa-circle-info' };
     list.innerHTML = notes.map(note => {
       const unread = Number(note.is_read) === 0;
-      const sender = note.sender_name || 'System';
+      const sender = note.sender_name ? window.internPilihDisplayName(note.sender_name) : 'System';
       return `<a class="notif-item" href="notifications.html" style="color:inherit;text-decoration:none;${unread ? '' : 'opacity:.72;'}">
         <div class="notif-dot-icon" style="background:rgba(59,130,246,.12);color:var(--blue3);"><i class="fas ${icons[note.type] || icons.system}"></i></div>
         <div style="min-width:0;flex:1;"><p style="font-size:13px;font-weight:600;">${escapeDashboardHtml(note.title)}</p><p class="notif-meta">${escapeDashboardHtml(sender)} - ${formatDashboardDate(note.created_at)}</p></div>
@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
-<script src="../assets/js/app.js?v=20261120-color3"></script>
+<script src="../assets/js/app.js?v=20261120-name1"></script>
 </body>
 </html>
 

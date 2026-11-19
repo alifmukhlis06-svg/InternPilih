@@ -3,6 +3,14 @@
  * This file is intentionally loaded synchronously in <head> before any inline
  * page script can initialize protected API requests.
  */
+window.internPilihDisplayName = window.internPilihDisplayName || function (name) {
+  const fullName = String(name || '').trim().replace(/\s+/g, ' ');
+  const patronymic = fullName.match(/\s+(?:bin|binti)(?=\s|$)/i);
+  return patronymic && patronymic.index > 0
+    ? fullName.slice(0, patronymic.index).trim()
+    : fullName;
+};
+
 (function () {
   if (window.__internPilihAuthGateInstalled) return;
   window.__internPilihAuthGateInstalled = true;
@@ -61,11 +69,12 @@
 
   function hydrateIdentity(user) {
     if (!user) return;
-    const initials = String(user.name || 'User').split(/\s+/).filter(Boolean)
+    const displayName = window.internPilihDisplayName(user.name) || 'User';
+    const initials = displayName.split(/\s+/).filter(Boolean)
       .map(word => word[0]).join('').slice(0, 2).toUpperCase();
     document.querySelectorAll('.user-avatar').forEach(element => { element.textContent = initials; });
     document.querySelectorAll('.user-name, [data-user-name], .sidebar-footer .user-info p')
-      .forEach(element => { element.textContent = user.name || ''; });
+      .forEach(element => { element.textContent = displayName; });
     document.querySelectorAll('.user-matric, [data-user-matric], .sidebar-footer .user-info span')
       .forEach(element => {
         element.textContent = user.role === 'admin'
