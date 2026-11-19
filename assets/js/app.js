@@ -900,13 +900,18 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
   }
 
   window.reviewPlacementChange = async function (id, status) {
-    const request = placementChangeRows.find(item => Number(item.id) === Number(id));
+    const requestId = Number(id);
+    if (!Number.isInteger(requestId) || requestId <= 0) {
+      alert('A valid placement-change request ID is required.');
+      return;
+    }
+    const request = placementChangeRows.find(item => Number(item.id) === requestId);
     if (!request) return;
     const action = status === 'approved_documents_required' ? 'approve' : 'reject';
     const note = window.prompt(`Add a short review note to ${action} ${request.student_name}'s change request:`, status === 'approved_documents_required' ? 'Approved for document submission.' : 'Rejected by coordinator.');
     if (note === null) return;
     try {
-      await apiSend('/api/placement-changes.php?id=' + id, 'PUT', {
+      await apiSend('/api/placement-changes.php?id=' + encodeURIComponent(requestId), 'PUT', {
         action: 'review_reason',
         status,
         review_note: note

@@ -200,7 +200,11 @@ if ($method === 'POST') {
     }
 }
 
-if ($method === 'PUT' && $id) {
+if ($method === 'PUT' && $id <= 0) {
+    respond(['error' => 'A valid placement-change request ID is required.', 'code' => 'invalid_placement_change_request_id'], 422);
+}
+
+if ($method === 'PUT') {
     $d = body();
     $action = (string)($d['action'] ?? '');
 
@@ -377,8 +381,18 @@ if ($method === 'PUT' && $id) {
         respond(['success' => true, 'status' => $status]);
     } catch (Throwable $error) {
         if ($conn->inTransaction()) $conn->rollback();
-        error_log('InternPilih placement change review failed: ' . $error->getMessage());
-        respond(['error' => 'Could not review the placement change request.'], 500);
+        $databaseCode = (string)$error->getCode();
+        error_log('InternPilih placement change review failed. Database code: ' . ($databaseCode !== '' ? $databaseCode : 'unknown'));
+        if ($databaseCode === '22001') {
+            respond([
+                'error' => 'The placement-change status could not be saved because the database status field is too short.',
+                'code' => 'placement_change_status_too_long',
+            ], 500);
+        }
+        respond([
+            'error' => 'Could not review the placement change request. Reference: placement_change_review_failed.',
+            'code' => 'placement_change_review_failed',
+        ], 500);
     }
 }
 
