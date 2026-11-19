@@ -854,6 +854,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
 
     list.innerHTML = placementChangeRows.length ? placementChangeRows.map(request => {
       const reviewable = ['documents_submitted', 'document_verification', 'revision_required'].includes(request.status);
+      const allVerified = Number(request.verified_count || 0) === 3;
       const requestLabel = request.is_revision_overdue ? 'Revision Overdue' : (labels[request.status] || request.status);
       const documents = Array.isArray(request.documents) ? request.documents : [];
       return `
@@ -887,8 +888,10 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${request.status === 'coordinator_review' ? `
-              <button class="btn btn-success btn-sm" onclick="reviewPlacementChange(${request.id}, 'approved_documents_required')"><i class="fas fa-check"></i> Approve</button>
-              <button class="btn btn-danger btn-sm" onclick="reviewPlacementChange(${request.id}, 'rejected')"><i class="fas fa-times"></i> Reject</button>
+              <button class="btn btn-success btn-sm" onclick="reviewPlacementChange(${request.id}, 'approved_documents_required')"><i class="fas fa-check"></i> Approve Request</button>
+              <button class="btn btn-danger btn-sm" onclick="reviewPlacementChange(${request.id}, 'rejected')"><i class="fas fa-times"></i> Reject Request</button>
+            ` : request.status === 'document_verification' && allVerified ? `
+              <button class="btn btn-success btn-sm" onclick="completePlacementChange(${request.id})"><i class="fas fa-check-double"></i> Complete Placement Change</button>
             ` : ['completed', 'rejected'].includes(request.status) ? `<span style="font-size:12px;color:var(--text2);">Decided ${fmtDate(String(request.final_decision_at || request.reviewed_at || '').slice(0, 10))}</span>` : ''}
           </div>
         </div>
@@ -926,6 +929,17 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     try {
       await apiSend('/api/placement-change-documents.php?id=' + id, 'PUT', { status, reason });
       showToast(status === 'verified' ? 'Document verified.' : 'Document returned for revision.', 'success');
+      await renderMonitoring(await getSummary());
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  window.completePlacementChange = async function (id) {
+    if (!window.confirm('Complete this placement change and make the requested placement official?')) return;
+    try {
+      await apiSend('/api/placement-changes.php?id=' + id, 'PUT', { action: 'complete' });
+      showToast('Placement change completed successfully.', 'success');
       await renderMonitoring(await getSummary());
     } catch (err) {
       alert(err.message);

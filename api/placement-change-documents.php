@@ -3,7 +3,6 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/activity.php';
 require_once __DIR__ . '/storage-client.php';
-require_once __DIR__ . '/placement-verification.php';
 
 $user = requireAuth();
 $method = $_SERVER['REQUEST_METHOD'];
@@ -238,67 +237,12 @@ if ($method === 'PUT' && $id) {
             $requestUpdate->execute();
             $requestStatus = 'revision_required';
         } else {
-            $verifiedCountStmt = $conn->prepare("
-                SELECT COUNT(*) AS verified_count FROM placement_change_documents
-                WHERE request_id = ? AND status = 'verified'
-            ");
-            $verifiedCountStmt->bind_param('i', $document['request_id']);
-            $verifiedCountStmt->execute();
-            $verifiedCount = (int)($verifiedCountStmt->get_result()->fetch_assoc()['verified_count'] ?? 0);
-            if ($verifiedCount === 3) {
-                $requestStmt = $conn->prepare("
-                    SELECT * FROM placement_change_requests WHERE id = ? FOR UPDATE
-                ");
-                $requestStmt->bind_param('i', $document['request_id']);
-                $requestStmt->execute();
-                $request = $requestStmt->get_result()->fetch_assoc();
-                if (!$request) {
-                    $conn->rollback();
-                    respond(['error' => 'Placement change request not found.'], 404);
-                }
-
-                $currentOfferId = (int)$request['current_offer_id'];
-                $requestedOfferId = (int)$request['requested_offer_id'];
-                $offerLock = $conn->prepare("SELECT id, status FROM offers WHERE id IN (?, ?) ORDER BY id FOR UPDATE");
-                $offerLock->bind_param('ii', $currentOfferId, $requestedOfferId);
-                $offerLock->execute();
-                $statuses = [];
-                foreach ($offerLock->get_result()->fetch_all(MYSQLI_ASSOC) as $row) {
-                    $statuses[(int)$row['id']] = $row['status'];
-                }
-                if (($statuses[$currentOfferId] ?? null) !== 'accepted' || ($statuses[$requestedOfferId] ?? null) !== 'pending') {
-                    $conn->rollback();
-                    respond(['error' => 'The placement offers are no longer eligible for completion.'], 409);
-                }
-
-                $today = date('Y-m-d');
-                $withdrawReason = 'Placement changed after all placement-change documents were verified.';
-                $withdraw = $conn->prepare("UPDATE offers SET status = 'withdrawn', response_date = ?, reject_reason = ? WHERE id = ?");
-                $withdraw->bind_param('ssi', $today, $withdrawReason, $currentOfferId);
-                $withdraw->execute();
-                $accept = $conn->prepare("UPDATE offers SET status = 'accepted', response_date = ?, reject_reason = NULL WHERE id = ?");
-                $accept->bind_param('si', $today, $requestedOfferId);
-                $accept->execute();
-                recalculatePlacementVerification($currentOfferId, (int)$request['student_id']);
-                $placementVerification = recalculatePlacementVerification($requestedOfferId, (int)$request['student_id']);
-
-                $requestUpdate = $conn->prepare("
-                    UPDATE placement_change_requests SET status = 'completed', final_decision_at = ? WHERE id = ?
-                ");
-                $requestUpdate->bind_param('si', $now, $document['request_id']);
-                $requestUpdate->execute();
-                $requestStatus = 'completed';
-                logActivity((int)$user['id'], 'placement_change.completed', 'placement_change_request', (int)$document['request_id'], [
-                    'current_offer_id' => $currentOfferId,
-                    'requested_offer_id' => $requestedOfferId,
-                    'placement_verification_status' => $placementVerification['status'],
-                ]);
-            } elseif ($document['request_status'] === 'revision_required') {
+            if ($document['request_status'] === 'revision_required') {
                 $requestStatus = 'revision_required';
             } else {
                 $requestUpdate = $conn->prepare("
                     UPDATE placement_change_requests SET status = 'document_verification'
-                    WHERE id = ? AND status = 'documents_submitted'
+                    WHERE id = ? AND status IN ('documents_submitted','document_verification')
                 ");
                 $requestUpdate->bind_param('i', $document['request_id']);
                 $requestUpdate->execute();

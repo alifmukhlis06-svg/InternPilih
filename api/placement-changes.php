@@ -233,7 +233,7 @@ if ($method === 'PUT' && $id) {
             $submittedAt = date('Y-m-d H:i:s');
             $update = $conn->prepare("
                 UPDATE placement_change_requests
-                SET status = 'documents_submitted'
+                SET status = 'document_verification'
                 WHERE id = ?
             ");
             $update->bind_param('i', $id);
@@ -249,7 +249,7 @@ if ($method === 'PUT' && $id) {
                 'revision_deadline' => $request['revision_deadline'] ?? null,
             ]);
             $conn->commit();
-            respond(['success' => true, 'status' => 'documents_submitted']);
+            respond(['success' => true, 'status' => 'document_verification']);
         } catch (Throwable $error) {
             if ($conn->inTransaction()) $conn->rollback();
             respond(['error' => 'Could not submit the placement change request.'], 500);
@@ -257,6 +257,81 @@ if ($method === 'PUT' && $id) {
     }
 
     if ($user['role'] !== 'admin') respond(['error' => 'Forbidden'], 403);
+
+    if ($action === 'complete') {
+        $conn = db();
+        $conn->begin_transaction();
+        try {
+            $stmt = $conn->prepare("SELECT * FROM placement_change_requests WHERE id = ? FOR UPDATE");
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $request = $stmt->get_result()->fetch_assoc();
+            if (!$request) {
+                $conn->rollback();
+                respond(['error' => 'Placement change request not found.'], 404);
+            }
+            requireCoordinatorStudent((int)$user['id'], (int)$request['student_id']);
+            if ($request['status'] !== 'document_verification') {
+                $conn->rollback();
+                respond(['error' => 'This request is not ready for completion.'], 409);
+            }
+
+            $verifiedStmt = $conn->prepare("
+                SELECT COUNT(*) AS verified_count FROM placement_change_documents
+                WHERE request_id = ? AND status = 'verified'
+            ");
+            $verifiedStmt->bind_param('i', $id);
+            $verifiedStmt->execute();
+            if ((int)($verifiedStmt->get_result()->fetch_assoc()['verified_count'] ?? 0) !== 3) {
+                $conn->rollback();
+                respond(['error' => 'Verify all 3 documents before completing the placement change.'], 409);
+            }
+
+            $currentOfferId = (int)$request['current_offer_id'];
+            $requestedOfferId = (int)$request['requested_offer_id'];
+            $offerLock = $conn->prepare("SELECT id, status FROM offers WHERE id IN (?, ?) ORDER BY id FOR UPDATE");
+            $offerLock->bind_param('ii', $currentOfferId, $requestedOfferId);
+            $offerLock->execute();
+            $statuses = [];
+            foreach ($offerLock->get_result()->fetch_all(MYSQLI_ASSOC) as $row) {
+                $statuses[(int)$row['id']] = $row['status'];
+            }
+            if (($statuses[$currentOfferId] ?? null) !== 'accepted' || ($statuses[$requestedOfferId] ?? null) !== 'pending') {
+                $conn->rollback();
+                respond(['error' => 'The placement offers are no longer eligible for completion.'], 409);
+            }
+
+            $today = date('Y-m-d');
+            $withdrawReason = 'Placement changed after coordinator completion.';
+            $withdraw = $conn->prepare("UPDATE offers SET status = 'withdrawn', response_date = ?, reject_reason = ? WHERE id = ?");
+            $withdraw->bind_param('ssi', $today, $withdrawReason, $currentOfferId);
+            $withdraw->execute();
+            $accept = $conn->prepare("UPDATE offers SET status = 'accepted', response_date = ?, reject_reason = NULL WHERE id = ?");
+            $accept->bind_param('si', $today, $requestedOfferId);
+            $accept->execute();
+            recalculatePlacementVerification($currentOfferId, (int)$request['student_id']);
+            $placementVerification = recalculatePlacementVerification($requestedOfferId, (int)$request['student_id']);
+
+            $completedAt = date('Y-m-d H:i:s');
+            $complete = $conn->prepare("
+                UPDATE placement_change_requests SET status = 'completed', final_decision_at = ? WHERE id = ?
+            ");
+            $complete->bind_param('si', $completedAt, $id);
+            $complete->execute();
+            logActivity((int)$user['id'], 'placement_change.completed', 'placement_change_request', $id, [
+                'current_offer_id' => $currentOfferId,
+                'requested_offer_id' => $requestedOfferId,
+                'placement_verification_status' => $placementVerification['status'],
+            ]);
+            $conn->commit();
+            respond(['success' => true, 'status' => 'completed']);
+        } catch (Throwable $error) {
+            if ($conn->inTransaction()) $conn->rollback();
+            error_log('InternPilih placement change completion failed: ' . $error->getMessage());
+            respond(['error' => 'Could not complete the placement change.'], 500);
+        }
+    }
+
     $status = (string)($d['status'] ?? '');
     $reviewNote = trim((string)($d['review_note'] ?? ''));
     if ($action !== 'review_reason' || !in_array($status, ['approved_documents_required', 'rejected'], true)) {
