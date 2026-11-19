@@ -623,10 +623,11 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     const placementChangeList = document.getElementById('dashboardPlacementChangeList');
     if (placementChangeList) {
       apiGet('/api/placement-changes.php').then(requests => {
-        const activeStatuses = ['preparing_request', 'documents_complete', 'request_submitted', 'coordinator_review', 'revision_required'];
+        const activeStatuses = ['coordinator_review', 'approved_documents_required', 'documents_submitted', 'document_verification', 'revision_required'];
         const labels = {
-          preparing_request: 'Preparing Request', documents_complete: 'Documents Complete',
-          request_submitted: 'Request Submitted', coordinator_review: 'Coordinator Review',
+          coordinator_review: 'Coordinator Review',
+          approved_documents_required: 'Approved - Documents Required',
+          documents_submitted: 'Documents Submitted', document_verification: 'Document Verification',
           revision_required: 'Revision Required'
         };
         const active = requests.filter(request => activeStatuses.includes(request.status));
@@ -838,21 +839,21 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     if (!list) return;
 
     const labels = {
-      preparing_request: 'Preparing Request', documents_complete: 'Documents Complete',
-      request_submitted: 'Request Submitted', coordinator_review: 'Coordinator Review',
-      revision_required: 'Revision Required', approved: 'Approved', rejected: 'Rejected'
+      coordinator_review: 'Coordinator Review',
+      approved_documents_required: 'Approved - Documents Required',
+      documents_submitted: 'Documents Submitted', document_verification: 'Document Verification',
+      revision_required: 'Revision Required', completed: 'Completed', rejected: 'Rejected'
     };
     const documentLabels = {
       proof_of_sending: 'Proof of Sending Placement Change Request',
       placement_change_letter: 'Placement Change Request Letter',
       company_response: 'Company Response'
     };
-    const active = placementChangeRows.filter(request => !['approved', 'rejected'].includes(request.status));
+    const active = placementChangeRows.filter(request => !['completed', 'rejected'].includes(request.status));
     if (count) count.textContent = active.length + ' active';
 
     list.innerHTML = placementChangeRows.length ? placementChangeRows.map(request => {
-      const reviewable = ['request_submitted', 'coordinator_review', 'revision_required'].includes(request.status);
-      const allVerified = Number(request.verified_count || 0) === 3;
+      const reviewable = ['documents_submitted', 'document_verification', 'revision_required'].includes(request.status);
       const requestLabel = request.is_revision_overdue ? 'Revision Overdue' : (labels[request.status] || request.status);
       const documents = Array.isArray(request.documents) ? request.documents : [];
       return `
@@ -870,9 +871,10 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
               <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;"><strong>${esc(request.requested_company_name)}</strong><br><span style="color:var(--text2);">${esc(request.requested_position)}</span></div>
             </div>
             <p style="font-size:13px;color:var(--text3);line-height:1.6;margin-top:10px;">${esc(request.reason)}</p>
-            <p style="font-size:12px;font-weight:700;margin-top:8px;">Documents: ${Number(request.document_progress || 0)}/3 uploaded - ${Number(request.verified_count || 0)}/3 verified</p>
+            ${request.status !== 'coordinator_review' && request.status !== 'rejected' ? `<p style="font-size:12px;font-weight:700;margin-top:8px;">Documents: ${Number(request.document_progress || 0)}/3 uploaded - ${Number(request.verified_count || 0)}/3 verified</p>` : ''}
+            ${request.document_deadline && !['coordinator_review', 'rejected', 'completed'].includes(request.status) ? `<p style="font-size:12px;color:${request.is_document_overdue ? 'var(--red)' : 'var(--gold)'};margin-top:4px;"><strong>${request.is_document_overdue ? 'Document deadline overdue' : 'Document deadline'}:</strong> ${esc(new Date(request.document_deadline).toLocaleString('en-MY'))}</p>` : ''}
             ${request.status === 'revision_required' ? `<p style="font-size:12px;color:${request.is_revision_overdue ? 'var(--red)' : 'var(--gold)'};margin-top:4px;"><strong>${request.is_revision_overdue ? 'Revision overdue' : 'Revision deadline'}:</strong> ${esc(request.revision_deadline ? new Date(request.revision_deadline).toLocaleString('en-MY') : 'Not set')}</p>` : ''}
-            <div style="display:grid;gap:7px;margin-top:10px;">
+            ${request.status !== 'coordinator_review' && request.status !== 'rejected' ? `<div style="display:grid;gap:7px;margin-top:10px;">
               ${documents.map(document => `<div style="border:1px solid var(--border);border-radius:6px;padding:9px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
                 <div><strong style="font-size:12px;">${esc(documentLabels[document.document_type] || document.document_type)}</strong><br><span style="font-size:11px;color:var(--text2);">${esc(document.status)}${document.rejection_reason ? ` - ${esc(document.rejection_reason)}` : ''}</span></div>
                 <div style="display:flex;gap:5px;">
@@ -880,14 +882,14 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
                   ${reviewable && document.status === 'uploaded' && document.last_submitted_at ? `<button class="btn btn-success btn-sm" onclick="reviewPlacementChangeDocument(${document.id}, 'verified')"><i class="fas fa-check"></i> Verify</button><button class="btn btn-danger btn-sm" onclick="reviewPlacementChangeDocument(${document.id}, 'rejected')"><i class="fas fa-times"></i> Reject</button>` : ''}
                 </div>
               </div>`).join('')}
-            </div>
+            </div>` : ''}
             ${request.review_note ? `<p style="font-size:12px;color:var(--text2);margin-top:6px;"><strong>Review note:</strong> ${esc(request.review_note)}</p>` : ''}
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-            ${['request_submitted', 'coordinator_review'].includes(request.status) ? `
-              <button class="btn btn-success btn-sm" ${allVerified ? '' : 'disabled title="Verify all 3 documents first"'} onclick="reviewPlacementChange(${request.id}, 'approved')"><i class="fas fa-check"></i> Final Approve</button>
+            ${request.status === 'coordinator_review' ? `
+              <button class="btn btn-success btn-sm" onclick="reviewPlacementChange(${request.id}, 'approved_documents_required')"><i class="fas fa-check"></i> Approve</button>
               <button class="btn btn-danger btn-sm" onclick="reviewPlacementChange(${request.id}, 'rejected')"><i class="fas fa-times"></i> Reject</button>
-            ` : ['approved', 'rejected'].includes(request.status) ? `<span style="font-size:12px;color:var(--text2);">Decided ${fmtDate(String(request.final_decision_at || request.reviewed_at || '').slice(0, 10))}</span>` : ''}
+            ` : ['completed', 'rejected'].includes(request.status) ? `<span style="font-size:12px;color:var(--text2);">Decided ${fmtDate(String(request.final_decision_at || request.reviewed_at || '').slice(0, 10))}</span>` : ''}
           </div>
         </div>
       `;
@@ -897,16 +899,16 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
   window.reviewPlacementChange = async function (id, status) {
     const request = placementChangeRows.find(item => Number(item.id) === Number(id));
     if (!request) return;
-    const action = status === 'approved' ? 'approve' : 'reject';
-    const note = window.prompt(`Add a short review note to ${action} ${request.student_name}'s change request:`, status === 'approved' ? 'Approved by coordinator.' : 'Rejected by coordinator.');
+    const action = status === 'approved_documents_required' ? 'approve' : 'reject';
+    const note = window.prompt(`Add a short review note to ${action} ${request.student_name}'s change request:`, status === 'approved_documents_required' ? 'Approved for document submission.' : 'Rejected by coordinator.');
     if (note === null) return;
     try {
       await apiSend('/api/placement-changes.php?id=' + id, 'PUT', {
-        action: 'final_decision',
+        action: 'review_reason',
         status,
         review_note: note
       });
-      showToast(status === 'approved' ? 'Placement changed successfully.' : 'Change request rejected.', 'success');
+      showToast(status === 'approved_documents_required' ? 'Request approved. The student now has 7 days to submit documents.' : 'Change request rejected.', 'success');
       await renderMonitoring(await getSummary());
     } catch (err) {
       alert(err.message);

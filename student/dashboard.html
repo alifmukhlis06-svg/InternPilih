@@ -147,14 +147,14 @@
 </div>
 
 <script>
-const dashboardActiveChangeStatuses = ['preparing_request', 'documents_complete', 'request_submitted', 'coordinator_review', 'revision_required'];
+const dashboardActiveChangeStatuses = ['coordinator_review', 'approved_documents_required', 'documents_submitted', 'document_verification', 'revision_required'];
 const dashboardChangeLabels = {
-  preparing_request: 'Preparing Request',
-  documents_complete: 'Documents Complete',
-  request_submitted: 'Request Submitted',
   coordinator_review: 'Coordinator Review',
+  approved_documents_required: 'Approved - Documents Required',
+  documents_submitted: 'Documents Submitted',
+  document_verification: 'Document Verification',
   revision_required: 'Revision Required',
-  approved: 'Approved',
+  completed: 'Completed',
   rejected: 'Rejected'
 };
 
@@ -218,10 +218,16 @@ async function loadDashboard() {
     const changeBlock = document.getElementById('placement-change-block');
     if (currentChange) {
       const changeLabel = currentChange.is_revision_overdue ? 'Revision Overdue' : (dashboardChangeLabels[currentChange.status] || currentChange.status);
-      const deadline = currentChange.status === 'revision_required' && currentChange.revision_deadline
-        ? `<br><span>Revision deadline: ${new Date(currentChange.revision_deadline).toLocaleString('en-MY')}</span>` : '';
+      const activeDeadline = currentChange.status === 'revision_required'
+        ? currentChange.revision_deadline : currentChange.document_deadline;
+      const deadline = activeDeadline
+        ? `<br><span>${currentChange.status === 'revision_required' ? 'Revision' : 'Document'} deadline: ${new Date(activeDeadline).toLocaleString('en-MY')}</span>` : '';
+      const progress = currentChange.status === 'coordinator_review' || currentChange.status === 'rejected'
+        ? '' : `<br><span>${Number(currentChange.document_progress || 0)}/3 documents uploaded</span>`;
+      const reviewNote = currentChange.status === 'rejected' && currentChange.review_note
+        ? `<br><span>Coordinator reason: ${escapeDashboardHtml(currentChange.review_note)}</span>` : '';
       changeBlock.style.display = 'block';
-      changeBlock.innerHTML = `<strong>Placement Change: ${escapeDashboardHtml(changeLabel)}</strong><br><span>${Number(currentChange.document_progress || 0)}/3 documents uploaded</span>${deadline}`;
+      changeBlock.innerHTML = `<strong>Placement Change: ${escapeDashboardHtml(changeLabel)}</strong>${progress}${deadline}${reviewNote}`;
     } else {
       changeBlock.style.display = 'none';
       changeBlock.innerHTML = '';
@@ -244,7 +250,7 @@ async function loadDashboard() {
         const requestLabel = changeForThisOffer
           ? (changeForThisOffer.is_revision_overdue ? 'Revision Overdue' : (dashboardChangeLabels[changeForThisOffer.status] || changeForThisOffer.status))
           : '';
-        const requestEditable = changeForThisOffer && ['preparing_request', 'documents_complete', 'revision_required'].includes(changeForThisOffer.status);
+        const requestEditable = changeForThisOffer && ['approved_documents_required', 'documents_submitted', 'document_verification', 'revision_required'].includes(changeForThisOffer.status);
         actionHtml = accepted.length > 0 && changeForThisOffer ? `
           ${requestEditable
             ? `<a href="offers.html" class="btn btn-outline btn-sm"><i class="fas fa-folder-open"></i> ${escapeDashboardHtml(requestLabel)}</a>`

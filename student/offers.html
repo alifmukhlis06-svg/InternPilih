@@ -102,7 +102,7 @@
     <div class="modal-body">
       <div class="alert alert-warning">
         <i class="fas fa-triangle-exclamation"></i>
-        <div>Your current accepted placement stays active until the coordinator approves this request.</div>
+        <div>Your current accepted placement stays active until all required documents are verified and the change is completed.</div>
       </div>
       <div style="display:grid;gap:12px;font-size:13px;margin-bottom:14px;">
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:12px;">
@@ -119,7 +119,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="document.getElementById('changeModal').classList.remove('open')">Cancel</button>
-      <button class="btn btn-primary" id="startPlacementChange" onclick="submitPlacementChange()"><i class="fas fa-folder-open"></i> Start Preparing</button>
+      <button class="btn btn-primary" id="startPlacementChange" onclick="submitPlacementChange()"><i class="fas fa-paper-plane"></i> Submit to Coordinator</button>
     </div>
   </div>
 </div>
@@ -130,7 +130,7 @@
     <div class="modal-header"><h3>Placement Change Documents</h3><button class="modal-close" onclick="document.getElementById('changeWorkflowModal').classList.remove('open')">x</button></div>
     <div class="modal-body">
       <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
-        <span class="badge badge-pending" id="changeWorkflowStatus">Preparing Request</span>
+        <span class="badge badge-pending" id="changeWorkflowStatus">Approved - Documents Required</span>
         <strong id="changeWorkflowProgress">0/3 documents uploaded</strong>
       </div>
       <div class="alert alert-warning" id="changeRevisionAlert" style="display:none;margin-bottom:14px;"></div>
@@ -139,7 +139,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="document.getElementById('changeWorkflowModal').classList.remove('open')">Close</button>
-      <button class="btn btn-primary" id="submitChangeWorkflow" onclick="submitPreparedPlacementChange()"><i class="fas fa-paper-plane"></i> Submit to Coordinator</button>
+      <button class="btn btn-primary" id="submitChangeWorkflow" onclick="submitPreparedPlacementChange()"><i class="fas fa-paper-plane"></i> Submit Documents for Verification</button>
     </div>
   </div>
 </div>
@@ -151,14 +151,14 @@ let currentFilter = 'all';
 let selectedChangeOfferId = null;
 let selectedPlacementRequestId = null;
 
-const activeChangeStatuses = ['preparing_request', 'documents_complete', 'request_submitted', 'coordinator_review', 'revision_required'];
+const activeChangeStatuses = ['coordinator_review', 'approved_documents_required', 'documents_submitted', 'document_verification', 'revision_required'];
 const changeStatusLabels = {
-  preparing_request: 'Preparing Request',
-  documents_complete: 'Documents Complete',
-  request_submitted: 'Request Submitted',
   coordinator_review: 'Coordinator Review',
+  approved_documents_required: 'Approved - Documents Required',
+  documents_submitted: 'Documents Submitted',
+  document_verification: 'Document Verification',
   revision_required: 'Revision Required',
-  approved: 'Approved',
+  completed: 'Completed',
   rejected: 'Rejected'
 };
 const changeDocumentLabels = {
@@ -191,13 +191,20 @@ function pendingChangeForOffer(offerId) {
     && activeChangeStatuses.includes(r.status) && r.is_active);
 }
 
+function rejectedChangeForOffer(offerId) {
+  return placementRequests.find(r => Number(r.requested_offer_id) === Number(offerId) && r.status === 'rejected');
+}
+
 function anyPendingChange() {
   return placementRequests.find(r => activeChangeStatuses.includes(r.status) && r.is_active);
 }
 
 function requestStatusButton(request, style = 'flex:1;justify-content:center;') {
   const label = request.is_revision_overdue ? 'Revision Overdue' : (changeStatusLabels[request.status] || request.status);
-  const editable = ['preparing_request', 'documents_complete', 'revision_required'].includes(request.status);
+  const editable = ['approved_documents_required', 'documents_submitted', 'document_verification', 'revision_required'].includes(request.status);
+  if (request.status === 'rejected') {
+    return `<button class="btn btn-outline btn-sm" style="${style}" onclick="showPlacementChangeDecision(${request.id})"><i class="fas fa-circle-info"></i> Rejected</button>`;
+  }
   return editable
     ? `<button class="btn btn-outline btn-sm" style="${style}" onclick="openPlacementChangeWorkflow(${request.id})"><i class="fas fa-folder-open"></i> ${escapeHtml(label)}</button>`
     : `<button class="btn btn-outline btn-sm" style="${style}" disabled><i class="fas fa-clock"></i> ${escapeHtml(label)}</button>`;
@@ -275,6 +282,7 @@ function renderOffers() {
 
     let buttonsHtml = '';
     const changeForThisOffer = pendingChangeForOffer(o.id);
+    const rejectedChange = rejectedChangeForOffer(o.id);
     if (o.status === 'pending') {
       if (acceptedOffer) {
         if (changeForThisOffer) {
@@ -301,7 +309,7 @@ function renderOffers() {
       }
     } else if (o.status === 'accepted') {
       const completedChange = placementRequests.find(r => Number(r.requested_offer_id) === Number(o.id)
-        && !activeChangeStatuses.includes(r.status));
+        && r.status === 'completed');
       buttonsHtml = `
         <a href="documents.html" class="btn btn-primary btn-sm" style="flex:1;justify-content:center;"><i class="fas fa-upload"></i> Upload Docs</a>
         ${completedChange ? requestStatusButton(completedChange) : ''}
@@ -333,6 +341,7 @@ function renderOffers() {
           <div><i class="fas fa-money-bill-wave" style="margin-right:4px;"></i>RM ${escapeHtml(o.allowance || '0')}/month</div>
           <div><i class="fas fa-laptop" style="margin-right:4px;"></i>${escapeHtml(o.work_mode || 'N/A')}</div>
         </div>
+        ${rejectedChange ? `<p style="font-size:12px;color:var(--red);margin-top:8px;"><strong>Placement change rejected:</strong> ${escapeHtml(rejectedChange.review_note || 'No reason provided.')}</p>` : ''}
         <div class="entity-actions">
           ${buttonsHtml}
           <button class="btn btn-outline btn-sm" onclick="viewOffer(${o.id})"><i class="fas fa-eye"></i></button>
@@ -394,7 +403,7 @@ function viewOffer(id) {
     footer.innerHTML += `<a href="communication.html" class="btn btn-danger"><i class="fas fa-times"></i> Reject</a>`;
   } else if (o.status === 'accepted') {
     const completedChange = placementRequests.find(r => Number(r.requested_offer_id) === Number(o.id)
-      && !activeChangeStatuses.includes(r.status));
+      && r.status === 'completed');
     if (completedChange) footer.innerHTML += requestStatusButton(completedChange, '');
   }
 
@@ -420,22 +429,30 @@ window.openPlacementChange = function(offerId) {
 window.openPlacementChangeWorkflow = function(requestId) {
   const request = placementRequests.find(item => Number(item.id) === Number(requestId));
   if (!request) return;
+  if (!['approved_documents_required', 'documents_submitted', 'document_verification', 'revision_required', 'completed'].includes(request.status)) {
+    showPlacementChangeDecision(requestId);
+    return;
+  }
   selectedPlacementRequestId = Number(request.id);
   const label = request.is_revision_overdue ? 'Revision Overdue' : (changeStatusLabels[request.status] || request.status);
   document.getElementById('changeWorkflowStatus').textContent = label;
   document.getElementById('changeWorkflowProgress').textContent = `${Number(request.document_progress || 0)}/3 documents uploaded`;
   const revision = document.getElementById('changeRevisionAlert');
-  if (request.status === 'revision_required') {
-    const deadline = request.revision_deadline ? new Date(request.revision_deadline).toLocaleString('en-MY') : 'Not set';
+  const activeDeadline = request.status === 'revision_required' ? request.revision_deadline : request.document_deadline;
+  if (activeDeadline) {
+    const deadline = new Date(activeDeadline).toLocaleString('en-MY');
+    const overdue = request.status === 'revision_required' ? request.is_revision_overdue : request.is_document_overdue;
     revision.style.display = 'flex';
-    revision.innerHTML = `<i class="fas fa-triangle-exclamation"></i><div><strong>${request.is_revision_overdue ? 'Revision overdue' : 'Revision required'}</strong><br>Resubmit rejected documents by ${escapeHtml(deadline)}.${request.review_note ? `<br>${escapeHtml(request.review_note)}` : ''}</div>`;
+    const originalDeadline = request.status === 'revision_required' && request.document_deadline
+      ? `<br>Original document deadline: ${escapeHtml(new Date(request.document_deadline).toLocaleString('en-MY'))}.` : '';
+    revision.innerHTML = `<i class="fas fa-triangle-exclamation"></i><div><strong>${overdue ? 'Deadline overdue' : (request.status === 'revision_required' ? 'Revision required' : '7-day document deadline')}</strong><br>${request.status === 'revision_required' ? 'Replace and resubmit rejected documents' : 'Submit all required documents'} by ${escapeHtml(deadline)}.${originalDeadline}${request.status === 'revision_required' && request.review_note ? `<br>${escapeHtml(request.review_note)}` : ''}</div>`;
   } else {
     revision.style.display = 'none';
     revision.innerHTML = '';
   }
   const docs = Array.isArray(request.documents) ? request.documents : [];
   document.getElementById('changeWorkflowDocuments').innerHTML = docs.map(doc => {
-    const uploadAllowed = ['preparing_request', 'documents_complete'].includes(request.status)
+    const uploadAllowed = request.status === 'approved_documents_required'
       || (request.status === 'revision_required' && doc.status === 'rejected');
     const statusLabel = doc.status === 'missing' ? 'Missing' : doc.status.charAt(0).toUpperCase() + doc.status.slice(1);
     return `<div style="border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -449,9 +466,9 @@ window.openPlacementChangeWorkflow = function(requestId) {
     </div>`;
   }).join('');
   const submit = document.getElementById('submitChangeWorkflow');
-  submit.style.display = ['preparing_request', 'documents_complete', 'revision_required'].includes(request.status) ? '' : 'none';
+  submit.style.display = ['approved_documents_required', 'revision_required'].includes(request.status) ? '' : 'none';
   submit.disabled = Number(request.document_progress || 0) !== 3;
-  submit.innerHTML = `<i class="fas fa-paper-plane"></i> ${request.status === 'revision_required' ? 'Resubmit to Coordinator' : 'Submit to Coordinator'}`;
+  submit.innerHTML = `<i class="fas fa-paper-plane"></i> ${request.status === 'revision_required' ? 'Resubmit Documents for Verification' : 'Submit Documents for Verification'}`;
   document.getElementById('changeWorkflowModal').classList.add('open');
 }
 
@@ -486,14 +503,14 @@ window.submitPreparedPlacementChange = async function() {
     const res = await fetch(`../api/placement-changes.php?id=${requestId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'submit' })
+      body: JSON.stringify({ action: 'submit_documents' })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.error) throw new Error(data.error || 'Request submission failed');
     localStorage.setItem('internpilih:offers-updated', String(Date.now()));
     await loadOffers();
     openPlacementChangeWorkflow(requestId);
-    alert('Placement change request submitted to the coordinator.');
+    alert('Documents submitted for coordinator verification.');
   } catch (err) {
     alert(err.message);
     button.disabled = false;
@@ -521,13 +538,22 @@ window.submitPlacementChange = async function() {
     if (!res.ok || data.error) throw new Error(data.error || 'Failed to submit request');
     document.getElementById('changeModal').classList.remove('open');
     localStorage.setItem('internpilih:offers-updated', String(Date.now()));
-    alert('Placement change request started. Upload all 3 supporting documents before submitting it to the coordinator.');
+    alert('Placement change request submitted to the coordinator for reason review.');
     await loadOffers();
-    openPlacementChangeWorkflow(data.id);
   } catch (err) {
     alert(err.message);
   } finally {
     button.disabled = false;
+  }
+}
+
+window.showPlacementChangeDecision = function(requestId) {
+  const request = placementRequests.find(item => Number(item.id) === Number(requestId));
+  if (!request) return;
+  if (request.status === 'rejected') {
+    alert(`Placement change request rejected.${request.review_note ? `\n\nCoordinator reason: ${request.review_note}` : ''}`);
+  } else if (request.status === 'coordinator_review') {
+    alert('Your placement change reason is awaiting Coordinator review. Documents will be available only after approval.');
   }
 }
 

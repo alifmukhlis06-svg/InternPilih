@@ -281,7 +281,7 @@ try {
         }
 
         if ($status === 'accepted' && $secondOfferId && $index === 14 && !seedId('SELECT id FROM placement_change_requests WHERE student_id = ? AND current_offer_id = ? AND requested_offer_id = ? LIMIT 1', [$studentId, $offerId, $secondOfferId])) {
-            seedRun("INSERT INTO placement_change_requests (student_id, current_offer_id, requested_offer_id, reason, status) VALUES (?, ?, ?, ?, 'preparing_request')", [$studentId, $offerId, $secondOfferId, 'The alternative placement offers a stronger match with my information management specialisation.']);
+            seedRun("INSERT INTO placement_change_requests (student_id, current_offer_id, requested_offer_id, reason, status, submitted_at) VALUES (?, ?, ?, ?, 'coordinator_review', CURRENT_TIMESTAMP)", [$studentId, $offerId, $secondOfferId, 'The alternative placement offers a stronger match with my information management specialisation.']);
             $counts['change_requests']++;
         }
 

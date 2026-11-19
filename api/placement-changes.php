@@ -1,5 +1,5 @@
 <?php
-// Placement-change request lifecycle and final placement decision.
+// Placement-change request lifecycle: reason review, documents, and completion.
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/activity.php';
 require_once __DIR__ . '/placement-verification.php';
@@ -9,8 +9,8 @@ $method = $_SERVER['REQUEST_METHOD'];
 $id = (int)($_GET['id'] ?? 0);
 
 const PLACEMENT_CHANGE_ACTIVE_STATUSES = [
-    'preparing_request', 'documents_complete', 'request_submitted',
-    'coordinator_review', 'revision_required',
+    'coordinator_review', 'approved_documents_required', 'documents_submitted',
+    'document_verification', 'revision_required',
 ];
 const PLACEMENT_CHANGE_DOCUMENT_TYPES = [
     'proof_of_sending', 'placement_change_letter', 'company_response',
@@ -67,6 +67,11 @@ function enrichPlacementChange(array $request): array {
     $request['is_revision_overdue'] = $request['status'] === 'revision_required'
         && !empty($request['revision_deadline'])
         && strtotime((string)$request['revision_deadline']) < time();
+    $request['is_document_overdue'] = in_array($request['status'], [
+            'approved_documents_required', 'documents_submitted', 'document_verification', 'revision_required'
+        ], true)
+        && !empty($request['document_deadline'])
+        && strtotime((string)$request['document_deadline']) < time();
     $request['is_active'] = in_array($request['status'], PLACEMENT_CHANGE_ACTIVE_STATUSES, true)
         && $request['current_offer_status'] === 'accepted'
         && $request['requested_offer_status'] === 'pending';
@@ -91,8 +96,9 @@ if ($method === 'GET') {
         $stmt->bind_param('i', $user['id']);
     } elseif ($user['role'] === 'admin') {
         $stmt = db()->prepare(placementChangeSelectSql() . " WHERE s.coordinator_id = ? ORDER BY CASE pcr.status
-            WHEN 'request_submitted' THEN 1 WHEN 'coordinator_review' THEN 2 WHEN 'revision_required' THEN 3
-            WHEN 'documents_complete' THEN 4 WHEN 'preparing_request' THEN 5 ELSE 6 END, pcr.created_at DESC");
+            WHEN 'coordinator_review' THEN 1 WHEN 'documents_submitted' THEN 2
+            WHEN 'document_verification' THEN 3 WHEN 'revision_required' THEN 4
+            WHEN 'approved_documents_required' THEN 5 ELSE 6 END, pcr.created_at DESC");
         $stmt->bind_param('i', $user['id']);
     } else {
         respond(['error' => 'Forbidden'], 403);
@@ -127,7 +133,7 @@ if ($method === 'POST') {
             JOIN offers current_offer ON current_offer.id = pcr.current_offer_id
             JOIN offers requested_offer ON requested_offer.id = pcr.requested_offer_id
             WHERE pcr.student_id = ?
-              AND pcr.status IN ('preparing_request','documents_complete','request_submitted','coordinator_review','revision_required')
+              AND pcr.status IN ('coordinator_review','approved_documents_required','documents_submitted','document_verification','revision_required')
             FOR UPDATE
         ");
         $active->bind_param('i', $user['id']);
@@ -170,22 +176,23 @@ if ($method === 'POST') {
             $conn->rollback();
             respond(['error' => 'The new offer must still be pending and belong to your account.'], 422);
         }
+        $submittedAt = date('Y-m-d H:i:s');
         $stmt = $conn->prepare("
             INSERT INTO placement_change_requests
-                (student_id, current_offer_id, requested_offer_id, reason, status)
-            VALUES (?, ?, ?, ?, 'preparing_request')
+                (student_id, current_offer_id, requested_offer_id, reason, status, submitted_at)
+            VALUES (?, ?, ?, ?, 'coordinator_review', ?)
         ");
         $currentOfferId = (int)$currentOffer['id'];
-        $stmt->bind_param('iiis', $user['id'], $currentOfferId, $requestedOfferId, $reason);
+        $stmt->bind_param('iiiss', $user['id'], $currentOfferId, $requestedOfferId, $reason, $submittedAt);
         $stmt->execute();
         $requestId = (int)$conn->insert_id;
         createPlacementChangeDocumentRows($requestId);
-        logActivity((int)$user['id'], 'placement_change.preparing', 'placement_change_request', $requestId, [
+        logActivity((int)$user['id'], 'placement_change.submitted', 'placement_change_request', $requestId, [
             'current_offer_id' => $currentOfferId,
             'requested_offer_id' => $requestedOfferId,
         ]);
         $conn->commit();
-        respond(['success' => true, 'id' => $requestId, 'status' => 'preparing_request'], 201);
+        respond(['success' => true, 'id' => $requestId, 'status' => 'coordinator_review'], 201);
     } catch (Throwable $error) {
         if ($conn->inTransaction()) $conn->rollback();
         error_log('InternPilih placement change creation failed: ' . $error->getMessage());
@@ -197,7 +204,7 @@ if ($method === 'PUT' && $id) {
     $d = body();
     $action = (string)($d['action'] ?? '');
 
-    if ($user['role'] === 'student' && $action === 'submit') {
+    if ($user['role'] === 'student' && $action === 'submit_documents') {
         $conn = db();
         $conn->begin_transaction();
         try {
@@ -209,7 +216,7 @@ if ($method === 'PUT' && $id) {
                 $conn->rollback();
                 respond(['error' => 'Placement change request not found.'], 404);
             }
-            if (!in_array($request['status'], ['preparing_request', 'documents_complete', 'revision_required'], true)) {
+            if (!in_array($request['status'], ['approved_documents_required', 'revision_required'], true)) {
                 $conn->rollback();
                 respond(['error' => 'This request is not open for submission.'], 409);
             }
@@ -226,10 +233,10 @@ if ($method === 'PUT' && $id) {
             $submittedAt = date('Y-m-d H:i:s');
             $update = $conn->prepare("
                 UPDATE placement_change_requests
-                SET status = 'request_submitted', submitted_at = COALESCE(submitted_at, ?), review_note = NULL
+                SET status = 'documents_submitted'
                 WHERE id = ?
             ");
-            $update->bind_param('si', $submittedAt, $id);
+            $update->bind_param('i', $id);
             $update->execute();
             $docUpdate = $conn->prepare("
                 UPDATE placement_change_documents SET last_submitted_at = ?, updated_at = ?
@@ -237,12 +244,12 @@ if ($method === 'PUT' && $id) {
             ");
             $docUpdate->bind_param('ssi', $submittedAt, $submittedAt, $id);
             $docUpdate->execute();
-            logActivity((int)$user['id'], 'placement_change.submitted', 'placement_change_request', $id, [
+            logActivity((int)$user['id'], 'placement_change.documents_submitted', 'placement_change_request', $id, [
                 'resubmission' => $request['status'] === 'revision_required',
                 'revision_deadline' => $request['revision_deadline'] ?? null,
             ]);
             $conn->commit();
-            respond(['success' => true, 'status' => 'request_submitted']);
+            respond(['success' => true, 'status' => 'documents_submitted']);
         } catch (Throwable $error) {
             if ($conn->inTransaction()) $conn->rollback();
             respond(['error' => 'Could not submit the placement change request.'], 500);
@@ -252,7 +259,7 @@ if ($method === 'PUT' && $id) {
     if ($user['role'] !== 'admin') respond(['error' => 'Forbidden'], 403);
     $status = (string)($d['status'] ?? '');
     $reviewNote = trim((string)($d['review_note'] ?? ''));
-    if ($action !== 'final_decision' || !in_array($status, ['approved', 'rejected'], true)) {
+    if ($action !== 'review_reason' || !in_array($status, ['approved_documents_required', 'rejected'], true)) {
         respond(['error' => 'Invalid review action.'], 422);
     }
     if ($status === 'rejected' && $reviewNote === '') {
@@ -271,56 +278,25 @@ if ($method === 'PUT' && $id) {
             respond(['error' => 'Placement change request not found.'], 404);
         }
         requireCoordinatorStudent((int)$user['id'], (int)$request['student_id']);
-        if (!in_array($request['status'], ['request_submitted', 'coordinator_review'], true)) {
+        if ($request['status'] !== 'coordinator_review') {
             $conn->rollback();
-            respond(['error' => 'This request is not ready for a final decision.'], 409);
-        }
-
-        if ($status === 'approved') {
-            $verifiedStmt = $conn->prepare("
-                SELECT COUNT(*) AS verified_count FROM placement_change_documents
-                WHERE request_id = ? AND status = 'verified'
-            ");
-            $verifiedStmt->bind_param('i', $id);
-            $verifiedStmt->execute();
-            if ((int)($verifiedStmt->get_result()->fetch_assoc()['verified_count'] ?? 0) !== 3) {
-                $conn->rollback();
-                respond(['error' => 'All 3 documents must be verified before final approval.'], 409);
-            }
-            $offerLock = $conn->prepare("SELECT id, status FROM offers WHERE id IN (?, ?) ORDER BY id FOR UPDATE");
-            $currentOfferId = (int)$request['current_offer_id'];
-            $requestedOfferId = (int)$request['requested_offer_id'];
-            $offerLock->bind_param('ii', $currentOfferId, $requestedOfferId);
-            $offerLock->execute();
-            $statuses = [];
-            foreach ($offerLock->get_result()->fetch_all(MYSQLI_ASSOC) as $row) $statuses[(int)$row['id']] = $row['status'];
-            if (($statuses[$currentOfferId] ?? null) !== 'accepted' || ($statuses[$requestedOfferId] ?? null) !== 'pending') {
-                $conn->rollback();
-                respond(['error' => 'The placement offers are no longer eligible for this change.'], 409);
-            }
-            $today = date('Y-m-d');
-            $withdrawReason = 'Placement changed after coordinator approval.';
-            $withdraw = $conn->prepare("UPDATE offers SET status = 'withdrawn', response_date = ?, reject_reason = ? WHERE id = ?");
-            $withdraw->bind_param('ssi', $today, $withdrawReason, $currentOfferId);
-            $withdraw->execute();
-            $accept = $conn->prepare("UPDATE offers SET status = 'accepted', response_date = ?, reject_reason = NULL WHERE id = ?");
-            $accept->bind_param('si', $today, $requestedOfferId);
-            $accept->execute();
-            recalculatePlacementVerification($currentOfferId, (int)$user['id']);
-            $placementVerification = recalculatePlacementVerification($requestedOfferId, (int)$user['id']);
+            respond(['error' => 'This request reason has already been reviewed.'], 409);
         }
 
         $decidedAt = date('Y-m-d H:i:s');
+        $documentDeadline = $status === 'approved_documents_required'
+            ? date('Y-m-d H:i:s', time() + 7 * 86400)
+            : null;
+        $finalDecisionAt = $status === 'rejected' ? $decidedAt : null;
         $review = $conn->prepare("
-            UPDATE placement_change_requests
-            SET status = ?, reviewed_by = ?, review_note = ?, reviewed_at = ?, final_decision_at = ?
-            WHERE id = ?
+            UPDATE placement_change_requests SET status = ?, reviewed_by = ?, review_note = ?,
+                reviewed_at = ?, document_deadline = ?, final_decision_at = ? WHERE id = ?
         ");
-        $review->bind_param('sisssi', $status, $user['id'], $reviewNote, $decidedAt, $decidedAt, $id);
+        $review->bind_param('sissssi', $status, $user['id'], $reviewNote, $decidedAt, $documentDeadline, $finalDecisionAt, $id);
         $review->execute();
         logActivity((int)$user['id'], 'placement_change.' . $status, 'placement_change_request', $id, [
             'review_note' => $reviewNote,
-            'placement_verification_status' => $placementVerification['status'] ?? null,
+            'document_deadline' => $documentDeadline,
         ]);
         $conn->commit();
         respond(['success' => true, 'status' => $status]);

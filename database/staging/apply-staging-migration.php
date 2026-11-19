@@ -18,6 +18,7 @@ $steps = [
     'account-normalization' => __DIR__ . '/006_normalize_synthetic_accounts.sql',
     'placement-change-workflow' => __DIR__ . '/007_placement_change_document_workflow.sql',
     'google-authentication' => __DIR__ . '/008_google_authentication.sql',
+    'placement-change-order' => __DIR__ . '/009_placement_change_workflow_order.sql',
 ];
 
 $step = '';
@@ -28,7 +29,7 @@ foreach ($argv as $argument) {
 }
 
 if (!isset($steps[$step])) {
-    fwrite(STDERR, "Choose --step=schema, --step=serverless-storage, --step=security, --step=profile-phone, --step=campus-schedule-password, --step=account-normalization, --step=placement-change-workflow, or --step=google-authentication.\n");
+    fwrite(STDERR, "Choose --step=schema, --step=serverless-storage, --step=security, --step=profile-phone, --step=campus-schedule-password, --step=account-normalization, --step=placement-change-workflow, --step=google-authentication, or --step=placement-change-order.\n");
     exit(2);
 }
 
@@ -109,6 +110,14 @@ try {
         if (!in_array($publicTableCount, [17, 18], true)
             || !stagingPgBool($pdo->query("SELECT to_regclass('public.users') IS NOT NULL")->fetchColumn())) {
             throw new RuntimeException('The Google authentication migration is out of order.');
+        }
+        assertStagingMarker($pdo);
+    }
+
+    if ($step === 'placement-change-order') {
+        if (!in_array($publicTableCount, [17, 18], true)
+            || !stagingPgBool($pdo->query("SELECT to_regclass('public.placement_change_requests') IS NOT NULL")->fetchColumn())) {
+            throw new RuntimeException('The placement-change order migration is out of order.');
         }
         assertStagingMarker($pdo);
     }
@@ -218,6 +227,22 @@ try {
         $auditTable = stagingPgBool($pdo->query("SELECT to_regclass('public.authentication_audit_logs') IS NOT NULL")->fetchColumn());
         if ($requiredColumns !== 2 || !$auditTable) {
             throw new RuntimeException('The Google authentication verification failed.');
+        }
+    }
+
+    if ($step === 'placement-change-order') {
+        $documentDeadlineCount = (int)$pdo->query("
+            SELECT COUNT(*) FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'placement_change_requests'
+              AND column_name = 'document_deadline'
+        ")->fetchColumn();
+        $statusDefault = (string)$pdo->query("
+            SELECT column_default FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'placement_change_requests'
+              AND column_name = 'status'
+        ")->fetchColumn();
+        if ($documentDeadlineCount !== 1 || !str_contains($statusDefault, 'coordinator_review')) {
+            throw new RuntimeException('The placement-change order verification failed.');
         }
     }
 
