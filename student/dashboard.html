@@ -248,7 +248,7 @@ async function loadDashboard() {
             : `<button class="btn btn-outline btn-sm" disabled><i class="fas fa-clock"></i> ${escapeDashboardHtml(requestLabel)}</button>`}
           <a href="communication.html" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</a>
         ` : accepted.length > 0 && activeChange ? `
-          <button class="btn btn-outline btn-sm" disabled><i class="fas fa-clock"></i> ${escapeDashboardHtml(dashboardChangeLabels[activeChange.status] || activeChange.status)}</button>
+          <button class="btn btn-outline btn-sm" disabled><i class="fas fa-clock"></i> Change Pending</button>
           <a href="communication.html" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</a>
         ` : accepted.length > 0 ? `
           <a href="offers.html" class="btn btn-primary btn-sm"><i class="fas fa-right-left"></i> Request Change</a>
