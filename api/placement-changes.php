@@ -20,8 +20,10 @@ function placementChangeSelectSql(): string {
     return "
         SELECT pcr.*, u.name AS student_name, s.matric_id, u.email AS student_email,
             current_offer.position AS current_position,
+            current_offer.status AS current_offer_status,
             current_company.name AS current_company_name,
             requested_offer.position AS requested_position,
+            requested_offer.status AS requested_offer_status,
             requested_company.name AS requested_company_name,
             reviewer.name AS reviewer_name
         FROM placement_change_requests pcr
@@ -65,6 +67,9 @@ function enrichPlacementChange(array $request): array {
     $request['is_revision_overdue'] = $request['status'] === 'revision_required'
         && !empty($request['revision_deadline'])
         && strtotime((string)$request['revision_deadline']) < time();
+    $request['is_active'] = in_array($request['status'], PLACEMENT_CHANGE_ACTIVE_STATUSES, true)
+        && $request['current_offer_status'] === 'accepted'
+        && $request['requested_offer_status'] === 'pending';
     return $request;
 }
 
@@ -116,15 +121,34 @@ if ($method === 'POST') {
             respond(['error' => 'Student profile not found.'], 404);
         }
         $active = $conn->prepare("
-            SELECT id FROM placement_change_requests
-            WHERE student_id = ? AND status IN ('preparing_request','documents_complete','request_submitted','coordinator_review','revision_required')
-            LIMIT 1
+            SELECT pcr.id, current_offer.status AS current_offer_status,
+                requested_offer.status AS requested_offer_status
+            FROM placement_change_requests pcr
+            JOIN offers current_offer ON current_offer.id = pcr.current_offer_id
+            JOIN offers requested_offer ON requested_offer.id = pcr.requested_offer_id
+            WHERE pcr.student_id = ?
+              AND pcr.status IN ('preparing_request','documents_complete','request_submitted','coordinator_review','revision_required')
+            FOR UPDATE
         ");
         $active->bind_param('i', $user['id']);
         $active->execute();
-        if ($active->get_result()->fetch_assoc()) {
-            $conn->rollback();
-            respond(['error' => 'You already have an active placement change request.'], 409);
+        foreach ($active->get_result()->fetch_all(MYSQLI_ASSOC) as $activeRequest) {
+            if ($activeRequest['current_offer_status'] === 'accepted' && $activeRequest['requested_offer_status'] === 'pending') {
+                $conn->rollback();
+                respond(['error' => 'You already have an active placement change request. Finish it before starting another one.'], 409);
+            }
+
+            $closedAt = date('Y-m-d H:i:s');
+            $staleId = (int)$activeRequest['id'];
+            $staleNote = 'Automatically closed because one of the linked offers is no longer eligible.';
+            $closeStale = $conn->prepare("
+                UPDATE placement_change_requests
+                SET status = 'rejected', review_note = ?, reviewed_at = ?, final_decision_at = ?
+                WHERE id = ?
+            ");
+            $closeStale->bind_param('sssi', $staleNote, $closedAt, $closedAt, $staleId);
+            $closeStale->execute();
+            logActivity((int)$user['id'], 'placement_change.stale_closed', 'placement_change_request', $staleId);
         }
         $current = $conn->prepare("
             SELECT id FROM offers WHERE student_id = ? AND status = 'accepted'

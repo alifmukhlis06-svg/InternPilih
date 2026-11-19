@@ -173,8 +173,10 @@ async function loadDashboard() {
       throw new Error(changesPayload.error || 'Unable to load placement changes.');
     }
     const offers = offersPayload;
-    const activeChange = changesPayload.find(request => dashboardActiveChangeStatuses.includes(request.status));
-    const currentChange = activeChange || changesPayload[0] || null;
+    const activeChange = changesPayload.find(request => dashboardActiveChangeStatuses.includes(request.status) && request.is_active);
+    const currentChange = activeChange
+      || changesPayload.find(request => !dashboardActiveChangeStatuses.includes(request.status))
+      || null;
 
     const pending = offers.filter(o => o.status === 'pending');
     const accepted = offers.filter(o => o.status === 'accepted');
@@ -237,7 +239,8 @@ async function loadDashboard() {
       const tr = document.createElement('tr');
       let actionHtml = '';
       if (o.status === 'pending') {
-        const changeForThisOffer = changesPayload.find(request => Number(request.requested_offer_id) === Number(o.id));
+        const changeForThisOffer = changesPayload.find(request => Number(request.requested_offer_id) === Number(o.id)
+          && dashboardActiveChangeStatuses.includes(request.status) && request.is_active);
         const requestLabel = changeForThisOffer
           ? (changeForThisOffer.is_revision_overdue ? 'Revision Overdue' : (dashboardChangeLabels[changeForThisOffer.status] || changeForThisOffer.status))
           : '';
@@ -248,10 +251,10 @@ async function loadDashboard() {
             : `<button class="btn btn-outline btn-sm" disabled><i class="fas fa-clock"></i> ${escapeDashboardHtml(requestLabel)}</button>`}
           <a href="communication.html" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</a>
         ` : accepted.length > 0 && activeChange ? `
-          <button class="btn btn-outline btn-sm" disabled><i class="fas fa-clock"></i> Change Pending</button>
+          <a href="offers.html?request_change=${o.id}" class="btn btn-primary btn-sm"><i class="fas fa-right-left"></i> Request Placement Change</a>
           <a href="communication.html" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</a>
         ` : accepted.length > 0 ? `
-          <a href="offers.html" class="btn btn-primary btn-sm"><i class="fas fa-right-left"></i> Request Change</a>
+          <a href="offers.html?request_change=${o.id}" class="btn btn-primary btn-sm"><i class="fas fa-right-left"></i> Request Placement Change</a>
           <a href="communication.html" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</a>
         ` : `
           <a href="acceptance.html?offer=${o.id}" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Accept</a>
