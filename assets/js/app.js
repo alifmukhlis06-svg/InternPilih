@@ -736,7 +736,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       const max = Math.max(...Object.values(counts), 1);
       if (body) {
         body.innerHTML = Object.entries(counts).map(([name, count], i) => {
-          const colors = ['blue', 'gold', 'purple', 'green', 'red'];
+          const colors = ['purple'];
           return `<div>${progressLabel(name, `${count} placement${count === 1 ? '' : 's'}`, pct(count, max), colors[i % colors.length])}</div>`;
         }).join('') || '<div style="color:var(--text2);font-size:13px;">No confirmed placements yet.</div>';
       }
@@ -1513,6 +1513,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       const acceptedPct = pct(accepted.length, offers.length);
       const offerRing = document.getElementById('employer-offer-ring');
       if (offerRing) {
+        offerRing.classList.toggle('has-data', offers.length > 0);
         offerRing.style.setProperty('--accepted-pct', `${acceptedPct}%`);
         offerRing.style.setProperty('--response-pct', `${responsePct}%`);
       }
