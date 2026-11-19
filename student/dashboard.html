@@ -6,7 +6,7 @@
 <script src="../assets/js/theme-init.js?v=20261031-classic1"></script>
 <link rel="stylesheet" href="../assets/css/style.css?v=20261031-classic1">
 <link rel="stylesheet" href="../assets/css/student-dashboard.css?v=20261119-table1">
-<link rel="stylesheet" href="../assets/css/dashboard-system.css?v=20261120-saas1">
+<link rel="stylesheet" href="../assets/css/dashboard-system.css?v=20261120-video2">
 <script src="../assets/js/auth-gate.js?v=20261031-classic1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -49,18 +49,21 @@
     </div>
   </header>
 
-  <main class="content fade-in student-dashboard-content">
-    <section class="dashboard-brief" aria-labelledby="student-brief-title">
+  <main class="content fade-in dashboard-workspace student-dashboard-content">
+    <section class="dashboard-brief workspace-intro" aria-labelledby="student-brief-title">
       <div class="dashboard-brief-copy">
-        <span class="dashboard-brief-kicker">Current semester</span>
-        <h2 id="student-brief-title">Keep your internship decisions moving.</h2>
-        <p>Review new offers, record each response, and keep your placement documents ready for coordinator verification.</p>
-        <a class="dashboard-brief-link" href="record-offer.html">Record a new offer <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        <span class="dashboard-brief-kicker">Student workspace</span>
+        <h2 id="student-brief-title">Welcome back, <span class="user-name">Student</span>.</h2>
+        <p>Your placement, offer decisions, documents, and deadlines in one focused view.</p>
+      </div>
+      <div class="workspace-intro-actions">
+        <span class="workspace-period"><i class="fas fa-calendar-days" aria-hidden="true"></i><span data-schedule-label="semester">Current semester</span></span>
+        <a class="btn btn-primary" href="record-offer.html"><i class="fas fa-plus" aria-hidden="true"></i>Record Offer</a>
       </div>
     </section>
 
     <section class="panel student-schedule-panel" aria-labelledby="student-schedule-title">
-      <div class="panel-header"><h3 id="student-schedule-title"><i class="fas fa-calendar-check" aria-hidden="true"></i>Internship Schedule</h3><span class="student-semester" data-schedule-label="semester">March–August 2027</span></div>
+      <div class="panel-header"><div><span class="panel-eyebrow">Semester timeline</span><h3 id="student-schedule-title"><i class="fas fa-calendar-check" aria-hidden="true"></i>Internship Schedule</h3></div><span class="student-semester" data-schedule-label="semester">March–August 2027</span></div>
       <div class="panel-body schedule-grid">
         <div class="schedule-item"><span>Application / offer preparation</span><strong data-schedule-key="internship_application_open">15 Nov 2026</strong></div>
         <div class="schedule-item"><span>Main company / offer deadline</span><strong data-schedule-key="main_offer_deadline">15 Dec 2026</strong></div>
@@ -97,7 +100,7 @@
     <div class="page-grid student-dashboard-grid">
       <section class="panel student-offers-panel" aria-labelledby="student-offers-title">
         <div class="panel-header">
-          <h3 class="icon-heading" id="student-offers-title"><i class="fas fa-briefcase" aria-hidden="true"></i>Current Internship Offers</h3>
+          <div><span class="panel-eyebrow">Live records</span><h3 class="icon-heading" id="student-offers-title"><i class="fas fa-briefcase" aria-hidden="true"></i>Current Internship Offers</h3></div>
           <a href="record-offer.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add Offer</a>
         </div>
         <div class="table-wrap">
@@ -112,34 +115,51 @@
 
       <aside class="student-dashboard-aside" aria-label="Placement and notification summary">
         <section class="panel student-placement-panel" aria-labelledby="student-placement-title">
-          <div class="panel-header"><h3 id="student-placement-title">Placement Status</h3></div>
+          <div class="panel-header"><div><span class="panel-eyebrow">Internship progress</span><h3 id="student-placement-title">Current Placement</h3></div><a href="offers.html" class="panel-link">Manage offers</a></div>
+          <div class="panel-body placement-focus-body">
+            <div class="placement-stage-summary">
+              <div class="placement-progress-ring" id="placement-progress-ring" style="--stage-progress:0%;"><div><strong id="placement-stage-count">0/3</strong><span>stages</span></div></div>
+              <div class="placement-stage-list">
+                <div class="placement-stage" id="student-stage-offers"><span class="stage-mark"><i class="fas fa-briefcase"></i></span><div><strong>Offer recorded</strong><span><b id="placement-sent">0</b> total offers</span></div></div>
+                <div class="placement-stage" id="student-stage-placement"><span class="stage-mark"><i class="fas fa-building-circle-check"></i></span><div><strong>Placement accepted</strong><span id="placement-accepted">0 / 1</span></div></div>
+                <div class="placement-stage" id="student-stage-documents"><span class="stage-mark"><i class="fas fa-file-circle-check"></i></span><div><strong>Documents verified</strong><span id="placement-documents-verified">0 / 3</span></div></div>
+              </div>
+            </div>
+            <div class="placement-offer-metrics" aria-label="Offer progress">
+              <div><span>Offers received</span><strong id="placement-received">0</strong><div class="progress-bar"><div class="progress-fill gold" id="progress-received" style="width:0%"></div></div></div>
+              <div><span>Offers recorded</span><strong id="placement-recorded-copy">0</strong><div class="progress-bar"><div class="progress-fill blue" id="progress-recorded" style="width:0%"></div></div></div>
+              <div><span>Placement</span><strong id="placement-accepted-copy">Pending</strong><div class="progress-bar"><div class="progress-fill green" id="progress-accepted" style="width:0%"></div></div></div>
+            </div>
+            <div id="accepted-block" class="info-note success" style="display:none;"><strong>Accepted Placement</strong><br><span id="accepted-details"></span></div>
+            <div id="no-accepted-block" class="info-note warning"><strong>No Placement Confirmed</strong><br><span>Please accept an offer or record a new one to proceed with verification documents.</span></div>
+            <div id="placement-change-block" class="info-note warning" style="display:none;"></div>
+          </div>
+        </section>
+
+        <section class="panel action-queue-panel" aria-labelledby="student-actions-title">
+          <div class="panel-header"><div><span class="panel-eyebrow">To do</span><h3 id="student-actions-title">Pending Actions</h3></div></div>
+          <div class="action-queue-list">
+            <a href="offers.html"><span class="action-icon action-purple"><i class="fas fa-inbox"></i></span><span><strong>Review offers</strong><small>Decisions awaiting you</small></span><b id="action-offers-count">0</b></a>
+            <a href="documents.html"><span class="action-icon action-green"><i class="fas fa-file-arrow-up"></i></span><span><strong>Complete documents</strong><small>Placement verification</small></span><b id="action-documents-count">0</b></a>
+            <a href="notifications.html"><span class="action-icon action-blue"><i class="fas fa-bell"></i></span><span><strong>Read updates</strong><small>Recent notifications</small></span><b id="action-notifications-count">0</b></a>
+          </div>
+        </section>
+
+        <section class="panel document-progress-panel" aria-labelledby="student-document-title">
+          <div class="panel-header"><div><span class="panel-eyebrow">Verification</span><h3 id="student-document-title">Document Progress</h3></div><a href="documents.html" class="panel-link">Open</a></div>
           <div class="panel-body">
-            <div style="margin-bottom:14px;">
-              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Offers Recorded</span><strong id="placement-sent">0</strong></div>
-              <div class="progress-bar"><div class="progress-fill blue" id="progress-recorded" style="width:0%"></div></div>
+            <div class="document-progress-head"><strong id="document-progress-count">0/3</strong><span>required documents uploaded</span></div>
+            <div class="progress-bar document-progress-track"><div class="progress-fill purple" id="document-progress-fill" style="width:0%"></div></div>
+            <div class="document-status-list">
+              <div><span>Offer Letter</span><b id="document-status-offer">Missing</b></div>
+              <div><span>Student ID</span><b id="document-status-id">Missing</b></div>
+              <div><span>Agreement</span><b id="document-status-agreement">Missing</b></div>
             </div>
-            <div style="margin-bottom:14px;">
-              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Offers Received</span><strong id="placement-received">0</strong></div>
-              <div class="progress-bar"><div class="progress-fill gold" id="progress-received" style="width:0%"></div></div>
-            </div>
-            <div style="margin-bottom:14px;">
-              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Accepted</span><strong id="placement-accepted">0</strong></div>
-              <div class="progress-bar"><div class="progress-fill green" id="progress-accepted" style="width:0%"></div></div>
-            </div>
-            <div id="accepted-block" class="info-note success" style="display:none;margin-top:16px;">
-              <strong>Accepted Placement</strong><br>
-              <span id="accepted-details"></span>
-            </div>
-            <div id="no-accepted-block" class="info-note warning" style="margin-top:16px;">
-              <strong>No Placement Confirmed</strong><br>
-              <span>Please accept an offer or record a new one to proceed with verification documents.</span>
-            </div>
-            <div id="placement-change-block" class="info-note warning" style="display:none;margin-top:12px;"></div>
           </div>
         </section>
 
         <section class="panel student-notifications-panel" aria-labelledby="student-notifications-title">
-          <div class="panel-header"><h3 id="student-notifications-title">Notifications</h3><a href="notifications.html" class="panel-link">View all</a></div>
+          <div class="panel-header"><div><span class="panel-eyebrow">Recent activity</span><h3 id="student-notifications-title">Notifications</h3></div><a href="notifications.html" class="panel-link">View all</a></div>
           <div class="panel-section" id="dashboardNotifications"><div class="empty-state" style="padding:24px;"><i class="fas fa-spinner fa-spin"></i><p>Loading notifications...</p></div></div>
         </section>
       </aside>
@@ -161,9 +181,13 @@ const dashboardChangeLabels = {
 
 async function loadDashboard() {
   try {
-    const [res, changeRes] = await Promise.all([
+    const [res, changeRes, documentsPayload] = await Promise.all([
       fetch('../api/offers.php'),
-      fetch('../api/placement-changes.php')
+      fetch('../api/placement-changes.php'),
+      fetch('../api/documents.php')
+        .then(response => response.ok ? response.json() : [])
+        .then(payload => Array.isArray(payload) ? payload : [])
+        .catch(() => [])
     ]);
     const offersPayload = await res.json().catch(() => ({}));
     const changesPayload = await changeRes.json().catch(() => ({}));
@@ -200,11 +224,43 @@ async function loadDashboard() {
 
     // Update placement status panel
     document.getElementById('placement-sent').textContent = offers.length;
+    document.getElementById('placement-recorded-copy').textContent = offers.length;
     document.getElementById('progress-recorded').style.width = offers.length > 0 ? '100%' : '0%';
     document.getElementById('placement-received').textContent = offers.length;
     document.getElementById('progress-received').style.width = offers.length > 0 ? '100%' : '0%';
     document.getElementById('placement-accepted').textContent = accepted.length > 0 ? '1 / 1' : '0 / 1';
+    document.getElementById('placement-accepted-copy').textContent = accepted.length > 0 ? 'Confirmed' : 'Pending';
     document.getElementById('progress-accepted').style.width = accepted.length > 0 ? '100%' : '0%';
+
+    const requiredDocumentTypes = ['offer_letter', 'student_id', 'agreement'];
+    const latestDocuments = new Map();
+    documentsPayload.forEach(document => {
+      if (requiredDocumentTypes.includes(document.doc_type) && !latestDocuments.has(document.doc_type)) {
+        latestDocuments.set(document.doc_type, document);
+      }
+    });
+    const uploadedDocuments = requiredDocumentTypes.filter(type => latestDocuments.has(type)).length;
+    const verifiedDocuments = requiredDocumentTypes.filter(type => latestDocuments.get(type)?.status === 'approved').length;
+    const documentLabels = { pending: 'Uploaded', approved: 'Verified', rejected: 'Rejected' };
+    const documentTargets = { offer_letter: 'document-status-offer', student_id: 'document-status-id', agreement: 'document-status-agreement' };
+    requiredDocumentTypes.forEach(type => {
+      const target = document.getElementById(documentTargets[type]);
+      const record = latestDocuments.get(type);
+      target.textContent = record ? (documentLabels[record.status] || 'Uploaded') : 'Missing';
+      target.dataset.status = record?.status || 'missing';
+    });
+    document.getElementById('document-progress-count').textContent = `${uploadedDocuments}/3`;
+    document.getElementById('document-progress-fill').style.width = `${Math.round((uploadedDocuments / 3) * 100)}%`;
+    document.getElementById('placement-documents-verified').textContent = `${verifiedDocuments} / 3`;
+    document.getElementById('action-offers-count').textContent = pending.length;
+    document.getElementById('action-documents-count').textContent = accepted.length ? Math.max(0, 3 - uploadedDocuments) : '-';
+
+    const completedStages = (offers.length > 0 ? 1 : 0) + (accepted.length > 0 ? 1 : 0) + (verifiedDocuments === 3 ? 1 : 0);
+    document.getElementById('placement-stage-count').textContent = `${completedStages}/3`;
+    document.getElementById('placement-progress-ring').style.setProperty('--stage-progress', `${Math.round((completedStages / 3) * 100)}%`);
+    document.getElementById('student-stage-offers').classList.toggle('is-complete', offers.length > 0);
+    document.getElementById('student-stage-placement').classList.toggle('is-complete', accepted.length > 0);
+    document.getElementById('student-stage-documents').classList.toggle('is-complete', verifiedDocuments === 3);
 
     const acceptedBlock = document.getElementById('accepted-block');
     const noAcceptedBlock = document.getElementById('no-accepted-block');
@@ -310,6 +366,9 @@ async function loadDashboardNotifications() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.error) throw new Error(data.error || 'Unable to load notifications');
     const notes = (data.notifications || []).slice(0, 4);
+    const unreadCount = (data.notifications || []).filter(note => Number(note.is_read) === 0).length;
+    const actionNotificationCount = document.getElementById('action-notifications-count');
+    if (actionNotificationCount) actionNotificationCount.textContent = unreadCount;
     const icons = { urgent: 'fa-triangle-exclamation', reminder: 'fa-bell', general: 'fa-bullhorn', system: 'fa-circle-info' };
     list.innerHTML = notes.map(note => {
       const unread = Number(note.is_read) === 0;

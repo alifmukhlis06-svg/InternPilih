@@ -611,13 +611,13 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     const pending = Number(data.stats.pending_offers || 0);
     const risk = Number(data.stats.risk_students || 0);
     const docs = Number(data.stats.pending_documents || 0);
-    [total, confirmed, pending, risk, docs].forEach((v, i) => { if (vals[i]) vals[i].textContent = v; });
+    [total, confirmed, pending, 0, docs].forEach((v, i) => { if (vals[i]) vals[i].textContent = v; });
     const placedPct = pct(confirmed, total);
     const change = document.querySelectorAll('.stats-grid .stat-change');
     if (change[0]) change[0].textContent = total + ' registered';
     if (change[1]) change[1].textContent = placedPct + '%';
     if (change[2]) change[2].textContent = pending ? 'Needs action' : 'No pending offers';
-    if (change[3]) change[3].textContent = risk ? 'High risk' : 'Clear';
+    if (change[3]) change[3].textContent = 'Loading active requests';
     if (change[4]) change[4].textContent = docs ? 'Review needed' : 'All reviewed';
 
     const placementChangeList = document.getElementById('dashboardPlacementChangeList');
@@ -631,6 +631,10 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
           revision_required: 'Revision Required'
         };
         const active = requests.filter(request => activeStatuses.includes(request.status));
+        const activeChangeStat = document.getElementById('stat-active-changes');
+        const activeChangeNote = document.getElementById('stat-active-changes-note');
+        if (activeChangeStat) activeChangeStat.textContent = active.length;
+        if (activeChangeNote) activeChangeNote.textContent = active.length ? 'Needs coordination' : 'No active requests';
         placementChangeList.innerHTML = active.length ? active.slice(0, 5).map(request => `
           <div class="notif-item" style="padding:9px 0;">
             <div class="notif-dot-icon"><i class="fas fa-right-left"></i></div>
@@ -638,7 +642,11 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
             ${badge(request.is_revision_overdue ? 'risk' : request.status, request.is_revision_overdue ? 'Revision Overdue' : labels[request.status])}
           </div>
         `).join('') : 'No active placement change requests.';
-      }).catch(() => { placementChangeList.textContent = 'Placement change requests could not be loaded.'; });
+      }).catch(() => {
+        placementChangeList.textContent = 'Placement change requests could not be loaded.';
+        const activeChangeNote = document.getElementById('stat-active-changes-note');
+        if (activeChangeNote) activeChangeNote.textContent = 'Unavailable';
+      });
     }
 
     const topbarSub = document.querySelector('.topbar p');
@@ -1467,6 +1475,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     const accepted = offers.filter(o => o.status === 'accepted');
     const pending = offers.filter(o => o.status === 'pending');
     const rejected = offers.filter(o => o.status === 'rejected');
+    const responded = offers.length - pending.length;
     const confirmedPlacements = Number(company.confirmed_placements || accepted.length || 0);
     const verifiedDocs = accepted.filter(o => placementVerificationStatus(o, data.documents) === 'verified').length;
     const pendingDocs = accepted.filter(o => placementVerificationStatus(o, data.documents) !== 'verified').length;
@@ -1488,18 +1497,30 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
 
     const vals = document.querySelectorAll('.stat-val');
     if (page === 'dashboard.html' || page === 'offers.html') {
-      [offers.length, page === 'offers.html' ? pending.length : accepted.length, page === 'offers.html' ? accepted.length : rejected.length, page === 'offers.html' ? rejected.length : pending.length].forEach((v, i) => {
+      [offers.length, page === 'offers.html' ? pending.length : responded, page === 'offers.html' ? accepted.length : accepted.length, page === 'offers.html' ? rejected.length : pending.length].forEach((v, i) => {
         if (vals[i]) vals[i].textContent = v;
       });
       const changes = document.querySelectorAll('.stats-grid .stat-change');
       if (page === 'dashboard.html') {
-        if (changes[0]) changes[0].textContent = pct(offers.length, offers.length) + '%';
-        if (changes[1]) changes[1].textContent = pct(accepted.length, offers.length) + '%';
-        if (changes[2]) changes[2].textContent = pct(rejected.length, offers.length) + '%';
-        if (changes[3]) changes[3].textContent = pct(pending.length, offers.length) + '%';
+        if (changes[0]) changes[0].textContent = `${offers.length} recorded`;
+        if (changes[1]) changes[1].textContent = pct(responded, offers.length) + '% response rate';
+        if (changes[2]) changes[2].textContent = pct(accepted.length, offers.length) + '% accepted';
+        if (changes[3]) changes[3].textContent = pct(pending.length, offers.length) + '% pending';
       }
     }
     if (page === 'dashboard.html') {
+      const responsePct = pct(responded, offers.length);
+      const acceptedPct = pct(accepted.length, offers.length);
+      const offerRing = document.getElementById('employer-offer-ring');
+      if (offerRing) {
+        offerRing.style.setProperty('--accepted-pct', `${acceptedPct}%`);
+        offerRing.style.setProperty('--response-pct', `${responsePct}%`);
+      }
+      setText('#employer-response-rate', `${responsePct}%`);
+      setText('#employer-status-accepted', accepted.length);
+      setText('#employer-status-rejected', rejected.length);
+      setText('#employer-status-pending', pending.length);
+
       const body = document.querySelector('.data-table tbody');
       if (body) body.innerHTML = offers.slice(0, 6).map(o => `
         <tr>
