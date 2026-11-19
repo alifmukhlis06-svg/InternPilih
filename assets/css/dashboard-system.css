@@ -1404,6 +1404,138 @@ html[data-theme="dark"] .employer-dashboard .employer-offer-ring.has-data {
   .dashboard-shell .topbar .badge { display:none; }
 }
 
+/* Student dashboard navigation glass. Solid surfaces are the no-blur fallback;
+   supporting browsers receive the lighter translucent layers below. */
+.student-dashboard {
+  --student-sidebar-glass-fallback:linear-gradient(180deg,#191522 0%,#0d0c12 54%,#15101c 100%);
+  --student-sidebar-glass:
+    radial-gradient(circle at 50% 0,rgba(139,104,235,.24),transparent 31%),
+    linear-gradient(180deg,rgba(24,20,34,.88) 0%,rgba(12,11,17,.9) 56%,rgba(19,14,27,.88) 100%);
+  --student-topbar-glass-fallback:#fbfaff;
+  --student-topbar-glass:linear-gradient(135deg,rgba(255,255,255,.82),rgba(248,246,255,.7));
+  --student-glass-border:rgba(106,82,162,.14);
+  --student-glass-highlight:rgba(255,255,255,.55);
+  --student-glass-shadow:0 18px 44px rgba(38,30,58,.1),0 3px 10px rgba(38,30,58,.045);
+}
+
+.student-dashboard .sidebar {
+  border-color:rgba(221,211,255,.14);
+  background:var(--student-sidebar-glass-fallback);
+  box-shadow:0 24px 56px rgba(13,10,20,.3),inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.student-dashboard .sidebar .nav-item {
+  color:#b8b2c2;
+  transition:transform .2s ease,background-color .2s ease,color .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+
+.student-dashboard .sidebar .nav-item .nav-icon { color:#b4adbf; }
+.student-dashboard .sidebar .nav-item:hover {
+  border-color:rgba(207,192,255,.16);
+  background:rgba(181,156,255,.11);
+  color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+.student-dashboard .sidebar .nav-item:hover .nav-icon { color:#ded3ff; }
+.student-dashboard .sidebar .nav-item.active {
+  border-color:rgba(215,201,255,.32);
+  background:linear-gradient(145deg,rgba(126,91,224,.54),rgba(85,64,151,.46));
+  color:#fff;
+  box-shadow:0 10px 22px rgba(7,5,12,.26),inset 0 1px 0 rgba(255,255,255,.16);
+}
+.student-dashboard .sidebar .nav-item.active .nav-icon { color:#fff; }
+.student-dashboard .sidebar .user-card {
+  border-color:rgba(223,214,255,.16);
+  background:rgba(255,255,255,.075);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.student-dashboard .topbar {
+  border-color:var(--student-glass-border);
+  background:var(--student-topbar-glass-fallback);
+  box-shadow:var(--student-glass-shadow),inset 0 1px 0 var(--student-glass-highlight);
+}
+
+.student-dashboard .topbar .notif-btn,
+.student-dashboard .topbar .theme-toggle,
+.student-dashboard .topbar .user-avatar {
+  border-color:rgba(102,79,157,.14);
+  background:rgba(255,255,255,.8);
+  color:#6f687c;
+  box-shadow:0 4px 13px rgba(45,34,70,.06),inset 0 1px 0 rgba(255,255,255,.72);
+  transition:transform .2s ease,background-color .2s ease,color .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+
+.student-dashboard .topbar .notif-btn:hover,
+.student-dashboard .topbar .theme-toggle:hover,
+.student-dashboard .topbar .user-avatar:hover {
+  border-color:rgba(117,89,217,.34);
+  background:rgba(242,237,255,.92);
+  color:var(--dash-purple);
+  box-shadow:0 8px 18px rgba(80,57,139,.12),inset 0 1px 0 rgba(255,255,255,.78);
+}
+
+.student-dashboard .sidebar a:focus-visible,
+.student-dashboard .sidebar button:focus-visible,
+.student-dashboard .topbar a:focus-visible,
+.student-dashboard .topbar button:focus-visible {
+  outline:3px solid #b9a4ff;
+  outline-offset:2px;
+  box-shadow:0 0 0 5px rgba(117,89,217,.22);
+}
+
+html[data-theme="dark"] .student-dashboard {
+  --student-sidebar-glass-fallback:linear-gradient(180deg,#17121f 0%,#09080d 56%,#130d1b 100%);
+  --student-sidebar-glass:
+    radial-gradient(circle at 50% 0,rgba(139,94,234,.26),transparent 31%),
+    linear-gradient(180deg,rgba(22,17,31,.88) 0%,rgba(8,8,13,.9) 57%,rgba(17,11,24,.88) 100%);
+  --student-topbar-glass-fallback:#100d18;
+  --student-topbar-glass:linear-gradient(135deg,rgba(21,17,30,.82),rgba(11,10,17,.76));
+  --student-glass-border:rgba(204,182,255,.13);
+  --student-glass-highlight:rgba(255,255,255,.055);
+  --student-glass-shadow:0 20px 46px rgba(0,0,0,.28),0 3px 10px rgba(0,0,0,.2);
+}
+
+html[data-theme="dark"] .student-dashboard .topbar .notif-btn,
+html[data-theme="dark"] .student-dashboard .topbar .theme-toggle,
+html[data-theme="dark"] .student-dashboard .topbar .user-avatar {
+  border-color:rgba(204,182,255,.13);
+  background:rgba(34,27,46,.8);
+  color:#c9c1d3;
+  box-shadow:0 4px 14px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.045);
+}
+
+html[data-theme="dark"] .student-dashboard .topbar .notif-btn:hover,
+html[data-theme="dark"] .student-dashboard .topbar .theme-toggle:hover,
+html[data-theme="dark"] .student-dashboard .topbar .user-avatar:hover {
+  border-color:rgba(183,153,255,.34);
+  background:rgba(63,46,86,.84);
+  color:#d7c6ff;
+}
+
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .student-dashboard .sidebar {
+    background:var(--student-sidebar-glass);
+    backdrop-filter:blur(20px) saturate(125%);
+    -webkit-backdrop-filter:blur(20px) saturate(125%);
+  }
+  .student-dashboard .topbar {
+    background:var(--student-topbar-glass);
+    backdrop-filter:blur(18px) saturate(135%);
+    -webkit-backdrop-filter:blur(18px) saturate(135%);
+  }
+}
+
+@media (max-width:768px) {
+  .student-dashboard .topbar .notif-btn,
+  .student-dashboard .topbar .theme-toggle,
+  .student-dashboard .topbar .user-avatar {
+    width:44px;
+    height:44px;
+    min-height:44px;
+  }
+}
+
 @media (prefers-reduced-motion:reduce) {
   .dashboard-shell *,
   .dashboard-shell *::before,
