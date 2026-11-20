@@ -14,6 +14,7 @@ $handlers = [
     'gemini' => 'gemini.php',
     'mail-status' => 'mail-status.php',
     'notifications' => 'notifications.php',
+    'opportunities' => 'opportunities.php',
     'offer-risk-ai' => 'offer-risk-ai.php',
     'offers' => 'offers.php',
     'password-reset' => 'password-reset.php',

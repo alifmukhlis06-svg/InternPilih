@@ -129,6 +129,7 @@ final class DatabaseConnection
         'placement_change_requests',
         'placement_change_documents',
         'password_reset_tokens',
+        'internship_opportunities',
     ];
 
     public function __construct(array $config)

@@ -30,6 +30,11 @@
   .company-empty{grid-column:1/-1;padding:42px 20px;text-align:center;color:var(--text2)}
   .company-empty i{display:block;margin-bottom:10px;color:var(--brand);font-size:24px}
   .company-empty .btn{margin-top:14px}
+  .company-opportunities{margin-top:18px}
+  .company-opportunity{padding:12px 0;border-top:1px solid var(--border);font-size:12px;line-height:1.55}
+  .company-opportunity:first-child{margin-top:8px}
+  .company-opportunity-title{font-weight:750;color:var(--text)}
+  .company-opportunity-meta{color:var(--text2);overflow-wrap:anywhere}
   html[data-theme="dark"] .company-card-role{background:rgba(35,24,55,.68)}
   @media(max-width:980px){.company-filter-bar{grid-template-columns:repeat(2,minmax(0,1fr))}}
   @media(max-width:600px){.company-filter-panel{padding:14px}.company-filter-bar{grid-template-columns:1fr}.company-directory-grid{grid-template-columns:1fr}.company-filter-meta{align-items:flex-start;flex-direction:column}}
@@ -79,7 +84,7 @@
         </div>
         <div class="company-filter-field"><label for="industryFilter">Industry</label><select class="form-control" id="industryFilter" onchange="renderCompanies()"><option value="all">All Industries</option></select></div>
         <div class="company-filter-field"><label for="locationFilter">Location</label><select class="form-control" id="locationFilter" onchange="renderCompanies()"><option value="all">All Locations</option></select></div>
-        <div class="company-filter-field"><label for="relevanceFilter">Relevance</label><select class="form-control" id="relevanceFilter" onchange="renderCompanies()"><option value="all">All</option><option value="recommended">Recommended for My Programme</option><option value="matching">Matching Current Internship Opportunities</option></select></div>
+        <div class="company-filter-field"><label for="relevanceFilter">Relevance</label><select class="form-control" id="relevanceFilter" onchange="renderCompanies()"><option value="all">All Companies</option><option value="recommended">Recommended for My Programme</option><option value="matching">Matching Current Internship Opportunities</option></select></div>
       </div>
       <div class="company-filter-meta"><span id="programmeContext">Loading your programme context...</span><span id="companyResultCount" aria-live="polite"></span></div>
     </div>
@@ -104,17 +109,25 @@
 
 <script>
 let companiesList = [];
+let opportunitiesList = [];
 let studentProgramme = '';
 
 async function loadCompanies() {
   try {
-    const [companyResponse, profileResponse] = await Promise.all([
+    const [companyResponse, profileResponse, opportunityResponse] = await Promise.all([
       fetch('../api/companies.php'),
-      fetch('../api/profile.php').catch(() => null)
+      fetch('../api/profile.php').catch(() => null),
+      fetch('../api/opportunities.php')
     ]);
     const payload = await companyResponse.json().catch(() => ({}));
     if (!companyResponse.ok || !Array.isArray(payload)) throw new Error(payload.error || 'Unable to load companies.');
+    const opportunityPayload = await opportunityResponse.json().catch(() => ({}));
+    if (!opportunityResponse.ok || !Array.isArray(opportunityPayload)) throw new Error(opportunityPayload.error || 'Unable to load opportunities.');
+    opportunitiesList = opportunityPayload;
     companiesList = payload;
+    companiesList.forEach(company => {
+      company.opportunities = opportunitiesList.filter(opportunity => String(opportunity.company_id) === String(company.id));
+    });
 
     if (profileResponse && profileResponse.ok) {
       const profile = await profileResponse.json().catch(() => ({}));
@@ -155,48 +168,17 @@ function normalise(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
 }
 
-function explicitList(value) {
-  if (Array.isArray(value)) return value.flatMap(explicitList);
-  if (value && typeof value === 'object') return [];
-  return String(value || '').split(/\|\||[,;\n]/).map(item => item.trim()).filter(Boolean);
-}
-
-function explicitlyIncludesProgramme(value) {
-  if (!studentProgramme) return false;
-  const target = normalise(studentProgramme);
-  return explicitList(value).some(programme => normalise(programme) === target);
-}
-
 function companyRelevance(company) {
-  const recommendationFields = [
-    company.recommended_programmes,
-    company.eligible_programmes,
-    company.programmes,
-    company.programme_requirements
-  ].filter(value => value !== undefined && value !== null && String(value).trim() !== '');
-  const recommended = recommendationFields.some(explicitlyIncludesProgramme);
-
-  const opportunities = [company.current_opportunities, company.opportunities]
-    .find(Array.isArray) || [];
-  const current = opportunities.filter(opportunity => {
-    const status = normalise(opportunity.status);
-    return opportunity.is_current === true || opportunity.active === true || ['open', 'active', 'current'].includes(status);
-  });
-  const withEligibility = current.filter(opportunity => [
-    opportunity.eligible_programmes,
-    opportunity.programmes,
-    opportunity.programme_requirements
-  ].some(value => explicitList(value).length));
-  const matching = withEligibility.some(opportunity => [
-    opportunity.eligible_programmes,
-    opportunity.programmes,
-    opportunity.programme_requirements
-  ].some(explicitlyIncludesProgramme));
+  const opportunities = Array.isArray(company.opportunities) ? company.opportunities : [];
+  const eligible = opportunities.filter(opportunity => Array.isArray(opportunity.eligible_programmes) && opportunity.eligible_programmes.length);
+  const programmeMatches = opportunities.filter(opportunity => opportunity.programme_match === true);
+  const currentMatches = programmeMatches.filter(opportunity => opportunity.is_current === true);
 
   return {
-    recommended,
-    opportunity: matching ? 'matching' : (withEligibility.length ? 'no-match' : 'unspecified'),
-    rank: matching ? 2 : (recommended ? 1 : 0)
+    recommended: programmeMatches.length > 0,
+    opportunity: currentMatches.length ? 'matching' : (eligible.length ? 'no-match' : 'unspecified'),
+    matchingOpportunities: currentMatches,
+    rank: currentMatches.length ? 2 : (programmeMatches.length ? 1 : 0)
   };
 }
 
@@ -217,7 +199,8 @@ function renderCompanies() {
   const directoryMatches = companiesList.filter(company => {
     if (industry !== 'all' && String(company.industry || '') !== industry) return false;
     if (location !== 'all' && String(company.location || '') !== location) return false;
-    const searchText = normalise([company.name, company.industry, company.location, formatPositions(company.positions, '')].join(' '));
+    const opportunityText = (company.opportunities || []).map(opportunity => [opportunity.position_title, opportunity.department, opportunity.location].join(' ')).join(' ');
+    const searchText = normalise([company.name, company.industry, company.location, formatPositions(company.positions, ''), opportunityText].join(' '));
     if (q && !searchText.includes(q)) return false;
     return true;
   });
@@ -234,9 +217,9 @@ function renderCompanies() {
     const anyRelevant = companiesList.some(company => matchesRelevance(company, relevanceFilter));
     let message = 'No companies match these filters.';
     if (relevanceFilter === 'matching' && !anyRelevant) {
-      message = `No matching internship opportunities are currently listed${studentProgramme ? ` for ${escapeHtml(studentProgramme)}` : ''}. You can still browse all companies.`;
+      message = 'No matching internship opportunities are currently available for your programme.';
     } else if (relevanceFilter === 'recommended' && !anyRelevant) {
-      message = 'Programme relevance is not specified in the current company data. You can still browse all companies.';
+      message = 'No programme-matched companies are currently available.';
     }
     grid.innerHTML = `<div class="company-empty"><i class="fas fa-building-circle-exclamation"></i>${message}<br><button class="btn btn-outline btn-sm" onclick="resetCompanyFilters()">Show All Companies</button></div>`;
     return;
@@ -254,11 +237,16 @@ function renderCompanies() {
     const relevance = companyRelevance(company);
     const badges = [];
     if (relevance.recommended) badges.push('<span class="badge badge-purple">Recommended</span>');
-    if (relevance.opportunity === 'matching') badges.push('<span class="badge badge-accepted">Matching Internship</span>');
+    if (relevance.opportunity === 'matching') badges.push(`<span class="badge badge-accepted">${relevance.matchingOpportunities.length > 1 ? `${relevance.matchingOpportunities.length} Matching Internships` : 'Matching Internship'}</span>`);
     else if (relevance.opportunity === 'no-match') badges.push('<span class="badge badge-withdrawn">No Current Match</span>');
     else badges.push('<span class="badge badge-withdrawn">Match Not Specified</span>');
 
-    const positions = formatPositions(company.positions, '');
+    const currentOpportunities = (company.opportunities || []).filter(opportunity => opportunity.is_current === true);
+    const displayedOpportunities = relevance.matchingOpportunities.length ? relevance.matchingOpportunities : currentOpportunities;
+    const opportunityLabel = relevance.matchingOpportunities.length ? 'Matching opportunity' : 'Open opportunities';
+    const opportunitySummary = displayedOpportunities.length
+      ? displayedOpportunities.slice(0, 2).map(opportunity => opportunity.position_title).join(', ') + (displayedOpportunities.length > 2 ? ` +${displayedOpportunities.length - 2} more` : '')
+      : 'No current opportunities are listed.';
     const card = document.createElement('article');
     card.className = 'panel company-card';
 
@@ -269,7 +257,7 @@ function renderCompanies() {
           <div><p class="entity-title">${escapeHtml(company.name || 'Unnamed company')}</p><p class="entity-subtitle">${escapeHtml(company.industry || 'Industry not specified')}</p></div>
         </div>
         <div class="company-card-location"><i class="fas fa-map-marker-alt"></i><span>${escapeHtml(company.location || 'Location not specified')}</span></div>
-        <div class="company-card-role"><strong>Recorded internship roles</strong>${positions ? escapeHtml(positions) : 'No internship roles are recorded.'}</div>
+        <div class="company-card-role"><strong>${escapeHtml(opportunityLabel)}</strong>${escapeHtml(opportunitySummary)}</div>
         <div class="company-card-badges">${badges.join('')}</div>
         <button class="btn btn-primary btn-sm" type="button" onclick="viewCompany('${escapeAttribute(company.id)}')">View Details</button>
       </div>
@@ -290,6 +278,17 @@ function viewCompany(id) {
   const c = companiesList.find(item => String(item.id) === String(id));
   if (!c) return;
 
+  const currentOpportunities = (c.opportunities || []).filter(opportunity => opportunity.is_current === true);
+  const opportunityDetails = currentOpportunities.length
+    ? currentOpportunities.map(opportunity => `
+        <div class="company-opportunity">
+          <div class="company-opportunity-title">${escapeHtml(opportunity.position_title)}</div>
+          <div class="company-opportunity-meta">${escapeHtml([opportunity.department, opportunity.location || c.location].filter(Boolean).join(' · ') || 'Details not specified')}</div>
+          <div class="company-opportunity-meta">Deadline: ${escapeHtml(opportunity.application_deadline || 'Not specified')}</div>
+          <div class="company-opportunity-meta">Eligible programmes: ${escapeHtml((opportunity.eligible_programmes || []).join(', ') || 'Not specified')}</div>
+        </div>`).join('')
+    : '<div class="company-opportunity"><div class="company-opportunity-meta">No open internship opportunities are currently listed.</div></div>';
+
   document.getElementById('modalCompName').textContent = c.name;
   document.getElementById('modalCompBody').innerHTML = `
     <div class="responsive-pair" style="gap:14px;font-size:13px;">
@@ -297,9 +296,9 @@ function viewCompany(id) {
       <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Work Mode</span><strong>${escapeHtml(c.work_mode || 'Not specified')}</strong></div>
       <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Location</span><strong>${escapeHtml(c.location || 'Not specified')}</strong></div>
       <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Allowance</span><strong>RM ${escapeHtml(c.allowance || '0')}/month</strong></div>
-      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Recorded Positions</span><strong>${escapeHtml(formatPositions(c.positions, 'No positions recorded yet'))}</strong></div>
       <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Contact Email</span><strong>${escapeHtml(c.hr_email || 'N/A')}</strong></div>
     </div>
+    <div class="company-opportunities"><strong>Open Internship Opportunities</strong>${opportunityDetails}</div>
     <div class="profile-about">
       <strong style="color:var(--text);">Directory note:</strong> Company visibility does not imply a current programme match. Matching is shown only when explicit opportunity eligibility data is available.
     </div>
