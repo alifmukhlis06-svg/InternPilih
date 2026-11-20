@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Reports & Analytics – InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261031-classic1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261120-complete-ui1">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261120-balanced-bigger1">
 <script src="../assets/js/auth-gate.js?v=20261120-name1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -24,6 +24,7 @@
     <a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bullhorn"></i></span>Announcements<span class="nav-badge">2</span></a>
     <div class="nav-section">Account</div>
     <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user-shield"></i></span>Profile</a>
+    <a class="nav-item" href="settings.html"><span class="nav-icon"><i class="fas fa-gear"></i></span>Settings</a>
   </nav>
   <div class="sidebar-footer">
     <div class="user-card"><div class="user-avatar avatar-admin">--</div><div class="user-info"><p>Loading coordinator</p><span>Coordinator</span></div></div>
@@ -43,7 +44,7 @@
 
   <div class="content fade-in">
     <!-- KPI CARDS -->
-    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:28px;">
+    <div class="stats-grid five" style="margin-bottom:28px;">
       <div class="stat-card blue"><div class="stat-icon blue"><i class="fas fa-users"></i></div><div><div class="stat-val">48</div><div class="stat-label">Total Students</div></div></div>
       <div class="stat-card green"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div><div class="stat-val">31</div><div class="stat-label">Confirmed</div><div class="stat-change up">64.6%</div></div></div>
       <div class="stat-card gold"><div class="stat-icon gold"><i class="fas fa-hourglass-half"></i></div><div><div class="stat-val">12</div><div class="stat-label">Pending</div></div></div>
@@ -52,7 +53,7 @@
     </div>
 
     <!-- CHARTS ROW 1 -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
+    <div class="responsive-pair" style="gap:24px;margin-bottom:24px;">
       <div class="panel">
         <div class="panel-header"><h3><i class="fas fa-chart-doughnut" style="color:var(--blue3);margin-right:8px;"></i>Placement Status Distribution</h3></div>
         <div class="panel-body" style="height:280px;display:flex;align-items:center;justify-content:center;">
@@ -68,7 +69,7 @@
     </div>
 
     <!-- CHARTS ROW 2 -->
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-bottom:24px;">
+    <div class="responsive-weighted" style="gap:24px;margin-bottom:24px;">
       <div class="panel">
         <div class="panel-header"><h3><i class="fas fa-chart-line" style="color:var(--brand);margin-right:8px;"></i>Monthly Offer Activity</h3></div>
         <div class="panel-body" style="height:250px;">
@@ -152,7 +153,7 @@ function showToast(msg){
 function exportReport(){window.downloadAdminReport('pdf','placement');}
 function exportCSV(){window.downloadAdminReport('csv','placement');}
 </script>
-<script src="../assets/js/app.js?v=20261120-uniform-shell1"></script>
+<script src="../assets/js/app.js?v=20261120-balanced-bigger1"></script>
 </body>
 </html>
 

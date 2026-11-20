@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Notifications - InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261031-classic1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261120-complete-ui1">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261120-balanced-bigger1">
 <script src="../assets/js/auth-gate.js?v=20261120-name1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -37,7 +37,7 @@
     <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
     <div><h1>Notifications</h1><p class="topbar-sub">3 unread notifications</p></div>
     <div class="topbar-right">
-      <button class="btn btn-outline btn-sm" onclick="markAllRead(event)"><i class="fas fa-check-double"></i> Mark All Read</button>
+      <button class="btn btn-outline btn-sm" aria-label="Mark all notifications as read" onclick="markAllRead(event)"><i class="fas fa-check-double"></i><span>Mark All Read</span></button>
     </div>
   </div>
 
@@ -79,12 +79,12 @@ async function markAllRead(event){
     if (activeTab) {
       filterNotif(activeTab.dataset.filter || 'all', activeTab);
     }
-    btn.innerHTML='<i class="fas fa-check"></i> All Read';
+    btn.innerHTML='<i class="fas fa-check"></i><span>All Read</span>';
     if(window.refreshStudentNotifications) await window.refreshStudentNotifications();
   }catch(err){
     alert('Unable to update notifications.');
   }
-  setTimeout(()=>btn.innerHTML='<i class="fas fa-check-double"></i> Mark All Read',2000);
+  setTimeout(()=>btn.innerHTML='<i class="fas fa-check-double"></i><span>Mark All Read</span>',2000);
 }
 function filterNotif(type,btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function () {
   new MutationObserver(syncCurrentView).observe(list, { childList:true });
 });
 </script>
-<script src="../assets/js/app.js?v=20261120-uniform-shell1"></script>
+<script src="../assets/js/app.js?v=20261120-balanced-bigger1"></script>
 </body>
 </html>
 

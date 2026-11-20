@@ -627,6 +627,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       let count = null;
       if (section === 'student' && href.includes('offers')) count = pendingOffers;
       if (section === 'student' && href.includes('notifications')) count = Number(summary.stats?.unread_notifications || 0);
+      if (section === 'employer' && href.includes('notifications')) count = Number(summary.stats?.unread_notifications || 0);
       if (section === 'admin' && href.includes('monitoring')) count = riskStudents;
       if (section === 'admin' && href.includes('verification')) count = pendingDocs;
       if (section === 'employer' && href.includes('offers')) count = pendingOffers;
@@ -721,7 +722,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       const body = progressPanel.querySelector('.panel-body');
       if (body) {
         body.innerHTML = `
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <div class="coordinator-progress-grid">
             <div>
               ${progressRow('Confirmed Placements', `${confirmed} / ${total}`, pct(confirmed, total), 'green')}
               ${progressRow('Offers Recorded', `${offersReceived}`, pct(offersReceived, Math.max(offersReceived, total)), 'blue')}
@@ -729,8 +730,8 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
               ${progressRow('Docs Verified', `${docsVerified} / ${docsSubmitted}`, pct(docsVerified, docsSubmitted), 'purple')}
             </div>
             <div>
-              <div style="width:160px;height:160px;border-radius:50%;background:conic-gradient(var(--green) 0% ${placedPct}%,var(--gold) ${placedPct}% ${Math.max(placedPct, pct(confirmed + pending, total))}%,var(--red) ${Math.max(placedPct, pct(confirmed + pending, total))}% 100%);display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;">
-                <div style="width:100px;height:100px;background:var(--card);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div class="coordinator-progress-ring" style="background:conic-gradient(var(--green) 0% ${placedPct}%,var(--gold) ${placedPct}% ${Math.max(placedPct, pct(confirmed + pending, total))}%,var(--red) ${Math.max(placedPct, pct(confirmed + pending, total))}% 100%);">
+                <div class="coordinator-progress-ring-center">
                   <span style="font-size:22px;font-weight:800;">${placedPct}%</span>
                   <span style="font-size:10px;color:var(--text2);">Placed</span>
                 </div>
@@ -877,8 +878,14 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     const button = document.getElementById('saveResponsePeriod');
     if (button) button.disabled = true;
     try {
-      await apiSend('/api/settings.php', 'PUT', { offer_response_period_days: days });
-      await renderMonitoring(await getSummary());
+      const saved = await apiSend('/api/settings.php', 'PUT', { offer_response_period_days: days });
+      if (section === 'admin' && page === 'settings.html') {
+        input.value = saved.offer_response_period_days ?? days;
+        const status = document.getElementById('responsePeriodStatus');
+        if (status) status.textContent = 'Response period saved.';
+      } else {
+        await renderMonitoring(await getSummary());
+      }
       showToast('Response period updated. Student flags were recalculated.', 'success');
     } catch (err) {
       alert(err.message);
@@ -1024,7 +1031,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       content.innerHTML = `
         ${st === 'risk' ? `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i><div><strong>Automatically flagged:</strong> ${esc(flagReasonText(s))}. The configured response period is ${Number(monitoringData.settings?.offer_response_period_days || 14)} days.</div></div>` : ''}
         ${st === 'risk' ? '<div id="aiRiskAssessment" style="display:none;margin-bottom:16px;"></div>' : ''}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;margin-bottom:16px;">
+        <div class="responsive-pair" style="gap:14px;font-size:13px;margin-bottom:16px;">
           <div><span style="color:var(--text2);">Faculty</span><br><strong>${esc(s.faculty || '-')}</strong></div>
           <div><span style="color:var(--text2);">Programme</span><br><strong>${esc(s.programme || '-')}</strong></div>
           <div><span style="color:var(--text2);">Campus</span><br><strong>${esc(s.campus || '-')}</strong></div>
@@ -1474,7 +1481,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       data = await apiGet('/api/notifications.php?fresh=' + Date.now());
     } catch (error) {
       list.dataset.loadError = 'true';
-      list.innerHTML = `<div class="empty-state" id="notifEmptyState"><i class="fas fa-triangle-exclamation"></i><p>Notifications could not be loaded.</p><button class="btn btn-outline btn-sm" type="button" onclick="window.refreshStudentNotifications()"><i class="fas fa-rotate-right"></i> Try Again</button></div>`;
+      list.innerHTML = `<div class="empty-state" id="notifEmptyState"><i class="fas fa-triangle-exclamation"></i><p>Notifications could not be loaded.</p><button class="btn btn-outline btn-sm" type="button" onclick="window.refreshRecipientNotifications()"><i class="fas fa-rotate-right"></i> Try Again</button></div>`;
       const sub = document.querySelector('.topbar p');
       if (sub) sub.textContent = 'Unable to refresh notifications';
       return;
@@ -1488,11 +1495,11 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       const unread = Number(note.is_read) === 0;
       const type = `${unread ? 'unread ' : ''}${isAdminNote(note) ? 'admin' : 'system'} ${note.type}`;
       return `
-      <div class="notif-item" style="padding:16px 20px;${unread ? '' : 'opacity:.72;'}" data-type="${esc(type)}">
-        <div class="notif-dot-icon" style="background:rgba(59,130,246,.12);color:${colorForType(note.type)};"><i class="fas ${iconForType(note.type)}"></i></div>
+      <div class="notif-item recipient-notification ${unread ? 'is-unread' : 'is-read'}" data-type="${esc(type)}">
+        <div class="notif-dot-icon" style="background:var(--brand-soft);color:${colorForType(note.type)};"><i class="fas ${iconForType(note.type)}"></i></div>
         <div style="flex:1;">
-          <p style="font-size:14px;font-weight:600;">${esc(note.title)}</p>
-          <p style="font-size:13px;color:var(--text3);margin-top:3px;">${esc(note.body)}</p>
+          <p class="recipient-notification-title">${esc(note.title)}</p>
+          <p class="recipient-notification-body">${esc(note.body)}</p>
           <p class="notif-meta" style="margin-top:6px;"><i class="fas fa-clock"></i> ${fmtDate(String(note.created_at || '').slice(0, 10))} - ${esc(note.sender_name ? displayName(note.sender_name) : 'System')}</p>
           ${note.link_url ? `<div style="margin-top:10px;display:flex;gap:8px;"><a href="${esc(note.link_url)}" class="btn btn-outline btn-sm"><i class="fas fa-arrow-right"></i> Open</a></div>` : ''}
         </div>
@@ -1500,6 +1507,17 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       </div>
     `}).join('') || '<div class="empty-state" id="notifEmptyState"><i class="fas fa-inbox"></i><p>No notifications yet.</p></div>';
     const unread = notes.filter(note => Number(note.is_read) === 0).length;
+    const navLink = document.querySelector('.sidebar nav a[href="notifications.html"]');
+    if (navLink) {
+      let badge = navLink.querySelector('.nav-badge');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'nav-badge';
+        navLink.appendChild(badge);
+      }
+      badge.textContent = unread;
+      badge.style.display = unread ? '' : 'none';
+    }
     const system = notes.filter(note => !isAdminNote(note)).length;
     const admin = notes.filter(note => isAdminNote(note)).length;
     const sub = document.querySelector('.topbar p');
@@ -1508,7 +1526,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     if (tabs[0]) tabs[0].textContent = `All (${notes.length})`;
     if (tabs[1]) tabs[1].textContent = `Unread (${unread})`;
     if (tabs[2]) tabs[2].textContent = `System (${system})`;
-    if (tabs[3]) tabs[3].textContent = `From Admin (${admin})`;
+    if (tabs[3]) tabs[3].textContent = `${section === 'employer' ? 'From Coordinator' : 'From Admin'} (${admin})`;
     const activeTab = document.querySelector('.tab-btn.active');
     if (activeTab && typeof window.filterNotif === 'function') {
       window.filterNotif(activeTab.dataset.filter || 'all', activeTab);
@@ -1692,7 +1710,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
               </div>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+          <div class="responsive-pair" style="gap:24px;">
             <div class="panel"><div class="panel-header"><h3><i class="fas fa-building" style="color:var(--blue3);margin-right:8px;"></i>Company Information</h3></div><div class="panel-body" style="font-size:13px;display:grid;gap:14px;">
               ${profileField('Company Name', company.name || '-')}
               ${profileField('Industry', company.industry || '-')}
@@ -1708,7 +1726,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
             </div></div>
           </div>
           <div class="panel" style="margin-top:0;"><div class="panel-header"><h3><i class="fas fa-briefcase" style="color:var(--purple);margin-right:8px;"></i>Internship Details</h3></div><div class="panel-body">
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;text-align:center;">
+            <div class="responsive-quad" style="gap:16px;text-align:center;">
               ${metricBox(companyPositionList(company).length, 'Recorded Positions', 'var(--blue3)')}
               ${metricBox(confirmedPlacements, 'Confirmed Interns', 'var(--green)')}
               ${metricBox(money(company.allowance), 'Monthly Allowance', 'var(--gold)', '18px')}
@@ -1730,7 +1748,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       setText('#msgTitle, #respModalTitle', displayName(o.student_name) + ' - Response Detail');
       const target = document.getElementById('msgBody') || document.getElementById('respModalBody');
       if (target) target.innerHTML = `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;">
+        <div class="responsive-pair" style="gap:14px;font-size:13px;">
           <div><span style="color:var(--text2);">Student</span><br><strong>${esc(displayName(o.student_name))}</strong></div>
           <div><span style="color:var(--text2);">Status</span><br>${badge(o.status, o.status)}</div>
           <div><span style="color:var(--text2);">Position</span><br><strong>${esc(o.position)}</strong></div>
@@ -1824,8 +1842,14 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
         });
         return;
       }
-      if (section === 'student' && page === 'notifications.html') {
+      if ((section === 'student' || section === 'employer') && page === 'notifications.html') {
         window.refreshStudentNotifications = renderStudentNotifications;
+        window.refreshRecipientNotifications = renderStudentNotifications;
+        if (section === 'employer') {
+          try { renderEmployerPages(await getSummary()); } catch (identityError) {
+            console.warn('Employer identity binding skipped:', identityError.message);
+          }
+        }
         await renderStudentNotifications();
         window.setInterval(renderStudentNotifications, 30000);
         document.addEventListener('visibilitychange', function () {
@@ -1834,6 +1858,18 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
         return;
       }
 
+      if (section === 'admin' && page === 'settings.html') {
+        const status = document.getElementById('responsePeriodStatus');
+        try {
+          const settings = await apiGet('/api/settings.php');
+          const input = document.getElementById('responsePeriodDays');
+          if (input) input.value = settings.offer_response_period_days ?? '';
+          if (status) status.textContent = 'Current response period loaded.';
+        } catch (error) {
+          if (status) status.textContent = error.message || 'Current setting could not be loaded.';
+        }
+        return;
+      }
       const data = await getSummary();
       if (section === 'admin' && page === 'dashboard.html') renderAdminDashboard(data);
       if (section === 'admin' && page === 'monitoring.html') await renderMonitoring(data);

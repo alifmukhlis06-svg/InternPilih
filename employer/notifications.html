@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-protected data-required-role="employer">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Employer Notifications - InternPilih</title>
+  <script src="../assets/js/theme-init.js?v=20261031-classic1"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261120-balanced-bigger1">
+  <script src="../assets/js/auth-gate.js?v=20261120-name1"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-building"></i></div><div><div class="strong-meta">InternPilih</div><div class="meta-text">Employer Portal</div></div></div></div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-home"></i></span>Dashboard</a>
+    <a class="nav-item" href="offers.html"><span class="nav-icon"><i class="fas fa-file-signature"></i></span>Offer Responses</a>
+    <a class="nav-item" href="placements.html"><span class="nav-icon"><i class="fas fa-user-check"></i></span>Placements</a>
+    <a class="nav-item active" href="notifications.html" aria-current="page"><span class="nav-icon"><i class="fas fa-bell"></i></span>Notifications</a>
+    <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Company Profile</a>
+  </nav>
+  <div class="readonly-note"><i class="fas fa-eye"></i> <strong>Read-Only Access</strong><br><span>You can view internship information and student responses but cannot edit system records.</span></div>
+  <div class="sidebar-footer">
+    <div class="user-card"><div class="user-avatar">--</div><div class="user-info"><p>Loading company</p><span>Employer Account</span></div></div>
+    <a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div><h1>Notifications</h1><p class="topbar-sub">Loading notifications...</p></div>
+    <div class="topbar-right"><button class="btn btn-outline btn-sm" type="button" aria-label="Mark all notifications as read" onclick="markAllRead(event)"><i class="fas fa-check-double" aria-hidden="true"></i><span>Mark All Read</span></button></div>
+  </div>
+  <div class="content fade-in">
+    <div class="max-readable">
+      <div class="tab-nav employer-notification-tabs" role="group" aria-label="Filter notifications">
+        <button class="tab-btn active" type="button" data-filter="all" onclick="filterNotif('all',this)">All</button>
+        <button class="tab-btn" type="button" data-filter="unread" onclick="filterNotif('unread',this)">Unread</button>
+        <button class="tab-btn" type="button" data-filter="system" onclick="filterNotif('system',this)">System</button>
+        <button class="tab-btn" type="button" data-filter="admin" onclick="filterNotif('admin',this)">From Coordinator</button>
+      </div>
+      <div class="panel"><div class="panel-section" id="notifList"><div class="empty-state" id="notifEmptyState"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i><p>Loading notifications...</p></div></div></div>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/employer-notifications.js?v=20261120-balanced-bigger1"></script>
+<script src="../assets/js/app.js?v=20261120-balanced-bigger1"></script>
+</body>
+</html>

@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Admin Profile – InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261031-classic1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261120-complete-ui1">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261120-balanced-bigger1">
 <script src="../assets/js/auth-gate.js?v=20261120-name1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -23,6 +23,7 @@
     <a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bullhorn"></i></span>Announcements</a>
     <div class="nav-section">Account</div>
     <a class="nav-item active" href="profile.html"><span class="nav-icon"><i class="fas fa-user-shield"></i></span>Profile</a>
+    <a class="nav-item" href="settings.html"><span class="nav-icon"><i class="fas fa-gear"></i></span>Settings</a>
   </nav>
   <div class="sidebar-footer">
     <div class="user-card"><div class="user-avatar avatar-admin">--</div><div class="user-info"><p>Loading coordinator</p><span>Coordinator</span></div></div>
@@ -50,7 +51,7 @@
           </div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div class="responsive-pair" style="gap:24px;">
         <div class="panel">
           <div class="panel-header"><h3><i class="fas fa-user-tie" style="color:var(--blue3);margin-right:8px;"></i>Personal Information</h3></div>
           <div class="panel-body">
@@ -87,7 +88,7 @@
 <script>
 function showToast(msg){const t=document.getElementById('toast');document.getElementById('toastMsg').textContent=msg;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',3000);}
 </script>
-<script src="../assets/js/app.js?v=20261120-uniform-shell1"></script>
+<script src="../assets/js/app.js?v=20261120-balanced-bigger1"></script>
 </body>
 </html>
 

@@ -6,56 +6,7 @@
   padding:clamp(18px,2.3vw,34px);
 }
 
-/* The existing career image remains the identity anchor; the overlay exists only to protect text contrast. */
-.student-dashboard .dashboard-brief {
-  min-height:clamp(188px,19vw,238px);
-  margin-bottom:26px;
-  padding:clamp(26px,3.6vw,48px);
-  background-position:center 42%;
-  border:1px solid #1c684f;
-  border-radius:10px;
-  box-shadow:none;
-}
-.student-dashboard .dashboard-brief::before {
-  background:linear-gradient(90deg,rgba(8,55,41,.96) 0%,rgba(8,55,41,.9) 48%,rgba(8,55,41,.48) 100%);
-}
-.student-dashboard .dashboard-brief-copy { width:min(620px,68%); }
-.student-dashboard .dashboard-brief-kicker {
-  margin-bottom:9px;
-  color:#d2f1e3;
-  font-size:10px;
-  letter-spacing:.09em;
-}
-.student-dashboard .dashboard-brief h2 {
-  max-width:600px;
-  font-size:clamp(25px,2.4vw,35px);
-  line-height:1.14;
-  letter-spacing:-.025em;
-}
-.student-dashboard .dashboard-brief p {
-  max-width:570px;
-  margin-top:11px;
-  color:#e7f3ed;
-  font-size:clamp(12px,1vw,14px);
-  line-height:1.65;
-}
-.student-dashboard .dashboard-brief-link {
-  min-height:44px;
-  margin-top:20px;
-  padding:10px 15px;
-  border:1px solid rgba(255,255,255,.82);
-  border-radius:6px;
-  background:#fff;
-  color:#124f3a;
-  font-size:12px;
-  transition:background-color var(--transition),color var(--transition),border-color var(--transition);
-}
-.student-dashboard .dashboard-brief-link:hover { background:#e7f3ed; color:#0c3f2e; border-color:#fff; }
-
 /* Schedule dates are a sequence, so the cells stay flat instead of becoming floating cards. */
-.student-dashboard .student-schedule-panel { margin-bottom:22px; border-radius:8px; }
-.student-dashboard .student-schedule-panel .panel-header h3 { display:flex; align-items:center; gap:9px; font-size:14px; }
-.student-dashboard .student-schedule-panel .panel-header h3 i { color:var(--green); }
 .student-dashboard .student-semester {
   padding:5px 8px;
   border:1px solid var(--glass-border);
@@ -66,121 +17,38 @@
   font-weight:700;
 }
 .student-dashboard .student-schedule-panel .schedule-grid { grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; }
-.student-dashboard .student-schedule-panel .schedule-item {
-  min-width:0;
-  padding:15px 13px;
-  border-color:var(--glass-border);
-  border-radius:var(--radius-control);
-  background:var(--glass-soft);
-}
-.student-dashboard .student-schedule-panel .schedule-item span { min-height:27px; color:var(--text2); font-size:10px; }
-.student-dashboard .student-schedule-panel .schedule-item strong { color:var(--brand); font-size:clamp(12px,1vw,14px); }
 
-.student-dashboard .student-dashboard-alert { margin-bottom:20px; border-radius:6px; box-shadow:none; }
-
-/* Pending decisions carry more weight than historical totals, so the first summary receives measured emphasis. */
-.student-dashboard .student-stats-grid {
-  grid-template-columns:1.25fr repeat(3,minmax(0,1fr));
-  gap:14px;
-  margin-bottom:26px;
-}
-.student-dashboard .stat-card {
-  min-width:0;
-  min-height:106px;
-  padding:18px;
-  border-radius:7px;
-  box-shadow:none;
-  overflow:visible;
-}
-.student-dashboard .stat-card::before { display:none; }
-.student-dashboard .stat-card:hover { border-color:var(--border); box-shadow:none; }
-.student-dashboard .student-stat-priority { background:var(--glass-surface-fallback); border-color:var(--glass-border); }
-.student-dashboard .stat-icon { width:44px; height:44px; border-radius:6px; }
-.student-dashboard .stat-icon.blue { background:var(--brand-soft); color:var(--brand); }
-.student-dashboard .stat-icon.green { background:rgba(16,185,129,.15); color:var(--green); }
-.student-dashboard .stat-icon.gold { background:#fff2d8; color:#8b5a12; }
-.student-dashboard .stat-icon.red { background:#fbe9e7; color:#9d352d; }
-.student-dashboard .stat-val { color:var(--text); font-size:clamp(24px,2vw,30px); letter-spacing:-.03em; }
-.student-dashboard .stat-label { margin-top:5px; color:var(--text2); font-size:12px; font-weight:650; }
-.student-dashboard .stat-change { color:var(--text2); }
-
-/* Offers remain the primary work area; placement and notices form a quieter supporting rail. */
-.student-dashboard .student-dashboard-grid {
-  grid-template-columns:minmax(0,1.7fr) minmax(290px,.72fr);
-  gap:24px;
-}
-.student-dashboard .student-dashboard-grid > *,
-.student-dashboard .student-dashboard-aside { min-width:0; }
-.student-dashboard .student-dashboard-aside { display:grid; gap:18px; align-content:start; }
-.student-dashboard .student-dashboard-aside .panel { margin-bottom:0; }
-.student-dashboard .panel { border-radius:var(--radius); }
-.student-dashboard .panel-header { min-height:54px; padding:14px 18px; background:transparent; }
-.student-dashboard .panel-header h3 { font-size:14px; letter-spacing:-.01em; }
-.student-dashboard .panel-link { color:var(--brand); text-underline-offset:3px; }
+/* Offer table behavior remains page-specific; the shell and card treatments live in shared styles. */
 .student-dashboard .data-table th { background:var(--glass-soft); color:var(--text2); }
 .student-dashboard .data-table td { color:var(--text3); }
 .student-dashboard .data-table tbody tr:hover { background:var(--brand-soft); }
 .student-dashboard .student-offers-panel .data-table { width:100%; border-collapse:collapse; table-layout:auto; }
 .student-dashboard .student-offers-panel .data-table th,
 .student-dashboard .student-offers-panel .data-table td {
-  padding:13px 14px;
+  padding:14px 15px;
   vertical-align:middle;
   border-bottom:1px solid var(--border);
 }
-.student-dashboard .student-offers-panel .data-table td { height:66px; }
+.student-dashboard .student-offers-panel .data-table td { height:72px; }
 .student-dashboard .student-offers-panel .data-table tbody tr:last-child td { border-bottom:0; }
 .student-dashboard .student-offers-panel .offer-actions-cell { min-width:190px; }
 .student-dashboard .student-offers-panel .offer-actions {
   display:flex;
   align-items:center;
   gap:6px;
-  min-height:32px;
+  min-height:35px;
   flex-wrap:wrap;
 }
 .student-dashboard .student-offers-panel .offer-action-text { color:var(--text3); font-size:12px; }
-.student-dashboard .progress-bar { height:6px; background:var(--bg3); }
-.student-dashboard .notif-item { gap:11px; }
-
-html[data-theme="dark"] .student-dashboard .dashboard-brief { border-color:#604593; }
-html[data-theme="dark"] .student-dashboard .dashboard-brief::before {
-  background:linear-gradient(90deg,rgba(8,5,12,.97) 0%,rgba(20,11,32,.94) 52%,rgba(58,29,94,.58) 100%);
-}
-html[data-theme="dark"] .student-dashboard .dashboard-brief-kicker { color:#d9c8ff; }
-html[data-theme="dark"] .student-dashboard .dashboard-brief-link { background:#f8f5ff; color:#2d1748; border-color:#fff; }
-html[data-theme="dark"] .student-dashboard .dashboard-brief-link:hover { background:#e5d8ff; color:#24113c; }
-html[data-theme="dark"] .student-dashboard .panel-header,
-html[data-theme="dark"] .student-dashboard .data-table th { border-color:var(--glass-border); }
 html[data-theme="dark"] .student-dashboard .student-semester { background:#1e1430; color:#dfd1ff; border-color:#5e438c; }
-html[data-theme="dark"] .student-dashboard .student-schedule-panel .schedule-item,
-html[data-theme="dark"] .student-dashboard .student-stat-priority { background:#15101c; border-color:#443453; }
-html[data-theme="dark"] .student-dashboard .student-schedule-panel .schedule-item span { color:#c9c0d5; }
-html[data-theme="dark"] .student-dashboard .student-schedule-panel .schedule-item strong { color:#c8b3ff; }
-html[data-theme="dark"] .student-dashboard .stat-icon.blue { background:var(--brand-soft); color:var(--brand); }
-html[data-theme="dark"] .student-dashboard .stat-icon.green { background:rgba(112,208,168,.14); color:var(--green); }
-html[data-theme="dark"] .student-dashboard .stat-icon.gold { background:rgba(228,181,99,.14); color:var(--gold); }
-html[data-theme="dark"] .student-dashboard .stat-icon.red { background:#32171b; color:#ffaaa3; }
-html[data-theme="dark"] .student-dashboard .progress-bar { background:#241b2c; }
-html[data-theme="dark"] .student-dashboard .data-table tbody tr:hover { background:#15101c; }
 
 @media (max-width:1180px) {
   .student-dashboard .student-schedule-panel .schedule-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
-  .student-dashboard .student-stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .student-dashboard .student-dashboard-grid { grid-template-columns:1fr; }
-  .student-dashboard .student-dashboard-aside { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 
 @media (max-width:768px) {
-  .student-dashboard .student-dashboard-content { padding:18px 14px 28px; }
-  .student-dashboard .dashboard-brief { min-height:220px; padding:28px 24px; background-position:60% center; }
-  .student-dashboard .dashboard-brief::before { background:rgba(8,55,41,.91); }
-  .student-dashboard .dashboard-brief-copy { width:100%; max-width:570px; }
-  .student-dashboard .student-dashboard-aside { grid-template-columns:1fr; }
+  .student-dashboard .student-dashboard-content { padding:20px 16px 30px; }
   .student-dashboard .student-schedule-panel .schedule-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .student-dashboard .btn,
-  .student-dashboard .dashboard-brief-link,
-  .student-dashboard .notif-btn,
-  .student-dashboard .theme-toggle { min-height:44px; }
-  html[data-theme="dark"] .student-dashboard .dashboard-brief::before { background:rgba(10,6,15,.92); }
 }
 
 /* On phones the offers table becomes labelled records rather than a clipped desktop table. */
@@ -191,12 +59,12 @@ html[data-theme="dark"] .student-dashboard .data-table tbody tr:hover { backgrou
   .student-dashboard .student-offers-panel .data-table tbody { display:grid; gap:12px; padding:12px; }
   .student-dashboard .student-offers-panel .data-table tr { display:block; padding:13px; border:1px solid var(--border); border-radius:7px; background:var(--card); }
   .student-dashboard .student-offers-panel .data-table td {
-    display:grid !important;
+    display:grid;
     grid-template-columns:minmax(78px,.4fr) minmax(0,1fr);
     gap:10px;
     height:auto;
     min-width:0;
-    padding:7px 0 !important;
+    padding:8px 0;
     border:0;
     overflow-wrap:anywhere;
   }
@@ -205,25 +73,13 @@ html[data-theme="dark"] .student-dashboard .data-table tbody tr:hover { backgrou
   .student-dashboard .student-offers-panel .data-table td:nth-child(2)::before { content:'Position'; }
   .student-dashboard .student-offers-panel .data-table td:nth-child(3)::before { content:'Deadline'; }
   .student-dashboard .student-offers-panel .data-table td:nth-child(4)::before { content:'Status'; }
-  .student-dashboard .student-offers-panel .data-table td:nth-child(5) { padding-top:10px !important; }
+  .student-dashboard .student-offers-panel .data-table td:nth-child(5) { padding-top:11px; }
   .student-dashboard .student-offers-panel .data-table td:nth-child(5)::before { content:'Action'; }
   .student-dashboard .student-offers-panel .offer-actions { min-width:0; gap:8px; }
   .student-dashboard .student-offers-panel .offer-actions .btn { flex:1 1 132px; justify-content:center; white-space:normal; }
 }
 
 @media (max-width:520px) {
-  .student-dashboard .dashboard-brief { min-height:0; padding:25px 20px; }
-  .student-dashboard .dashboard-brief h2 { font-size:25px; }
-  .student-dashboard .dashboard-brief-link { width:100%; justify-content:center; }
-  .student-dashboard .student-schedule-panel .schedule-grid,
-  .student-dashboard .student-stats-grid { grid-template-columns:1fr; }
-  .student-dashboard .student-schedule-panel .schedule-item span { min-height:0; }
-  .student-dashboard .panel-header { align-items:flex-start; }
+  .student-dashboard .student-schedule-panel .schedule-grid { grid-template-columns:1fr; }
   .student-dashboard .student-offers-panel .panel-header .btn { width:100%; justify-content:center; }
-}
-
-@media (prefers-reduced-motion:reduce) {
-  .student-dashboard .dashboard-brief-link,
-  .student-dashboard .btn,
-  .student-dashboard .progress-fill { transition:none; }
 }

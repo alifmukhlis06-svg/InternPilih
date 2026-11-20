@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Announcements – InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261031-classic1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261120-complete-ui1">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261120-balanced-bigger1">
 <script src="../assets/js/auth-gate.js?v=20261120-name1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -23,6 +23,7 @@
     <a class="nav-item active" href="notifications.html"><span class="nav-icon"><i class="fas fa-bullhorn"></i></span>Announcements</a>
     <div class="nav-section">Account</div>
     <a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user-shield"></i></span>Profile</a>
+    <a class="nav-item" href="settings.html"><span class="nav-icon"><i class="fas fa-gear"></i></span>Settings</a>
   </nav>
   <div class="sidebar-footer">
     <div class="user-card"><div class="user-avatar avatar-admin">--</div><div class="user-info"><p>Loading coordinator</p><span>Coordinator</span></div></div>
@@ -46,7 +47,7 @@
           <div class="panel-body">
             <div class="form-group">
               <label class="form-label">Announcement Type</label>
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+              <div class="responsive-thirds" style="gap:10px;">
                 <div class="role-btn active" id="typeGeneral" onclick="setType('general')"><i class="fas fa-bullhorn"></i><span>General</span></div>
                 <div class="role-btn" id="typeReminder" onclick="setType('reminder')"><i class="fas fa-bell"></i><span>Reminder</span></div>
                 <div class="role-btn" id="typeUrgent" onclick="setType('urgent')"><i class="fas fa-exclamation-triangle"></i><span>Urgent</span></div>
@@ -321,7 +322,7 @@ toggleSchedule();
 loadNotificationMeta();
 loadSentHistory();
 </script>
-<script src="../assets/js/app.js?v=20261120-uniform-shell1"></script>
+<script src="../assets/js/app.js?v=20261120-balanced-bigger1"></script>
 </body>
 </html>
 
