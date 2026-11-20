@@ -279,28 +279,70 @@ if ($method === 'PUT') {
                 $conn->rollback();
                 respond(['error' => 'This request is not ready for completion.'], 409);
             }
+            if (empty($request['reviewed_at']) || empty($request['reviewed_by']) || empty($request['document_deadline'])) {
+                $conn->rollback();
+                respond(['error' => 'Coordinator approval is required before completion.'], 409);
+            }
 
-            $verifiedStmt = $conn->prepare("
-                SELECT COUNT(*) AS verified_count FROM placement_change_documents
-                WHERE request_id = ? AND status = 'verified'
+            // Lock and validate the actual evidence rows. A count alone could be
+            // satisfied by duplicate or unexpected document types.
+            $documentStmt = $conn->prepare("
+                SELECT id, request_id, document_type, status, file_name
+                FROM placement_change_documents
+                WHERE request_id = ?
+                ORDER BY id
+                FOR UPDATE
             ");
-            $verifiedStmt->bind_param('i', $id);
-            $verifiedStmt->execute();
-            if ((int)($verifiedStmt->get_result()->fetch_assoc()['verified_count'] ?? 0) !== 3) {
+            $documentStmt->bind_param('i', $id);
+            $documentStmt->execute();
+            $documentRows = $documentStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $documentsByType = [];
+            $documentsEligible = count($documentRows) === count(PLACEMENT_CHANGE_DOCUMENT_TYPES);
+            foreach ($documentRows as $documentRow) {
+                $documentType = (string)$documentRow['document_type'];
+                if ((int)$documentRow['request_id'] !== $id
+                    || !in_array($documentType, PLACEMENT_CHANGE_DOCUMENT_TYPES, true)
+                    || isset($documentsByType[$documentType])
+                    || $documentRow['status'] !== 'verified'
+                    || trim((string)$documentRow['file_name']) === '') {
+                    $documentsEligible = false;
+                    break;
+                }
+                $documentsByType[$documentType] = true;
+            }
+            foreach (PLACEMENT_CHANGE_DOCUMENT_TYPES as $requiredType) {
+                if (!isset($documentsByType[$requiredType])) {
+                    $documentsEligible = false;
+                    break;
+                }
+            }
+            if (!$documentsEligible) {
                 $conn->rollback();
                 respond(['error' => 'Verify all 3 documents before completing the placement change.'], 409);
             }
 
             $currentOfferId = (int)$request['current_offer_id'];
             $requestedOfferId = (int)$request['requested_offer_id'];
-            $offerLock = $conn->prepare("SELECT id, status FROM offers WHERE id IN (?, ?) ORDER BY id FOR UPDATE");
+            if ($currentOfferId <= 0 || $requestedOfferId <= 0 || $currentOfferId === $requestedOfferId) {
+                $conn->rollback();
+                respond(['error' => 'The placement offers are not valid for completion.'], 409);
+            }
+            $offerLock = $conn->prepare("SELECT id, student_id, status FROM offers WHERE id IN (?, ?) ORDER BY id FOR UPDATE");
             $offerLock->bind_param('ii', $currentOfferId, $requestedOfferId);
             $offerLock->execute();
             $statuses = [];
             foreach ($offerLock->get_result()->fetch_all(MYSQLI_ASSOC) as $row) {
-                $statuses[(int)$row['id']] = $row['status'];
+                $statuses[(int)$row['id']] = [
+                    'student_id' => (int)$row['student_id'],
+                    'status' => $row['status'],
+                ];
             }
-            if (($statuses[$currentOfferId] ?? null) !== 'accepted' || ($statuses[$requestedOfferId] ?? null) !== 'pending') {
+            $studentId = (int)$request['student_id'];
+            if (count($statuses) !== 2
+                || ($statuses[$currentOfferId]['student_id'] ?? 0) !== $studentId
+                || ($statuses[$requestedOfferId]['student_id'] ?? 0) !== $studentId
+                || ($statuses[$currentOfferId]['status'] ?? null) !== 'accepted'
+                || ($statuses[$requestedOfferId]['status'] ?? null) !== 'pending') {
                 $conn->rollback();
                 respond(['error' => 'The placement offers are no longer eligible for completion.'], 409);
             }

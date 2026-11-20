@@ -28,6 +28,7 @@ window.internPilihDisplayName = window.internPilihDisplayName || function (name)
   let domReady = document.readyState !== 'loading';
   let initialRequests = 0;
   let revealTimer = null;
+  let authorizationInFlight = null;
 
   window.appUrl = function (path) {
     if (!path || !path.startsWith('/')) return path;
@@ -57,12 +58,35 @@ window.internPilihDisplayName = window.internPilihDisplayName || function (name)
     : Promise.resolve(null);
   window.__internPilihNativeFetch = nativeFetch;
 
+  function hideProtectedContent() {
+    if (!protectedPage) return;
+    window.clearTimeout(revealTimer);
+    authSucceeded = false;
+    root.removeAttribute('data-auth-ready');
+    root.setAttribute('data-auth-checking', '');
+  }
+
+  function clearProtectedState(scrubRenderedContent) {
+    hideProtectedContent();
+    window.internPilihUser = null;
+    try {
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('internpilih:access-pending');
+    } catch (_) {}
+    if (scrubRenderedContent) {
+      document.querySelectorAll('.main, .sidebar').forEach(element => element.replaceChildren());
+    }
+  }
+
+  window.__internPilihClearProtectedState = clearProtectedState;
+
   function finishInitialLoad() {
     if (!protectedPage || !authSucceeded || !domReady || initialRequests !== 0) return;
     window.clearTimeout(revealTimer);
     revealTimer = window.setTimeout(function () {
       if (initialRequests !== 0) return;
       root.removeAttribute('data-load-error');
+      root.removeAttribute('data-auth-checking');
       root.setAttribute('data-auth-ready', '');
     }, 0);
   }
@@ -91,6 +115,57 @@ window.internPilihDisplayName = window.internPilihDisplayName || function (name)
     finishInitialLoad();
   };
 
+  function redirectToLogin() {
+    clearProtectedState(true);
+    window.location.replace(window.appUrl('/login.html'));
+  }
+
+  function redirectForRole(role) {
+    const homes = {
+      student: '/student/dashboard.html',
+      employer: '/employer/dashboard.html',
+      admin: '/admin/dashboard.html'
+    };
+    clearProtectedState(true);
+    window.location.replace(window.appUrl(homes[role] || '/login.html'));
+  }
+
+  function revalidateAuthentication() {
+    if (!protectedPage) return Promise.resolve(null);
+    hideProtectedContent();
+    if (authorizationInFlight) return authorizationInFlight;
+
+    authorizationInFlight = (async function () {
+      try {
+        const response = await nativeFetch(window.appUrl('/api/auth.php'), {
+          cache: 'no-store',
+          credentials: 'same-origin'
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.user) {
+          redirectToLogin();
+          return null;
+        }
+        const requiredRole = root.getAttribute('data-required-role');
+        if (requiredRole && payload.user.role !== requiredRole) {
+          redirectForRole(payload.user.role);
+          return null;
+        }
+        sessionStorage.setItem('user', JSON.stringify(payload.user));
+        window.__completeInternPilihAuth(payload.user);
+        return payload.user;
+      } catch (_) {
+        redirectToLogin();
+        return null;
+      } finally {
+        authorizationInFlight = null;
+      }
+    })();
+    return authorizationInFlight;
+  }
+
+  window.__internPilihRevalidateAuth = revalidateAuthentication;
+
   window.fetch = async function (input, init) {
     const resolved = resolveApiUrl(input);
     const path = requestPath(resolved);
@@ -102,7 +177,7 @@ window.internPilihDisplayName = window.internPilihDisplayName || function (name)
       await window.authReady;
       const response = await nativeFetch(resolved, init);
       if (response.status === 401) {
-        window.location.replace(window.appUrl('/login.html'));
+        redirectToLogin();
       }
       return response;
     } catch (error) {
@@ -120,28 +195,15 @@ window.internPilihDisplayName = window.internPilihDisplayName || function (name)
   });
 
   if (!protectedPage) return;
-  (async function authorize() {
-    try {
-      const response = await nativeFetch(window.appUrl('/api/auth.php'), { cache: 'no-store' });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || !payload.user) {
-        window.location.replace(window.appUrl('/login.html'));
-        return;
-      }
-      const requiredRole = root.getAttribute('data-required-role');
-      if (requiredRole && payload.user.role !== requiredRole) {
-        const homes = {
-          student: '/student/dashboard.html',
-          employer: '/employer/dashboard.html',
-          admin: '/admin/dashboard.html'
-        };
-        window.location.replace(window.appUrl(homes[payload.user.role] || '/login.html'));
-        return;
-      }
-      sessionStorage.setItem('user', JSON.stringify(payload.user));
-      window.__completeInternPilihAuth(payload.user);
-    } catch (_) {
-      window.location.replace(window.appUrl('/login.html'));
-    }
-  })();
+  revalidateAuthentication();
+  window.addEventListener('pagehide', function () {
+    // Store only the hidden state in browser history/BFCache. A restored page
+    // must pass the pageshow revalidation below before it can be revealed.
+    hideProtectedContent();
+  });
+  window.addEventListener('pageshow', function () {
+    // pageshow runs for normal navigation and BFCache restoration. Hide first,
+    // then prove that the server-side session is still valid before revealing.
+    revalidateAuthentication();
+  });
 })();

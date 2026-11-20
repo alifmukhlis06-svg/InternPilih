@@ -5,7 +5,7 @@
 <title>Upload Documents - InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
 <link rel="stylesheet" href="../assets/css/style.css?v=20261121-ui-size1">
-<script src="../assets/js/auth-gate.js?v=20261120-name1"></script>
+<script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -223,7 +223,7 @@ function renderDocs() {
         innerHtml = `
           <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.2);border-radius:8px;font-size:12px;margin-top:12px;">
             <i class="fas fa-file-pdf" style="color:var(--blue3);"></i>
-            <span style="word-break:break-all;">${doc.file_name}</span>
+            <span data-document-file-name style="word-break:break-all;"></span>
             <span style="margin-left:auto;font-size:11px;color:var(--text2);">Verified by admin</span>
             <a class="btn btn-outline btn-sm" href="../api/document-file.php?id=${encodeURIComponent(doc.id)}" target="_blank" rel="noopener"><i class="fas fa-download"></i> View</a>
           </div>
@@ -232,7 +232,7 @@ function renderDocs() {
         statusBadge = '<span class="badge badge-rejected">Rejected</span>';
         cardBorder = 'rgba(239,68,68,.3)';
         innerHtml = `
-          <div style="color:var(--red);font-size:11px;margin:8px 0;">Rejected reason: ${doc.reject_reason || 'Blurry / incorrect file'}</div>
+          <div style="color:var(--red);font-size:11px;margin:8px 0;">Rejected reason: <span data-document-reject-reason></span></div>
           <div class="upload-area" style="padding:20px;" onclick="triggerUpload('input-${t.key}')">
             <i class="fas fa-cloud-upload-alt" style="font-size:24px;"></i>
             <p style="font-size:12px;"><span>Click to re-upload</span></p>
@@ -246,7 +246,7 @@ function renderDocs() {
         innerHtml = `
           <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;margin-top:12px;">
             <i class="fas fa-file-pdf" style="color:var(--gold);"></i>
-            <span style="word-break:break-all;">${doc.file_name}</span>
+            <span data-document-file-name style="word-break:break-all;"></span>
             <a class="btn btn-outline btn-sm" href="../api/document-file.php?id=${encodeURIComponent(doc.id)}" target="_blank" rel="noopener"><i class="fas fa-download"></i> View</a>
             <button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="triggerUpload('input-${t.key}')"><i class="fas fa-redo"></i> Replace</button>
             <input type="file" id="input-${t.key}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadFile(this, '${t.key}')">
@@ -277,6 +277,12 @@ function renderDocs() {
       </div>
       ${innerHtml}
     `;
+    if (doc) {
+      const fileName = div.querySelector('[data-document-file-name]');
+      if (fileName) fileName.textContent = String(doc.file_name || 'Document');
+      const rejectReason = div.querySelector('[data-document-reject-reason]');
+      if (rejectReason) rejectReason.textContent = String(doc.reject_reason || 'Blurry / incorrect file');
+    }
     container.appendChild(div);
 
     // Add to sidebar status list
@@ -402,7 +408,7 @@ window.addEventListener('storage', function (event) {
   if (event.key === 'internpilih:offers-updated' || event.key === 'internpilih:placement-changed') loadPage();
 });
 </script>
-<script src="../assets/js/app.js?v=20261121-ui-size1"></script>
+<script src="../assets/js/app.js?v=20261121-security1"></script>
 </body>
 </html>
 

@@ -101,7 +101,9 @@ if ($method === 'GET') {
     }
 
     $stmt = db()->prepare("
-        SELECT n.*, u.name AS sender_name
+        SELECT n.id, n.announcement_id, n.recipient_user_id, n.created_by,
+               n.type, n.title, n.body, n.link_url, n.recipient_group,
+               n.is_read, n.created_at, u.name AS sender_name
         FROM notifications n
         LEFT JOIN users u ON u.id = n.created_by
         WHERE n.recipient_user_id = ?

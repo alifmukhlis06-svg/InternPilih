@@ -259,6 +259,12 @@ async function loadGoogleAuthHelper() {
 }
 
 async function doLogout() {
+  if (typeof window.__internPilihClearProtectedState === 'function') {
+    window.__internPilihClearProtectedState(true);
+  } else {
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('internpilih:access-pending');
+  }
   try {
     const googleAuth = await loadGoogleAuthHelper();
     await googleAuth.signOut();
@@ -266,9 +272,7 @@ async function doLogout() {
     // Continue clearing the InternPilih session if Supabase is unavailable.
   }
   await fetch('/api/auth.php', { method: 'DELETE' }).catch(() => {});
-  sessionStorage.removeItem('user');
-  sessionStorage.removeItem('internpilih:access-pending');
-  window.location.href = window.appUrl('/login.html');
+  window.location.replace(window.appUrl('/login.html'));
 }
 
 // Download an authenticated coordinator report and surface API errors instead
