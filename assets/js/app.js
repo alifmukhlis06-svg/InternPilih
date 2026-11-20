@@ -326,6 +326,23 @@ window.downloadAdminReport = async function (format, report) {
 
 // Wire up any logout button
 document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.nav-item, .logout-btn').forEach(function (item) {
+    if (item.querySelector('.nav-label')) return;
+    const textNodes = Array.from(item.childNodes).filter(function (node) {
+      return node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '';
+    });
+    const labelText = textNodes.map(function (node) { return node.textContent.trim(); }).join(' ');
+    if (!labelText) return;
+    textNodes.forEach(function (node) { node.remove(); });
+    const label = document.createElement('span');
+    label.className = 'nav-label';
+    label.textContent = labelText;
+    const badge = item.querySelector('.nav-badge');
+    item.insertBefore(label, badge || null);
+    if (!item.hasAttribute('aria-label')) item.setAttribute('aria-label', labelText);
+    if (item.classList.contains('nav-item') && !item.hasAttribute('title')) item.title = labelText;
+  });
+
   document.querySelectorAll('.logout-btn').forEach(function (btn) {
     btn.addEventListener('click', function (e) {
       e.preventDefault();
