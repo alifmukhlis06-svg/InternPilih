@@ -902,14 +902,19 @@ textarea.form-control { resize:vertical; min-height:100px; }
   :root { --topbar:70px; }
   .sidebar {
     top:0;
-    bottom:0;
+    bottom:auto;
     left:0;
     width:min(284px,calc(100vw - 20px));
     height:100vh;
+    height:100dvh;
+    max-height:100vh;
+    max-height:100dvh;
     border-radius:0 24px 24px 0;
     transform:translateX(-108%);
     overflow-y:auto;
     overflow-x:hidden;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
     box-shadow:none;
   }
   .sidebar.mobile-open {
@@ -919,7 +924,7 @@ textarea.form-control { resize:vertical; min-height:100px; }
   .sidebar-brand { justify-content:flex-start; min-height:84px; padding:16px 19px; border-bottom:1px solid var(--glass-border); }
   .sidebar-logo { justify-content:flex-start; }
   .sidebar-logo > div:last-child { display:block; }
-  .sidebar nav { display:block; padding:10px 13px; }
+  .sidebar nav { display:block; flex:0 0 auto; min-height:auto; padding:10px 13px; overflow:visible; }
   .nav-section { display:block; padding:15px 11px 7px; font-size:9px; }
   .nav-item { display:grid; grid-template-columns:30px minmax(0,1fr) 24px; align-items:center; column-gap:8px; min-height:48px; margin-bottom:3px; padding:10px 12px; border-radius:12px; font-size:12px; text-align:left; }
   .nav-item .nav-icon { grid-column:1; width:30px; }
@@ -930,7 +935,7 @@ textarea.form-control { resize:vertical; min-height:100px; }
   .readonly-note i { margin-right:5px; }
   .readonly-note strong { display:inline; }
   .readonly-note span { display:block; margin-top:3px; color:var(--text2); }
-  .sidebar-footer { display:block; padding:10px 13px 14px; border-top:1px solid var(--glass-border); }
+  .sidebar-footer { display:block; flex:0 0 auto; padding:10px 13px calc(24px + env(safe-area-inset-bottom)); border-top:1px solid var(--glass-border); }
   .sidebar .user-card { justify-content:flex-start; width:100%; padding:8px; }
   .sidebar .user-info { display:block; }
   .sidebar .user-info p { font-size:11px; }
@@ -1128,9 +1133,9 @@ html[data-ui-size="compact"] { --ui-scale:.92; --sidebar-counter-scale:1.0869565
 html[data-ui-size="default"] { --ui-scale:1; --sidebar-counter-scale:1; }
 html[data-ui-size="large"] { --ui-scale:1.12; --sidebar-counter-scale:.8928571; }
 html[data-ui-size] body { zoom:var(--ui-scale); }
+html[data-ui-size] .sidebar { zoom:var(--sidebar-counter-scale); }
 
 @media (min-width:769px) {
-  html[data-ui-size] .sidebar { zoom:var(--sidebar-counter-scale); }
   html[data-ui-size="compact"] { --sidebar-rail:86px; --sidebar-expanded:232px; --sidebar:120px; }
   html[data-ui-size="large"] { --sidebar-rail:94px; --sidebar-expanded:244px; --sidebar:132px; }
   html[data-ui-size="compact"] .nav-item { font-size:8.5px; }
