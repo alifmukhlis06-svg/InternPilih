@@ -2,11 +2,38 @@
 <html lang="en" data-protected data-required-role="student">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Company Database - InternPilih</title>
+<title>Company Directory - InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
 <link rel="stylesheet" href="../assets/css/style.css?v=20261121-profile-readonly1">
 <script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  .company-filter-panel{padding:16px;margin-bottom:20px}
+  .company-filter-bar{display:grid;grid-template-columns:minmax(220px,2fr) repeat(3,minmax(150px,1fr));gap:12px;align-items:end}
+  .company-filter-field{min-width:0}
+  .company-filter-field label{display:block;margin-bottom:6px;color:var(--text2);font-size:10px;font-weight:750;letter-spacing:.055em;text-transform:uppercase}
+  .company-filter-field .search-input-wrap{min-width:0;width:100%}
+  .company-filter-field .form-control,.company-filter-field .search-input{width:100%;min-width:0}
+  .company-filter-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;color:var(--text2);font-size:11px}
+  .company-directory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+  .company-card{margin-bottom:0;min-width:0}
+  .company-card .entity-card-body{display:flex;min-height:100%;flex-direction:column}
+  .company-card .entity-leading{margin-bottom:12px}
+  .company-card .entity-leading>div:last-child{min-width:0}
+  .company-card .entity-title,.company-card .entity-subtitle{overflow-wrap:anywhere}
+  .company-card-location{display:flex;align-items:flex-start;gap:7px;margin-bottom:12px;color:var(--text2);font-size:12px;line-height:1.5}
+  .company-card-location i{width:14px;margin-top:2px;color:var(--brand);text-align:center;flex:0 0 auto}
+  .company-card-role{margin:0 0 13px;padding:10px 11px;border-radius:10px;background:rgba(248,245,253,.46);color:var(--text2);font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+  .company-card-role strong{display:block;margin-bottom:2px;color:var(--text);font-size:11px}
+  .company-card-badges{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+  .company-card .btn{margin-top:auto;width:100%;justify-content:center}
+  .company-empty{grid-column:1/-1;padding:42px 20px;text-align:center;color:var(--text2)}
+  .company-empty i{display:block;margin-bottom:10px;color:var(--brand);font-size:24px}
+  .company-empty .btn{margin-top:14px}
+  html[data-theme="dark"] .company-card-role{background:rgba(35,24,55,.68)}
+  @media(max-width:980px){.company-filter-bar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:600px){.company-filter-panel{padding:14px}.company-filter-bar{grid-template-columns:1fr}.company-directory-grid{grid-template-columns:1fr}.company-filter-meta{align-items:flex-start;flex-direction:column}}
+</style>
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
@@ -35,7 +62,7 @@
 <div class="main">
   <div class="topbar">
     <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
-    <div><h1>Company Database</h1><p class="topbar-sub">Browse internship companies and opportunities</p></div>
+    <div><h1>Company Directory</h1><p class="topbar-sub">Browse approved companies; opportunity matching is shown separately</p></div>
     <div class="topbar-right">
       <a href="record-offer.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Record Offer</a>
       <a href="notifications.html" class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></a>
@@ -43,18 +70,21 @@
   </div>
 
   <div class="content fade-in">
-    <!-- FILTER & SEARCH -->
-    <div class="search-bar" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
-      <div class="search-input-wrap" style="max-width:400px;">
-        <i class="fas fa-search"></i>
-        <input class="search-input" placeholder="Search company, location or industry..." id="compSearch" oninput="searchCompanies()">
+    <!-- DIRECTORY FILTERS -->
+    <div class="panel company-filter-panel">
+      <div class="company-filter-bar">
+        <div class="company-filter-field">
+          <label for="compSearch">Search</label>
+          <div class="search-input-wrap"><i class="fas fa-search"></i><input class="search-input" placeholder="Company, location, industry or role" id="compSearch" oninput="renderCompanies()"></div>
+        </div>
+        <div class="company-filter-field"><label for="industryFilter">Industry</label><select class="form-control" id="industryFilter" onchange="renderCompanies()"><option value="all">All Industries</option></select></div>
+        <div class="company-filter-field"><label for="locationFilter">Location</label><select class="form-control" id="locationFilter" onchange="renderCompanies()"><option value="all">All Locations</option></select></div>
+        <div class="company-filter-field"><label for="relevanceFilter">Relevance</label><select class="form-control" id="relevanceFilter" onchange="renderCompanies()"><option value="all">All</option><option value="recommended">Recommended for My Programme</option><option value="matching">Matching Current Internship Opportunities</option></select></div>
       </div>
-      <div id="industry-chips" style="display:flex;flex:1 1 480px;min-width:0;max-width:100%;flex-wrap:wrap;align-items:center;gap:8px;">
-        <span class="chip active" onclick="filterChip('all', this)">All</span>
-      </div>
+      <div class="company-filter-meta"><span id="programmeContext">Loading your programme context...</span><span id="companyResultCount" aria-live="polite"></span></div>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;" id="compGrid">
+    <div class="company-directory-grid" id="compGrid">
       <!-- Dynamically populated -->
     </div>
   </div>
@@ -74,131 +104,204 @@
 
 <script>
 let companiesList = [];
-let currentIndustryFilter = 'all';
+let studentProgramme = '';
 
 async function loadCompanies() {
   try {
-    const res = await fetch('../api/companies.php');
-    const payload = await res.json().catch(() => ({}));
-    if (!res.ok || !Array.isArray(payload)) throw new Error(payload.error || 'Unable to load companies.');
+    const [companyResponse, profileResponse] = await Promise.all([
+      fetch('../api/companies.php'),
+      fetch('../api/profile.php').catch(() => null)
+    ]);
+    const payload = await companyResponse.json().catch(() => ({}));
+    if (!companyResponse.ok || !Array.isArray(payload)) throw new Error(payload.error || 'Unable to load companies.');
     companiesList = payload;
 
-    // Generate unique industries for chips
-    const industries = new Set();
-    companiesList.forEach(c => {
-      if (c.industry) {
-        // clean up industry text for simpler chips (e.g. GLC / Oil & Gas -> GLC)
-        const parts = c.industry.split(' / ');
-        industries.add(parts[0].split(' & ')[0].trim());
-      }
-    });
+    if (profileResponse && profileResponse.ok) {
+      const profile = await profileResponse.json().catch(() => ({}));
+      studentProgramme = String(profile.user?.programme || '').trim();
+    }
 
-    const chipsContainer = document.getElementById('industry-chips');
-    chipsContainer.innerHTML = '<span class="chip active" onclick="filterChip(\'all\', this)">All</span>';
-    industries.forEach(ind => {
-      const span = document.createElement('span');
-      span.className = 'chip';
-      span.textContent = ind;
-      span.onclick = function() { filterChip(ind, this); };
-      chipsContainer.appendChild(span);
-    });
+    populateFilter('industryFilter', companiesList.map(company => company.industry), 'All Industries');
+    populateFilter('locationFilter', companiesList.map(company => company.location), 'All Locations');
+    document.getElementById('programmeContext').textContent = studentProgramme
+      ? `Programme context: ${studentProgramme}. Matches appear only when explicit eligibility data is available.`
+      : 'Programme context is unavailable. No programme compatibility will be assumed.';
 
     renderCompanies();
   } catch (err) {
     document.documentElement.setAttribute('data-load-error', '');
+    document.getElementById('compGrid').innerHTML = '<div class="company-empty"><i class="fas fa-circle-exclamation"></i>Unable to load the company directory right now.</div>';
   }
+}
+
+function populateFilter(id, values, allLabel) {
+  const select = document.getElementById(id);
+  const unique = [...new Set(values.map(value => String(value || '').trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+  select.innerHTML = '';
+  const all = document.createElement('option');
+  all.value = 'all';
+  all.textContent = allLabel;
+  select.appendChild(all);
+  unique.forEach(value => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+}
+
+function normalise(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
+}
+
+function explicitList(value) {
+  if (Array.isArray(value)) return value.flatMap(explicitList);
+  if (value && typeof value === 'object') return [];
+  return String(value || '').split(/\|\||[,;\n]/).map(item => item.trim()).filter(Boolean);
+}
+
+function explicitlyIncludesProgramme(value) {
+  if (!studentProgramme) return false;
+  const target = normalise(studentProgramme);
+  return explicitList(value).some(programme => normalise(programme) === target);
+}
+
+function companyRelevance(company) {
+  const recommendationFields = [
+    company.recommended_programmes,
+    company.eligible_programmes,
+    company.programmes,
+    company.programme_requirements
+  ].filter(value => value !== undefined && value !== null && String(value).trim() !== '');
+  const recommended = recommendationFields.some(explicitlyIncludesProgramme);
+
+  const opportunities = [company.current_opportunities, company.opportunities]
+    .find(Array.isArray) || [];
+  const current = opportunities.filter(opportunity => {
+    const status = normalise(opportunity.status);
+    return opportunity.is_current === true || opportunity.active === true || ['open', 'active', 'current'].includes(status);
+  });
+  const withEligibility = current.filter(opportunity => [
+    opportunity.eligible_programmes,
+    opportunity.programmes,
+    opportunity.programme_requirements
+  ].some(value => explicitList(value).length));
+  const matching = withEligibility.some(opportunity => [
+    opportunity.eligible_programmes,
+    opportunity.programmes,
+    opportunity.programme_requirements
+  ].some(explicitlyIncludesProgramme));
+
+  return {
+    recommended,
+    opportunity: matching ? 'matching' : (withEligibility.length ? 'no-match' : 'unspecified'),
+    rank: matching ? 2 : (recommended ? 1 : 0)
+  };
+}
+
+function matchesRelevance(company, filter) {
+  if (filter === 'all') return true;
+  const relevance = companyRelevance(company);
+  if (filter === 'matching') return relevance.opportunity === 'matching';
+  return relevance.recommended || relevance.opportunity === 'matching';
 }
 
 function renderCompanies() {
   const grid = document.getElementById('compGrid');
-  grid.innerHTML = '';
+  const q = normalise(document.getElementById('compSearch').value);
+  const industry = document.getElementById('industryFilter').value;
+  const location = document.getElementById('locationFilter').value;
+  const relevanceFilter = document.getElementById('relevanceFilter').value;
 
-  const q = document.getElementById('compSearch').value.toLowerCase();
-
-  const filtered = companiesList.filter(c => {
-    // Filter by industry chip
-    if (currentIndustryFilter !== 'all') {
-      if (!c.industry.toLowerCase().includes(currentIndustryFilter.toLowerCase())) return false;
-    }
-    // Filter by search query
-    if (q) {
-      const match = c.name.toLowerCase().includes(q) ||
-                    c.industry.toLowerCase().includes(q) ||
-                    c.location.toLowerCase().includes(q);
-      if (!match) return false;
-    }
+  const directoryMatches = companiesList.filter(company => {
+    if (industry !== 'all' && String(company.industry || '') !== industry) return false;
+    if (location !== 'all' && String(company.location || '') !== location) return false;
+    const searchText = normalise([company.name, company.industry, company.location, formatPositions(company.positions, '')].join(' '));
+    if (q && !searchText.includes(q)) return false;
     return true;
   });
+  const filtered = directoryMatches
+    .filter(company => matchesRelevance(company, relevanceFilter))
+    .sort((a, b) => relevanceFilter === 'recommended'
+      ? companyRelevance(b).rank - companyRelevance(a).rank || String(a.name).localeCompare(String(b.name))
+      : 0);
+
+  document.getElementById('companyResultCount').textContent = `${filtered.length} of ${companiesList.length} companies`;
+  grid.innerHTML = '';
 
   if (filtered.length === 0) {
-    grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--text2);">No companies match your filters.</div>';
+    const anyRelevant = companiesList.some(company => matchesRelevance(company, relevanceFilter));
+    let message = 'No companies match these filters.';
+    if (relevanceFilter === 'matching' && !anyRelevant) {
+      message = `No matching internship opportunities are currently listed${studentProgramme ? ` for ${escapeHtml(studentProgramme)}` : ''}. You can still browse all companies.`;
+    } else if (relevanceFilter === 'recommended' && !anyRelevant) {
+      message = 'Programme relevance is not specified in the current company data. You can still browse all companies.';
+    }
+    grid.innerHTML = `<div class="company-empty"><i class="fas fa-building-circle-exclamation"></i>${message}<br><button class="btn btn-outline btn-sm" onclick="resetCompanyFilters()">Show All Companies</button></div>`;
     return;
   }
 
-  filtered.forEach(c => {
+  filtered.forEach(company => {
     let icon = '<i class="fas fa-briefcase"></i>';
-    const ind = c.industry.toLowerCase();
+    const ind = String(company.industry || '').toLowerCase();
     if (ind.includes('oil') || ind.includes('gas')) icon = '<i class="fas fa-industry"></i>';
     else if (ind.includes('it') || ind.includes('software') || ind.includes('computer')) icon = '<i class="fas fa-laptop-code"></i>';
     else if (ind.includes('telecom') || ind.includes('axiata')) icon = '<i class="fas fa-signal"></i>';
     else if (ind.includes('finance') || ind.includes('bank')) icon = '<i class="fas fa-building-columns"></i>';
     else if (ind.includes('health') || ind.includes('kpj')) icon = '<i class="fas fa-hospital"></i>';
 
-    const card = document.createElement('div');
-    card.className = 'panel comp-card';
-    card.style.marginBottom = '0';
-    card.style.cursor = 'pointer';
-    card.onclick = function() { viewCompany(c.id); };
+    const relevance = companyRelevance(company);
+    const badges = [];
+    if (relevance.recommended) badges.push('<span class="badge badge-purple">Recommended</span>');
+    if (relevance.opportunity === 'matching') badges.push('<span class="badge badge-accepted">Matching Internship</span>');
+    else if (relevance.opportunity === 'no-match') badges.push('<span class="badge badge-withdrawn">No Current Match</span>');
+    else badges.push('<span class="badge badge-withdrawn">Match Not Specified</span>');
+
+    const positions = formatPositions(company.positions, '');
+    const card = document.createElement('article');
+    card.className = 'panel company-card';
 
     card.innerHTML = `
       <div class="entity-card-body">
-        <div class="entity-leading" style="margin-bottom:14px;">
+        <div class="entity-leading">
           <div class="entity-icon">${icon}</div>
-          <div><p class="entity-title">${c.name}</p><p class="entity-subtitle">${c.industry}</p></div>
+          <div><p class="entity-title">${escapeHtml(company.name || 'Unnamed company')}</p><p class="entity-subtitle">${escapeHtml(company.industry || 'Industry not specified')}</p></div>
         </div>
-        <div class="entity-facts">
-          <div><i class="fas fa-map-marker-alt" style="width:14px;"></i> ${c.location}</div>
-          <div><i class="fas fa-money-bill-wave" style="width:14px;"></i> Allowance: RM ${c.allowance || '0'}/month</div>
-          <div><i class="fas fa-laptop" style="width:14px;"></i> ${c.work_mode || 'On-site'}</div>
-          <div><i class="fas fa-briefcase" style="width:14px;"></i> ${formatPositions(c.positions)}</div>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
-          <span class="badge badge-verified" style="font-size:10px;">Verified Partner</span>
-        </div>
-        <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;">View Details</button>
+        <div class="company-card-location"><i class="fas fa-map-marker-alt"></i><span>${escapeHtml(company.location || 'Location not specified')}</span></div>
+        <div class="company-card-role"><strong>Recorded internship roles</strong>${positions ? escapeHtml(positions) : 'No internship roles are recorded.'}</div>
+        <div class="company-card-badges">${badges.join('')}</div>
+        <button class="btn btn-primary btn-sm" type="button" onclick="viewCompany('${escapeAttribute(company.id)}')">View Details</button>
       </div>
     `;
     grid.appendChild(card);
   });
 }
 
-function filterChip(ind, btn) {
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  currentIndustryFilter = ind;
-  renderCompanies();
-}
-
-function searchCompanies() {
+function resetCompanyFilters() {
+  document.getElementById('compSearch').value = '';
+  document.getElementById('industryFilter').value = 'all';
+  document.getElementById('locationFilter').value = 'all';
+  document.getElementById('relevanceFilter').value = 'all';
   renderCompanies();
 }
 
 function viewCompany(id) {
-  const c = companiesList.find(item => item.id === id);
+  const c = companiesList.find(item => String(item.id) === String(id));
   if (!c) return;
 
   document.getElementById('modalCompName').textContent = c.name;
   document.getElementById('modalCompBody').innerHTML = `
     <div class="responsive-pair" style="gap:14px;font-size:13px;">
-      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Industry</span><strong>${c.industry}</strong></div>
-      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Work Mode</span><strong>${c.work_mode || 'On-site'}</strong></div>
-      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Location</span><strong>${c.location}</strong></div>
-      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Allowance</span><strong>RM ${c.allowance || '0'}/month</strong></div>
-      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Recorded Positions</span><strong>${formatPositions(c.positions, 'No positions recorded yet')}</strong></div>
-      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Contact Email</span><strong>${c.hr_email || 'N/A'}</strong></div>
+      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Industry</span><strong>${escapeHtml(c.industry || 'Not specified')}</strong></div>
+      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Work Mode</span><strong>${escapeHtml(c.work_mode || 'Not specified')}</strong></div>
+      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Location</span><strong>${escapeHtml(c.location || 'Not specified')}</strong></div>
+      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Allowance</span><strong>RM ${escapeHtml(c.allowance || '0')}/month</strong></div>
+      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Recorded Positions</span><strong>${escapeHtml(formatPositions(c.positions, 'No positions recorded yet'))}</strong></div>
+      <div><span style="color:var(--text2);display:block;margin-bottom:3px;">Contact Email</span><strong>${escapeHtml(c.hr_email || 'N/A')}</strong></div>
     </div>
     <div class="profile-about">
-      <strong style="color:var(--text);">About:</strong> Partnered company registered under InternPilih providing internship placements for UiTM students.
+      <strong style="color:var(--text);">Directory note:</strong> Company visibility does not imply a current programme match. Matching is shown only when explicit opportunity eligibility data is available.
     </div>
   `;
   document.getElementById('compModal').classList.add('open');
@@ -207,6 +310,14 @@ function viewCompany(id) {
 function formatPositions(value, emptyLabel = 'Positions added with each offer') {
   const positions = String(value || '').split('||').filter(Boolean);
   return positions.length ? positions.join(', ') : emptyLabel;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(String(value ?? '')).replace(/`/g, '&#96;');
 }
 
 document.addEventListener('DOMContentLoaded', loadCompanies);
