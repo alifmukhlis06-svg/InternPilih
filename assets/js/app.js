@@ -1449,10 +1449,10 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     };
     Object.entries(fieldValues).forEach(([id, value]) => {
       const field = document.getElementById(id);
-      if (field) field.value = value;
+      if (field) field.textContent = value === '' ? 'Not recorded' : String(value);
     });
     const coordinatorInput = document.getElementById('coordinatorName');
-    if (coordinatorInput) coordinatorInput.value = u.coordinator_name || 'Not assigned';
+    if (coordinatorInput) coordinatorInput.textContent = u.coordinator_name || 'Not assigned';
     setText('#studentProfileName', u.name || 'Student');
     setText('#studentProfileMeta', `${u.matric_id || '-'} - ${u.faculty || '-'}`);
     setText('#studentProfileProgramme', u.programme || 'Programme not recorded');
@@ -1732,19 +1732,19 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
             </div>
           </div>
           <div class="responsive-pair" style="gap:24px;">
-            <div class="panel"><div class="panel-header"><h3><i class="fas fa-building" style="color:var(--blue3);margin-right:8px;"></i>Company Information</h3></div><div class="panel-body" style="font-size:13px;display:grid;gap:14px;">
+            <div class="panel"><div class="panel-header"><h3><i class="fas fa-building" style="color:var(--blue3);margin-right:8px;"></i>Company Information</h3></div><dl class="panel-body profile-info-list">
               ${profileField('Company Name', company.name || '-')}
               ${profileField('Industry', company.industry || '-')}
               ${profileField('Work Mode', company.work_mode || '-')}
               ${profileField('Monthly Allowance', money(company.allowance))}
               ${profileField('Active Offers', String(offers.length))}
-            </div></div>
-            <div class="panel"><div class="panel-header"><h3><i class="fas fa-map-marker-alt" style="color:var(--gold);margin-right:8px;"></i>Contact & Location</h3></div><div class="panel-body" style="font-size:13px;display:grid;gap:14px;">
+            </dl></div>
+            <div class="panel"><div class="panel-header"><h3><i class="fas fa-map-marker-alt" style="color:var(--gold);margin-right:8px;"></i>Contact & Location</h3></div><dl class="panel-body profile-info-list">
               ${profileField('Address', company.location || '-')}
               ${profileField('HR Contact Email', company.hr_email || data.user.email)}
               ${profileField('Recorded Positions', companyPositions(company))}
               ${profileField('Confirmed Interns', `${confirmedPlacements} placements`)}
-            </div></div>
+            </dl></div>
           </div>
           <div class="panel" style="margin-top:0;"><div class="panel-header"><h3><i class="fas fa-briefcase" style="color:var(--purple);margin-right:8px;"></i>Internship Details</h3></div><div class="panel-body">
             <div class="responsive-quad" style="gap:16px;text-align:center;">
@@ -1757,9 +1757,10 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
               <strong style="color:var(--text);">About:</strong> Company data is loaded from the InternPilih database and managed by the internship coordinator.
             </div>
           </div></div>
-          <div class="panel" style="margin-top:0;"><div class="panel-header"><h3><i class="fas fa-lock" style="color:var(--red);margin-right:8px;"></i>Account Settings</h3></div><div class="panel-body">
-            <div class="form-row"><div class="form-group"><label class="form-label">Login Email</label><input type="email" class="form-control" value="${esc(data.user.email)}" readonly style="opacity:.7;"></div><div class="form-group"><label class="form-label">Account Role</label><input class="form-control" value="Employer" readonly style="opacity:.7;"></div></div>
-          </div></div>
+          <div class="panel" style="margin-top:0;"><div class="panel-header"><h3><i class="fas fa-lock" style="color:var(--red);margin-right:8px;"></i>Account Information</h3></div><dl class="panel-body profile-info-list">
+            ${profileField('Login Email', data.user.email || '-')}
+            ${profileField('Account Role', 'Employer')}
+          </dl></div>
         `;
       }
     }
@@ -1786,7 +1787,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
   }
 
   function profileField(label, value) {
-    return `<div><span style="color:var(--text2);font-size:11px;text-transform:uppercase;font-weight:600;letter-spacing:.5px;">${esc(label)}</span><p style="margin-top:3px;font-weight:600;">${esc(value)}</p></div>`;
+    return `<div class="profile-info-item"><dt class="profile-info-label">${esc(label)}</dt><dd class="profile-info-value">${esc(value)}</dd></div>`;
   }
 
   function metricBox(value, label, color, size = '24px') {
@@ -1827,7 +1828,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     };
     Object.entries(values).forEach(([id, value]) => {
       const element = document.getElementById(id);
-      if (element) element.value = value;
+      if (element) element.textContent = value === '' ? 'Not recorded' : String(value);
     });
     const title = document.getElementById('coordinatorProfileName');
     if (title) title.textContent = u.name || '';

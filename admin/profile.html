@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Admin Profile – InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261121-mobile-actions1">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261121-profile-readonly1">
 <script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -54,23 +54,23 @@
       <div class="responsive-pair" style="gap:24px;">
         <div class="panel">
           <div class="panel-header"><h3><i class="fas fa-user-tie" style="color:var(--blue3);margin-right:8px;"></i>Personal Information</h3></div>
-          <div class="panel-body">
-            <div class="form-group"><label class="form-label">Full Name</label><input id="coordinatorFullName" type="text" class="form-control" readonly></div>
-            <div class="form-group"><label class="form-label">Account ID</label><input id="coordinatorAccountId" type="text" class="form-control" readonly style="opacity:.6;"></div>
-            <div class="form-group"><label class="form-label">Staff ID</label><input id="coordinatorStaffId" type="text" class="form-control" readonly></div>
-            <div class="form-group"><label class="form-label">Email Address</label><input id="coordinatorEmail" type="email" class="form-control" readonly></div>
-            <div class="form-group"><label class="form-label">Assigned Students</label><input id="coordinatorStudentCount" type="text" class="form-control" readonly style="opacity:.6;"></div>
-          </div>
+          <div class="panel-body"><dl class="profile-info-list">
+            <div class="profile-info-item"><dt class="profile-info-label">Full Name</dt><dd class="profile-info-value" id="coordinatorFullName">Loading</dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Account ID</dt><dd class="profile-info-value" id="coordinatorAccountId">Loading</dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Staff ID</dt><dd class="profile-info-value" id="coordinatorStaffId">Loading</dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Email Address</dt><dd class="profile-info-value" id="coordinatorEmail">Loading</dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Assigned Students</dt><dd class="profile-info-value" id="coordinatorStudentCount">Loading</dd></div>
+          </dl></div>
         </div>
         <div class="panel">
           <div class="panel-header"><h3><i class="fas fa-university" style="color:var(--brand);margin-right:8px;"></i>Academic Information</h3></div>
-          <div class="panel-body">
-            <div class="form-group"><label class="form-label">Faculty</label><input id="coordinatorFaculty" type="text" class="form-control" readonly style="opacity:.6;"></div>
-            <div class="form-group"><label class="form-label">Course</label><input id="coordinatorProgramme" type="text" class="form-control" readonly style="opacity:.6;"></div>
-            <div class="form-group"><label class="form-label">Campus</label><input id="coordinatorCampus" type="text" class="form-control" readonly style="opacity:.7;"></div>
-            <div class="form-group"><label class="form-label">Institution</label><input type="text" class="form-control" value="Universiti Teknologi MARA" readonly style="opacity:.6;"></div>
-            <div class="form-group"><label class="form-label">Role</label><input type="text" class="form-control" value="Course Coordinator" readonly style="opacity:.6;"></div>
-          </div>
+          <div class="panel-body"><dl class="profile-info-list">
+            <div class="profile-info-item"><dt class="profile-info-label">Faculty</dt><dd class="profile-info-value" id="coordinatorFaculty">Loading</dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Course</dt><dd class="profile-info-value" id="coordinatorProgramme">Loading</dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Campus</dt><dd class="profile-info-value" id="coordinatorCampus">Loading</dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Institution</dt><dd class="profile-info-value">Universiti Teknologi MARA</dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Role</dt><dd class="profile-info-value">Course Coordinator</dd></div>
+          </dl></div>
         </div>
       </div>
       <div class="panel" style="margin-top:0;">
@@ -88,7 +88,7 @@
 <script>
 function showToast(msg){const t=document.getElementById('toast');document.getElementById('toastMsg').textContent=msg;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',3000);}
 </script>
-<script src="../assets/js/app.js?v=20261121-sidebar-expand1"></script>
+<script src="../assets/js/app.js?v=20261121-profile-readonly1"></script>
 </body>
 </html>
 

@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Profile – InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261121-mobile-actions1">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261121-profile-readonly1">
 <script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -65,26 +65,13 @@
         <div class="panel">
           <div class="panel-header"><h3><i class="fas fa-user" style="color:var(--blue3);margin-right:8px;"></i>Personal Information</h3></div>
           <div class="panel-body">
-            <div class="form-group">
-              <label class="form-label">Full Name</label>
-              <input type="text" class="form-control" value="" id="fullName" readonly>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Student ID / Matric No.</label>
-              <input type="text" class="form-control" value="" id="studentMatric" readonly style="opacity:.6;">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email Address</label>
-              <input type="email" class="form-control" value="" id="studentEmail" readonly title="Email is managed by the account record" style="opacity:.7;">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Phone Number</label>
-              <input type="tel" class="form-control" value="" id="studentPhone" readonly>
-            </div>
-            <div class="form-group">
-              <label class="form-label">CGPA</label>
-              <input type="number" min="0" max="4" step="0.01" class="form-control" value="" id="studentCgpa" readonly>
-            </div>
+            <dl class="profile-info-list">
+              <div class="profile-info-item"><dt class="profile-info-label">Full Name</dt><dd class="profile-info-value" id="fullName">Loading</dd></div>
+              <div class="profile-info-item"><dt class="profile-info-label">Student ID / Matric No.</dt><dd class="profile-info-value" id="studentMatric">Loading</dd></div>
+              <div class="profile-info-item"><dt class="profile-info-label">Email Address</dt><dd class="profile-info-value" id="studentEmail">Loading</dd></div>
+              <div class="profile-info-item"><dt class="profile-info-label">Phone Number</dt><dd class="profile-info-value" id="studentPhone">Loading</dd></div>
+              <div class="profile-info-item"><dt class="profile-info-label">CGPA</dt><dd class="profile-info-value" id="studentCgpa">Loading</dd></div>
+            </dl>
           </div>
         </div>
 
@@ -92,26 +79,13 @@
         <div class="panel">
           <div class="panel-header"><h3><i class="fas fa-graduation-cap" style="color:var(--brand);margin-right:8px;"></i>Academic Information</h3></div>
           <div class="panel-body">
-            <div class="form-group">
-              <label class="form-label">Programme</label>
-              <input type="text" class="form-control" value="" id="studentProgramme" readonly style="opacity:.7;">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Faculty</label>
-              <input type="text" class="form-control" value="" id="studentFaculty" readonly style="opacity:.7;">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Campus</label>
-              <input type="text" class="form-control" id="studentCampus" value="" readonly>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Internship Semester</label>
-              <input type="text" class="form-control" data-schedule-label="semester" value="March–August 2027" readonly style="opacity:.7;">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Coordinator</label>
-              <input type="text" class="form-control" id="coordinatorName" value="" readonly style="opacity:.6;">
-            </div>
+            <dl class="profile-info-list">
+              <div class="profile-info-item"><dt class="profile-info-label">Programme</dt><dd class="profile-info-value" id="studentProgramme">Loading</dd></div>
+              <div class="profile-info-item"><dt class="profile-info-label">Faculty</dt><dd class="profile-info-value" id="studentFaculty">Loading</dd></div>
+              <div class="profile-info-item"><dt class="profile-info-label">Campus</dt><dd class="profile-info-value" id="studentCampus">Loading</dd></div>
+              <div class="profile-info-item"><dt class="profile-info-label">Internship Semester</dt><dd class="profile-info-value" data-schedule-label="semester">Loading</dd></div>
+              <div class="profile-info-item"><dt class="profile-info-label">Coordinator</dt><dd class="profile-info-value" id="coordinatorName">Loading</dd></div>
+            </dl>
           </div>
         </div>
       </div>
@@ -130,7 +104,7 @@
   </div>
 </div>
 
-<script src="../assets/js/app.js?v=20261121-sidebar-expand1"></script>
+<script src="../assets/js/app.js?v=20261121-profile-readonly1"></script>
 </body>
 </html>
 
