@@ -62,6 +62,8 @@ html[data-protected]:not([data-auth-ready])::before {
   --table-cell-y:14px;
   --table-cell-x:15px;
   --transition:.22s ease;
+  --ui-scale:1;
+  --sidebar-counter-scale:1;
 }
 
 /* User-controlled accessibility color adjustments. */
@@ -153,7 +155,7 @@ a { color:inherit; }
   display:flex;
   flex-direction:column;
   z-index:300;
-  overflow-y:auto;
+  overflow-y:hidden;
   overflow-x:hidden;
   scrollbar-width:none;
   border:1px solid var(--glass-border);
@@ -163,6 +165,7 @@ a { color:inherit; }
   transition:transform var(--transition),box-shadow var(--transition);
 }
 .sidebar::-webkit-scrollbar { display:none; }
+
 .sidebar-brand {
   min-height:84px;
   padding:15px 11px;
@@ -194,7 +197,8 @@ a { color:inherit; }
   flex-direction:column;
   gap:6px;
   padding:9px 10px;
-  overflow-y:auto;
+  min-height:0;
+  overflow-y:hidden;
   overflow-x:hidden;
 }
 .nav-section { display:none; }
@@ -205,7 +209,9 @@ a { color:inherit; }
   align-items:center;
   justify-content:center;
   gap:4px;
-  min-height:61px;
+  flex:1 1 0;
+  min-height:0;
+  max-height:61px;
   margin:0;
   padding:8px 5px;
   border:1px solid transparent;
@@ -220,7 +226,7 @@ a { color:inherit; }
   cursor:pointer;
 }
 .nav-item .nav-icon { width:auto; color:#62596e; text-align:center; font-size:17px; flex-shrink:0; }
-.nav-item:hover { transform:translateY(-1px); border-color:rgba(112,79,184,.16); background:rgba(117,89,217,.1); color:#4a3780; }
+.nav-item:hover { z-index:1; transform:scale(1.035); border-color:rgba(112,79,184,.22); background:rgba(117,89,217,.11); color:#4a3780; box-shadow:0 0 18px rgba(117,89,217,.14); }
 .nav-item:hover .nav-icon { color:#6d4dc6; }
 .nav-item.active {
   border-color:rgba(111,76,193,.23);
@@ -318,6 +324,36 @@ a { color:inherit; }
 }
 .readonly-note i { font-size:13px; }
 .readonly-note strong,.readonly-note span { display:none; }
+
+/* Compress spacing before considering overflow on unusually short desktop
+   windows. Navigation remains a stable flex column with every item visible. */
+@media (min-width:769px) and (max-height:800px) {
+  .sidebar-brand { min-height:64px; padding:8px 10px; }
+  .sidebar-logo .icon { width:40px; height:40px; border-radius:12px; }
+  .sidebar nav { gap:3px; padding:4px 9px; }
+  .nav-item { gap:2px; padding:4px; border-radius:13px; line-height:1.05; }
+  .sidebar-footer { gap:3px; padding:5px 9px; }
+  .user-card { width:50px; padding:5px; }
+  .user-avatar { width:36px; height:36px; }
+  .logout-btn { min-height:34px; padding:5px; }
+}
+
+@media (min-width:769px) and (max-height:560px) {
+  .sidebar-brand { min-height:52px; padding:5px 9px; }
+  .sidebar-logo .icon { width:35px; height:35px; }
+  .sidebar nav { gap:1px; padding:2px 8px; }
+  .nav-item { padding:2px 3px; }
+  .sidebar-footer { display:flex; justify-content:center; gap:4px; padding:3px 7px; }
+  .user-card { width:43px; padding:3px; }
+  .user-avatar { width:33px; height:33px; }
+  .logout-btn { width:38px; min-height:33px; padding:4px; }
+}
+
+@media (min-width:769px) and (max-height:480px) {
+  .sidebar { overflow-y:auto; }
+  .sidebar nav { flex:none; overflow:visible; }
+  .nav-item { flex:none; min-height:39px; }
+}
 
 .sidebar-overlay {
   display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
@@ -922,9 +958,22 @@ html[data-theme="dark"] {
   --shadow-md:0 14px 36px rgba(0,0,0,.42);
 }
 
-html[data-text-size="small"] body { zoom:.9; }
-html[data-text-size="normal"] body { zoom:1; }
-html[data-text-size="large"] body { zoom:1.1; }
+/* UI sizing is global, while the fixed desktop sidebar is counter-scaled so
+   Large mode cannot reduce its usable viewport height. */
+html[data-ui-size="compact"] { --ui-scale:.92; --sidebar-counter-scale:1.0869565; }
+html[data-ui-size="default"] { --ui-scale:1; --sidebar-counter-scale:1; }
+html[data-ui-size="large"] { --ui-scale:1.12; --sidebar-counter-scale:.8928571; }
+html[data-ui-size] body { zoom:var(--ui-scale); }
+
+@media (min-width:769px) {
+  html[data-ui-size] .sidebar { zoom:var(--sidebar-counter-scale); }
+  html[data-ui-size="compact"] { --sidebar-rail:86px; --sidebar:120px; }
+  html[data-ui-size="large"] { --sidebar-rail:94px; --sidebar:132px; }
+  html[data-ui-size="compact"] .nav-item { font-size:8.5px; }
+  html[data-ui-size="compact"] .nav-item .nav-icon { font-size:16px; }
+  html[data-ui-size="large"] .nav-item { font-size:9.5px; }
+  html[data-ui-size="large"] .nav-item .nav-icon { font-size:18px; }
+}
 
 html[data-theme="dark"] body,
 html[data-theme="dark"] .modal,

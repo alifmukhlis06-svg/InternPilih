@@ -3,11 +3,11 @@
   window.__internPilihAccessibilityInstalled = true;
 
   const storageKey = 'internpilih:accessibility';
-  const settingsVersion = 2;
-  const defaults = { theme: 'light', textSize: 'normal', vision: 'standard' };
+  const settingsVersion = 3;
+  const defaults = { theme: 'light', uiSize: 'default', vision: 'standard' };
   const allowed = {
     theme: ['light', 'dark'],
-    textSize: ['small', 'normal', 'large'],
+    uiSize: ['compact', 'default', 'large'],
     vision: ['standard', 'red-green', 'blue-yellow', 'contrast']
   };
 
@@ -15,8 +15,10 @@
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
       return {
-        theme: saved.version === settingsVersion && allowed.theme.includes(saved.theme) ? saved.theme : defaults.theme,
-        textSize: allowed.textSize.includes(saved.textSize) ? saved.textSize : defaults.textSize,
+        theme: allowed.theme.includes(saved.theme) ? saved.theme : defaults.theme,
+        uiSize: allowed.uiSize.includes(saved.uiSize)
+          ? saved.uiSize
+          : ({ small: 'compact', normal: 'default', large: 'large' }[saved.textSize] || defaults.uiSize),
         vision: allowed.vision.includes(saved.vision) ? saved.vision : defaults.vision
       };
     } catch (_) {
@@ -29,7 +31,7 @@
   function applySettings() {
     const root = document.documentElement;
     root.dataset.theme = settings.theme;
-    root.dataset.textSize = settings.textSize;
+    root.dataset.uiSize = settings.uiSize;
     root.dataset.colorVision = settings.vision;
     try { localStorage.setItem(storageKey, JSON.stringify({ ...settings, version: settingsVersion })); } catch (_) {}
   }
@@ -73,11 +75,11 @@
         <input type="checkbox" id="accessibilityDark">
       </label>
       <div class="accessibility-field">
-        <span>Font size</span>
-        <div class="font-size-controls" role="group" aria-label="Font size">
-          <button type="button" data-text-size="small" aria-label="Decrease font size">A&minus;</button>
-          <button type="button" data-text-size="normal" aria-label="Default font size">A</button>
-          <button type="button" data-text-size="large" aria-label="Increase font size">A+</button>
+        <span>UI size</span>
+        <div class="font-size-controls" role="group" aria-label="UI size">
+          <button type="button" data-ui-size="compact" aria-label="Use compact UI size">Compact</button>
+          <button type="button" data-ui-size="default" aria-label="Use default UI size">Default</button>
+          <button type="button" data-ui-size="large" aria-label="Use large UI size">Large</button>
         </div>
       </div>
       <label class="accessibility-field" for="accessibilityVision">
@@ -99,7 +101,7 @@
     }
     document.body.append(launcher, panel);
     const dark = panel.querySelector('#accessibilityDark');
-    const textSizeButtons = Array.from(panel.querySelectorAll('[data-text-size]'));
+    const uiSizeButtons = Array.from(panel.querySelectorAll('[data-ui-size]'));
     const vision = panel.querySelector('#accessibilityVision');
     dark.checked = settings.theme === 'dark';
     vision.value = settings.vision;
@@ -113,12 +115,12 @@
     }
     syncThemeControls();
 
-    function syncTextSizeButtons() {
-      textSizeButtons.forEach(button => {
-        button.setAttribute('aria-pressed', String(button.dataset.textSize === settings.textSize));
+    function syncUiSizeButtons() {
+      uiSizeButtons.forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.uiSize === settings.uiSize));
       });
     }
-    syncTextSizeButtons();
+    syncUiSizeButtons();
 
     function setOpen(open) {
       panel.hidden = !open;
@@ -135,9 +137,9 @@
       updateSetting('theme', dark.checked ? 'dark' : 'light');
       syncThemeControls();
     });
-    textSizeButtons.forEach(button => button.addEventListener('click', () => {
-      updateSetting('textSize', button.dataset.textSize);
-      syncTextSizeButtons();
+    uiSizeButtons.forEach(button => button.addEventListener('click', () => {
+      updateSetting('uiSize', button.dataset.uiSize);
+      syncUiSizeButtons();
     }));
     vision.addEventListener('change', () => updateSetting('vision', vision.value));
     panel.querySelector('#accessibilityReset').addEventListener('click', () => {
@@ -146,7 +148,7 @@
       vision.value = defaults.vision;
       applySettings();
       syncThemeControls();
-      syncTextSizeButtons();
+      syncUiSizeButtons();
     });
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape' && !panel.hidden) setOpen(false);

@@ -158,7 +158,7 @@ window.internPilihDisplayName = window.internPilihDisplayName || function (name)
 (function loadAccessibilityControls() {
   if (window.__internPilihAccessibilityInstalled) return;
   const script = document.createElement('script');
-  script.src = window.appUrl('/assets/js/accessibility.js?v=20261031-classic1');
+  script.src = window.appUrl('/assets/js/accessibility.js?v=20261121-ui-size1');
   script.defer = true;
   document.head.appendChild(script);
 })();
