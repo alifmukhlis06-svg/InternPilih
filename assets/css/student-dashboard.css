@@ -58,10 +58,10 @@
 .student-dashboard .student-schedule-panel .panel-header h3 i { color:var(--green); }
 .student-dashboard .student-semester {
   padding:5px 8px;
-  border:1px solid #b8d6c8;
-  border-radius:4px;
-  background:#edf7f2;
-  color:#235d47;
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius-small);
+  background:var(--brand-soft);
+  color:var(--brand);
   font-size:11px;
   font-weight:700;
 }
@@ -69,12 +69,12 @@
 .student-dashboard .student-schedule-panel .schedule-item {
   min-width:0;
   padding:15px 13px;
-  border-color:#d7e5de;
-  border-radius:6px;
-  background:#f5f9f7;
+  border-color:var(--glass-border);
+  border-radius:var(--radius-control);
+  background:var(--glass-soft);
 }
-.student-dashboard .student-schedule-panel .schedule-item span { min-height:27px; color:#52685e; font-size:10px; }
-.student-dashboard .student-schedule-panel .schedule-item strong { color:#145c43; font-size:clamp(12px,1vw,14px); }
+.student-dashboard .student-schedule-panel .schedule-item span { min-height:27px; color:var(--text2); font-size:10px; }
+.student-dashboard .student-schedule-panel .schedule-item strong { color:var(--brand); font-size:clamp(12px,1vw,14px); }
 
 .student-dashboard .student-dashboard-alert { margin-bottom:20px; border-radius:6px; box-shadow:none; }
 
@@ -94,10 +94,10 @@
 }
 .student-dashboard .stat-card::before { display:none; }
 .student-dashboard .stat-card:hover { border-color:var(--border); box-shadow:none; }
-.student-dashboard .student-stat-priority { background:#edf7f2; border-color:#b8d6c8; }
+.student-dashboard .student-stat-priority { background:var(--glass-surface-fallback); border-color:var(--glass-border); }
 .student-dashboard .stat-icon { width:44px; height:44px; border-radius:6px; }
-.student-dashboard .stat-icon.blue,
-.student-dashboard .stat-icon.green { background:#dff0e8; color:#145c43; }
+.student-dashboard .stat-icon.blue { background:var(--brand-soft); color:var(--brand); }
+.student-dashboard .stat-icon.green { background:rgba(16,185,129,.15); color:var(--green); }
 .student-dashboard .stat-icon.gold { background:#fff2d8; color:#8b5a12; }
 .student-dashboard .stat-icon.red { background:#fbe9e7; color:#9d352d; }
 .student-dashboard .stat-val { color:var(--text); font-size:clamp(24px,2vw,30px); letter-spacing:-.03em; }
@@ -113,15 +113,13 @@
 .student-dashboard .student-dashboard-aside { min-width:0; }
 .student-dashboard .student-dashboard-aside { display:grid; gap:18px; align-content:start; }
 .student-dashboard .student-dashboard-aside .panel { margin-bottom:0; }
-.student-dashboard .panel { border-radius:8px; box-shadow:none; }
-.student-dashboard .panel-header { min-height:54px; padding:14px 18px; background:#f8fbf9; }
+.student-dashboard .panel { border-radius:var(--radius); }
+.student-dashboard .panel-header { min-height:54px; padding:14px 18px; background:transparent; }
 .student-dashboard .panel-header h3 { font-size:14px; letter-spacing:-.01em; }
-.student-dashboard .panel-link { color:#145c43; text-underline-offset:3px; }
-.student-dashboard .btn-primary { background:#14785b; }
-.student-dashboard .btn-primary:hover { background:#0f654c; }
-.student-dashboard .data-table th { background:#f1f6f3; color:#4c6258; }
+.student-dashboard .panel-link { color:var(--brand); text-underline-offset:3px; }
+.student-dashboard .data-table th { background:var(--glass-soft); color:var(--text2); }
 .student-dashboard .data-table td { color:var(--text3); }
-.student-dashboard .data-table tbody tr:hover { background:#f6faf8; }
+.student-dashboard .data-table tbody tr:hover { background:var(--brand-soft); }
 .student-dashboard .student-offers-panel .data-table { width:100%; border-collapse:collapse; table-layout:auto; }
 .student-dashboard .student-offers-panel .data-table th,
 .student-dashboard .student-offers-panel .data-table td {
@@ -140,8 +138,7 @@
   flex-wrap:wrap;
 }
 .student-dashboard .student-offers-panel .offer-action-text { color:var(--text3); font-size:12px; }
-.student-dashboard .progress-bar { height:6px; background:#e3ece7; }
-.student-dashboard .notif-dot-icon { background:#e2f1e9 !important; color:#145c43 !important; border-radius:6px; }
+.student-dashboard .progress-bar { height:6px; background:var(--bg3); }
 .student-dashboard .notif-item { gap:11px; }
 
 html[data-theme="dark"] .student-dashboard .dashboard-brief { border-color:#604593; }
@@ -151,20 +148,18 @@ html[data-theme="dark"] .student-dashboard .dashboard-brief::before {
 html[data-theme="dark"] .student-dashboard .dashboard-brief-kicker { color:#d9c8ff; }
 html[data-theme="dark"] .student-dashboard .dashboard-brief-link { background:#f8f5ff; color:#2d1748; border-color:#fff; }
 html[data-theme="dark"] .student-dashboard .dashboard-brief-link:hover { background:#e5d8ff; color:#24113c; }
-html[data-theme="dark"] .student-dashboard .panel { background:#0c0910; border-color:#362a42; }
 html[data-theme="dark"] .student-dashboard .panel-header,
-html[data-theme="dark"] .student-dashboard .data-table th { background:#120d18; border-color:#362a42; }
+html[data-theme="dark"] .student-dashboard .data-table th { border-color:var(--glass-border); }
 html[data-theme="dark"] .student-dashboard .student-semester { background:#1e1430; color:#dfd1ff; border-color:#5e438c; }
 html[data-theme="dark"] .student-dashboard .student-schedule-panel .schedule-item,
 html[data-theme="dark"] .student-dashboard .student-stat-priority { background:#15101c; border-color:#443453; }
 html[data-theme="dark"] .student-dashboard .student-schedule-panel .schedule-item span { color:#c9c0d5; }
 html[data-theme="dark"] .student-dashboard .student-schedule-panel .schedule-item strong { color:#c8b3ff; }
-html[data-theme="dark"] .student-dashboard .stat-icon.blue,
-html[data-theme="dark"] .student-dashboard .stat-icon.green,
-html[data-theme="dark"] .student-dashboard .stat-icon.gold { background:#24163a; color:#c8b3ff; }
+html[data-theme="dark"] .student-dashboard .stat-icon.blue { background:var(--brand-soft); color:var(--brand); }
+html[data-theme="dark"] .student-dashboard .stat-icon.green { background:rgba(112,208,168,.14); color:var(--green); }
+html[data-theme="dark"] .student-dashboard .stat-icon.gold { background:rgba(228,181,99,.14); color:var(--gold); }
 html[data-theme="dark"] .student-dashboard .stat-icon.red { background:#32171b; color:#ffaaa3; }
 html[data-theme="dark"] .student-dashboard .progress-bar { background:#241b2c; }
-html[data-theme="dark"] .student-dashboard .notif-dot-icon { background:#24163a !important; color:#c8b3ff !important; }
 html[data-theme="dark"] .student-dashboard .data-table tbody tr:hover { background:#15101c; }
 
 @media (max-width:1180px) {

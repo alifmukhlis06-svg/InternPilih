@@ -5,28 +5,28 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Acceptance System - InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261031-classic1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261120-uniform-shell1">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261120-complete-ui1">
 <script src="../assets/js/auth-gate.js?v=20261120-name1"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     .acceptance-layout { display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start; }
     .offer-choice { width:100%;padding:14px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;text-align:left;transition:.2s; }
-    .offer-choice:hover { border-color:var(--green);transform:translateY(-1px); }
-    .offer-choice.selected { border-color:var(--green);box-shadow:0 0 0 3px rgba(16,185,129,.1);background:rgba(16,185,129,.03); }
+    .offer-choice:hover { border-color:var(--brand);transform:translateY(-1px); }
+    .offer-choice.selected { border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft);background:var(--brand-soft); }
     .offer-choice:disabled { cursor:not-allowed;opacity:.65;transform:none; }
     .offer-choice-head { display:flex;align-items:flex-start;justify-content:space-between;gap:12px; }
     .offer-company { display:flex;align-items:center;gap:12px;min-width:0; }
-    .offer-icon { width:42px;height:42px;border-radius:8px;background:rgba(16,185,129,.12);color:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+    .offer-icon { width:42px;height:42px;border-radius:8px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;flex-shrink:0; }
     .offer-meta { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 16px;margin-top:12px;color:var(--text2);font-size:12px; }
     .upload-box { border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:.2s;background:var(--bg3); }
-    .upload-box:hover,.upload-box.dragging { border-color:var(--green);background:rgba(16,185,129,.04); }
+    .upload-box:hover,.upload-box.dragging { border-color:var(--brand);background:var(--brand-soft); }
     .upload-box.has-file { border-style:solid;border-color:var(--green);background:rgba(16,185,129,.05); }
     .summary-row { display:flex;justify-content:space-between;gap:18px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px; }
     .summary-row:last-child { border-bottom:0; }
     .summary-row span { color:var(--text2); }
     .summary-row strong { text-align:right;word-break:break-word; }
     .check-row { display:flex;align-items:flex-start;gap:10px;padding:13px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);font-size:12px;line-height:1.55;cursor:pointer; }
-    .check-row input { margin-top:3px;accent-color:var(--green); }
+    .check-row input { margin-top:3px;accent-color:var(--brand); }
     .empty-box { text-align:center;color:var(--text2);padding:34px 20px;font-size:13px; }
     @media (max-width:980px) { .acceptance-layout { grid-template-columns:1fr; } }
     @media (max-width:560px) { .offer-meta { grid-template-columns:1fr; } }
