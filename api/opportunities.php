@@ -140,6 +140,7 @@ if ($method === 'GET') {
                 'position_title' => $row['position_title'],
                 'department' => $row['department'],
                 'description' => $row['description'],
+                'is_demo' => str_starts_with(trim((string)($row['description'] ?? '')), '[DEMO]'),
                 'location' => $row['location'],
                 'status' => $row['status'],
                 'intake' => $row['intake'],

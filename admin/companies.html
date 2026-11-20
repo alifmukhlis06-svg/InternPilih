@@ -211,7 +211,7 @@ function renderOpportunities() {
   document.getElementById('opportunityTotal').textContent = `· ${opportunities.length} total`;
   document.getElementById('opportunityBody').innerHTML = opportunities.length ? opportunities.map(opportunity => `
     <tr>
-      <td>${escapeHtml(opportunity.company_name)}</td><td><strong>${escapeHtml(opportunity.position_title)}</strong></td>
+      <td>${escapeHtml(opportunity.company_name)}</td><td><strong>${escapeHtml(opportunity.position_title)}</strong>${opportunity.is_demo ? ' <span class="badge badge-purple">Demo</span>' : ''}</td>
       <td>${escapeHtml(opportunity.department || 'Not specified')}</td><td>${escapeHtml(opportunity.location || 'Not specified')}</td>
       <td>${escapeHtml(opportunity.application_deadline || 'Not specified')}</td>
       <td>${escapeHtml((opportunity.eligible_programmes || []).join(', ') || 'Not specified')}</td>

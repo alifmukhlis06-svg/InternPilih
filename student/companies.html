@@ -137,7 +137,7 @@ async function loadCompanies() {
     populateFilter('industryFilter', companiesList.map(company => company.industry), 'All Industries');
     populateFilter('locationFilter', companiesList.map(company => company.location), 'All Locations');
     document.getElementById('programmeContext').textContent = studentProgramme
-      ? `Programme context: ${studentProgramme}. Matches appear only when explicit eligibility data is available.`
+      ? `Programme context: ${studentProgramme}. Matches use explicit eligibility only.${opportunitiesList.some(opportunity => opportunity.is_demo) ? ' Listed opportunities include synthetic FYP demo data, not real vacancies.' : ''}`
       : 'Programme context is unavailable. No programme compatibility will be assumed.';
 
     renderCompanies();
@@ -282,7 +282,7 @@ function viewCompany(id) {
   const opportunityDetails = currentOpportunities.length
     ? currentOpportunities.map(opportunity => `
         <div class="company-opportunity">
-          <div class="company-opportunity-title">${escapeHtml(opportunity.position_title)}</div>
+          <div class="company-opportunity-title">${escapeHtml(opportunity.position_title)}${opportunity.is_demo ? ' <span class="badge badge-purple">Demo Opportunity</span>' : ''}</div>
           <div class="company-opportunity-meta">${escapeHtml([opportunity.department, opportunity.location || c.location].filter(Boolean).join(' · ') || 'Details not specified')}</div>
           <div class="company-opportunity-meta">Deadline: ${escapeHtml(opportunity.application_deadline || 'Not specified')}</div>
           <div class="company-opportunity-meta">Eligible programmes: ${escapeHtml((opportunity.eligible_programmes || []).join(', ') || 'Not specified')}</div>
