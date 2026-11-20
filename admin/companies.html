@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Company Database – InternPilih Admin</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261121-mobile-scroll1">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261121-mobile-actions1">
 <script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -117,7 +117,7 @@
       <div style="font-size:48px;margin-bottom:12px;">🗑️</div>
       <h3 style="font-size:17px;font-weight:700;margin-bottom:8px;">Delete Company?</h3>
       <p style="font-size:13px;color:var(--text2);margin-bottom:24px;">This action cannot be undone. All related placement records will remain.</p>
-      <div style="display:flex;gap:10px;justify-content:center;">
+      <div class="form-actions form-actions-center">
         <button class="btn btn-outline" onclick="document.getElementById('deleteModal').classList.remove('open')">Cancel</button>
         <button class="btn btn-danger" onclick="confirmDelete()"><i class="fas fa-trash"></i> Delete</button>
       </div>
