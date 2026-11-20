@@ -10,6 +10,39 @@ window.internPilihDisplayName = window.internPilihDisplayName || function (name)
     : fullName;
 };
 
+// Keep shared workspace controls in the same place on every page.
+(function ensureWorkspaceTopbarControls() {
+  const topbar = document.querySelector('.topbar');
+  const sidebarAvatar = document.querySelector('.sidebar-footer .user-avatar');
+  if (!topbar || !sidebarAvatar) return;
+
+  let topbarActions = topbar.querySelector('.topbar-right');
+  if (!topbarActions) {
+    topbarActions = document.createElement('div');
+    topbarActions.className = 'topbar-right';
+    topbar.appendChild(topbarActions);
+  }
+
+  const notificationsLink = document.querySelector('.sidebar nav a[href="notifications.html"]');
+  if (notificationsLink && !topbarActions.querySelector('.notif-btn')) {
+    const notifications = document.createElement('a');
+    notifications.className = 'notif-btn';
+    notifications.href = notificationsLink.getAttribute('href');
+    notifications.setAttribute('aria-label', 'Open notifications');
+    notifications.innerHTML = '<i class="fas fa-bell" aria-hidden="true"></i>';
+    topbarActions.appendChild(notifications);
+  }
+
+  if (topbarActions.querySelector('.user-avatar')) return;
+
+  const profile = document.createElement('a');
+  profile.className = 'user-avatar';
+  profile.href = 'profile.html';
+  profile.setAttribute('aria-label', 'Open profile');
+  profile.textContent = sidebarAvatar.textContent.trim() || '--';
+  topbarActions.appendChild(profile);
+})();
+
 // Resolve app-root URLs and hold protected API work until authorization has
 // completed. Protected HTML is hidden by CSS until its initial live data has
 // loaded, so static fallback markup can never flash another account's data.

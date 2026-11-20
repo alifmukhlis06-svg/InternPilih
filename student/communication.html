@@ -6,14 +6,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Rejection System – InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261031-classic1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261120-global-glass1">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261120-uniform-shell1">
 <script src="../assets/js/auth-gate.js?v=20261120-name1"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     .ai-panel {
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      background: var(--glass-surface-fallback);
       overflow: hidden;
       margin-bottom: 20px;
       box-shadow: var(--shadow-sm);
@@ -24,15 +24,15 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      border-bottom: 1px solid var(--border);
-      background: #f7fafb;
+      border-bottom: 1px solid var(--glass-border);
+      background: transparent;
     }
 
     .ai-panel-header .ai-icon {
       width: 36px;
       height: 36px;
-      border-radius: 5px;
-      background: #e3f7f5;
+      border-radius: 11px;
+      background: rgba(117,89,217,.12);
       color: var(--uitm-blue-2);
       display: flex;
       align-items: center;
@@ -56,10 +56,10 @@
     .ai-badge {
       margin-left: auto;
       padding: 3px 10px;
-      border-radius: 6px;
+      border-radius: 999px;
       font-size: 10px;
       font-weight: 700;
-      background: #e3f7f5;
+      background: rgba(117,89,217,.12);
       color: var(--uitm-blue-2);
       letter-spacing: .2px;
     }
@@ -90,9 +90,9 @@
     .ai-textarea {
       width: 100%;
       padding: 9px 12px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: #fff;
+      border-radius: 10px;
+      border: 1px solid var(--glass-border);
+      background: var(--bg2);
       color: var(--text);
       font-size: 13px;
       font-family: inherit;
@@ -104,7 +104,7 @@
     .ai-select:focus,
     .ai-textarea:focus {
       border-color: var(--uitm-purple);
-      box-shadow: 0 0 0 3px rgba(9,169,163,.12);
+      box-shadow: 0 0 0 3px rgba(117,89,217,.12);
     }
 
     .ai-textarea {
@@ -118,7 +118,7 @@
       background: var(--uitm-purple);
       color: #fff;
       border: none;
-      border-radius: 6px;
+      border-radius: 11px;
       padding: 11px 20px;
       font-size: 13px;
       font-weight: 700;
@@ -254,8 +254,8 @@
     }
 
     .tone-chip.active {
-      background: #e3f7f5;
-      border-color: #b7e4e0;
+      background: rgba(117,89,217,.12);
+      border-color: rgba(117,89,217,.25);
       color: var(--uitm-blue-2);
     }
   </style>
@@ -318,7 +318,7 @@
     </div>
 
     <div class="content fade-in">
-      <div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;">
+      <div class="page-grid wide-aside" style="gap:18px;">
 
         <div>
           <div class="alert alert-info"><i class="fas fa-info-circle"></i>Let
@@ -805,7 +805,7 @@
 
     document.addEventListener('DOMContentLoaded', loadOffers);
   </script>
-<script src="../assets/js/app.js?v=20261120-name1"></script>
+<script src="../assets/js/app.js?v=20261120-uniform-shell1"></script>
 </body>
 
 </html>

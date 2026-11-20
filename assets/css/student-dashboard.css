@@ -1,32 +1,4 @@
-/* Direction: a calm institutional dashboard with green hierarchy in light mode and purple hierarchy in optional dark mode. */
-.student-dashboard {
-  --uitm-blue:#145c43;
-  --uitm-blue-2:#0e7652;
-  --uitm-purple:#14785b;
-  --uitm-purple-2:#0f654c;
-  --uitm-yellow:#a86712;
-  --blue:#145c43;
-  --blue2:#0e7652;
-  --blue3:#14785b;
-  --gold:#8b5a12;
-  --green:#14785b;
-  --purple:#14785b;
-  --bg:#f3f7f5;
-  --bg2:#ffffff;
-  --bg3:#edf4f0;
-  --card:#ffffff;
-  --text:#13271f;
-  --text2:#51675e;
-  --text3:#29463a;
-  --border:#d4e2db;
-  --shadow-sm:none;
-  --shadow-md:0 10px 26px rgba(19,71,52,.09);
-}
-
 /* A centered content rail keeps long dashboard rows readable without changing information order. */
-.student-dashboard .main { background:var(--bg); }
-.student-dashboard .topbar { background:var(--bg2); border-bottom-color:var(--border); }
-.student-dashboard .topbar h1 { color:var(--text); letter-spacing:-.02em; }
 .student-dashboard .student-dashboard-content {
   width:100%;
   max-width:1440px;
@@ -172,28 +144,6 @@
 .student-dashboard .notif-dot-icon { background:#e2f1e9 !important; color:#145c43 !important; border-radius:6px; }
 .student-dashboard .notif-item { gap:11px; }
 
-html[data-theme="dark"] .student-dashboard {
-  --uitm-blue:#bca5ff;
-  --uitm-blue-2:#a78bfa;
-  --uitm-purple:#8b5cf6;
-  --uitm-purple-2:#7c3aed;
-  --uitm-yellow:#c084fc;
-  --blue:#bca5ff;
-  --blue2:#a78bfa;
-  --blue3:#a78bfa;
-  --gold:#c084fc;
-  --green:#a78bfa;
-  --purple:#c084fc;
-  --bg:#050307;
-  --bg2:#0c0910;
-  --bg3:#15101c;
-  --card:#0c0910;
-  --text:#faf7ff;
-  --text2:#c9c0d5;
-  --text3:#e5ddec;
-  --border:#362a42;
-}
-html[data-theme="dark"] .student-dashboard .main { background:#050307; }
 html[data-theme="dark"] .student-dashboard .dashboard-brief { border-color:#604593; }
 html[data-theme="dark"] .student-dashboard .dashboard-brief::before {
   background:linear-gradient(90deg,rgba(8,5,12,.97) 0%,rgba(20,11,32,.94) 52%,rgba(58,29,94,.58) 100%);
@@ -201,8 +151,7 @@ html[data-theme="dark"] .student-dashboard .dashboard-brief::before {
 html[data-theme="dark"] .student-dashboard .dashboard-brief-kicker { color:#d9c8ff; }
 html[data-theme="dark"] .student-dashboard .dashboard-brief-link { background:#f8f5ff; color:#2d1748; border-color:#fff; }
 html[data-theme="dark"] .student-dashboard .dashboard-brief-link:hover { background:#e5d8ff; color:#24113c; }
-html[data-theme="dark"] .student-dashboard .panel,
-html[data-theme="dark"] .student-dashboard .topbar { background:#0c0910; border-color:#362a42; }
+html[data-theme="dark"] .student-dashboard .panel { background:#0c0910; border-color:#362a42; }
 html[data-theme="dark"] .student-dashboard .panel-header,
 html[data-theme="dark"] .student-dashboard .data-table th { background:#120d18; border-color:#362a42; }
 html[data-theme="dark"] .student-dashboard .student-semester { background:#1e1430; color:#dfd1ff; border-color:#5e438c; }
