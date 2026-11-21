@@ -10,6 +10,59 @@ window.internPilihDisplayName = window.internPilihDisplayName || function (name)
     : fullName;
 };
 
+// Load the liquid-glass overrides last so they consistently refine page-level
+// and dashboard styles without changing the existing HTML architecture.
+(function installLiquidGlassSystem() {
+  if (window.__internPilihLiquidGlassInstalled) return;
+  window.__internPilihLiquidGlassInstalled = true;
+
+  const currentScript = document.currentScript;
+  if (currentScript && !document.querySelector('link[data-internpilih-liquid-glass]')) {
+    const stylesheet = document.createElement('link');
+    stylesheet.rel = 'stylesheet';
+    stylesheet.href = new URL('../css/liquid-glass.css?v=20261121-liquid-glass1', currentScript.src).href;
+    stylesheet.dataset.internpilihLiquidGlass = 'true';
+    document.head.appendChild(stylesheet);
+  }
+
+  const root = document.documentElement;
+  const userAgent = navigator.userAgent || '';
+  const chromium = /(?:Chrome|Chromium|Edg)\//.test(userAgent) && !/(?:OPR|Firefox|FxiOS)\//.test(userAgent);
+  const supportsBackdrop = window.CSS && CSS.supports && CSS.supports('backdrop-filter', 'blur(1px)');
+  const reducedTransparency = window.matchMedia && window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
+
+  if (!chromium || !supportsBackdrop || reducedTransparency || !document.body) return;
+
+  const svgNamespace = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNamespace, 'svg');
+  svg.setAttribute('width', '0');
+  svg.setAttribute('height', '0');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  svg.dataset.internpilihGlassFilter = 'true';
+  svg.style.cssText = 'position:absolute;inline-size:0;block-size:0;overflow:hidden;pointer-events:none';
+  svg.innerHTML = [
+    '<defs>',
+    '<filter id="internpilih-liquid-glass-refraction" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">',
+    '<feTurbulence type="fractalNoise" baseFrequency="0.009 0.015" numOctaves="1" seed="17" result="glassNoise"/>',
+    '<feGaussianBlur in="glassNoise" stdDeviation="0.35" result="softGlassNoise"/>',
+    '<feDisplacementMap in="SourceGraphic" in2="softGlassNoise" scale="1.8" xChannelSelector="R" yChannelSelector="G"/>',
+    '</filter>',
+    '</defs>'
+  ].join('');
+  document.body.appendChild(svg);
+  root.classList.add('has-liquid-glass-refraction');
+
+  let scrollTimer = 0;
+  window.addEventListener('scroll', function () {
+    root.classList.add('glass-scrolling');
+    window.clearTimeout(scrollTimer);
+    scrollTimer = window.setTimeout(function () {
+      root.classList.remove('glass-scrolling');
+    }, 140);
+  }, { passive:true });
+})();
+
 // Keep shared workspace controls in the same place on every page.
 (function ensureWorkspaceTopbarControls() {
   const topbar = document.querySelector('.topbar');

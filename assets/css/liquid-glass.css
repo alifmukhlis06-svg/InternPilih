@@ -1,0 +1,451 @@
+/*
+ * InternPilih liquid-glass material system
+ *
+ * Framework-free adaptation of the surface layering in
+ * @zakisheriff/liquid-glass. Solid translucent colours are the fallback;
+ * backdrop blur and a tiny shared SVG displacement progressively enhance the
+ * two major shell surfaces where the browser can do so efficiently.
+ */
+
+:root {
+  --glass-major-blur:24px;
+  --glass-panel-blur:15px;
+  --glass-menu-blur:22px;
+  --glass-saturation:145%;
+  --glass-sidebar-fallback:rgba(244,239,253,.88);
+  --glass-sidebar:
+    radial-gradient(circle at 18% 2%,rgba(151,116,238,.24),transparent 34%),
+    linear-gradient(155deg,rgba(255,255,255,.61),rgba(239,231,251,.44));
+  --glass-topbar-fallback:rgba(249,246,255,.9);
+  --glass-topbar:
+    radial-gradient(circle at 8% 0,rgba(174,145,244,.17),transparent 30%),
+    linear-gradient(135deg,rgba(255,255,255,.66),rgba(242,235,252,.48));
+  --glass-surface-fallback:rgba(253,251,255,.9);
+  --glass-surface:linear-gradient(145deg,rgba(255,255,255,.7),rgba(246,241,253,.54));
+  --glass-surface-strong:linear-gradient(145deg,rgba(255,255,255,.78),rgba(239,231,251,.62));
+  --glass-control:rgba(255,255,255,.58);
+  --glass-control-focus:rgba(255,255,255,.82);
+  --glass-menu:linear-gradient(145deg,rgba(255,255,255,.9),rgba(244,238,252,.84));
+  --glass-soft:rgba(244,238,252,.55);
+  --glass-border:rgba(112,82,169,.2);
+  --glass-edge-highlight:rgba(255,255,255,.86);
+  --glass-edge-lowlight:rgba(102,70,157,.09);
+  --glass-shadow:
+    0 18px 48px rgba(54,37,88,.1),
+    0 2px 7px rgba(54,37,88,.055),
+    inset 0 1px 0 var(--glass-edge-highlight),
+    inset 0 -1px 0 var(--glass-edge-lowlight);
+  --glass-card-shadow:
+    0 13px 34px rgba(54,37,88,.075),
+    0 2px 7px rgba(54,37,88,.035),
+    inset 0 1px 0 rgba(255,255,255,.78),
+    inset 0 -1px 0 rgba(96,67,151,.065);
+  --glass-deep-shadow:
+    0 28px 74px rgba(31,19,54,.24),
+    0 4px 12px rgba(31,19,54,.09),
+    inset 0 1px 0 rgba(255,255,255,.85),
+    inset 0 -1px 0 rgba(94,66,148,.09);
+}
+
+html[data-theme="dark"] {
+  --glass-sidebar-fallback:rgba(18,12,30,.91);
+  --glass-sidebar:
+    radial-gradient(circle at 20% 0,rgba(135,79,235,.25),transparent 37%),
+    linear-gradient(155deg,rgba(30,20,48,.7),rgba(9,7,17,.59));
+  --glass-topbar-fallback:rgba(20,14,33,.91);
+  --glass-topbar:
+    radial-gradient(circle at 8% 0,rgba(148,98,238,.18),transparent 32%),
+    linear-gradient(135deg,rgba(31,21,48,.69),rgba(11,8,21,.58));
+  --glass-surface-fallback:rgba(20,14,33,.91);
+  --glass-surface:linear-gradient(145deg,rgba(31,21,48,.72),rgba(12,9,23,.62));
+  --glass-surface-strong:linear-gradient(145deg,rgba(42,27,65,.78),rgba(17,11,30,.7));
+  --glass-control:rgba(40,28,60,.6);
+  --glass-control-focus:rgba(50,34,76,.82);
+  --glass-menu:linear-gradient(145deg,rgba(33,23,50,.91),rgba(16,11,27,.88));
+  --glass-soft:rgba(46,30,69,.55);
+  --glass-border:rgba(190,159,250,.18);
+  --glass-edge-highlight:rgba(255,255,255,.12);
+  --glass-edge-lowlight:rgba(0,0,0,.25);
+  --glass-shadow:
+    0 20px 52px rgba(0,0,0,.34),
+    0 2px 8px rgba(0,0,0,.24),
+    inset 0 1px 0 var(--glass-edge-highlight),
+    inset 0 -1px 0 var(--glass-edge-lowlight);
+  --glass-card-shadow:
+    0 15px 38px rgba(0,0,0,.27),
+    0 2px 8px rgba(0,0,0,.18),
+    inset 0 1px 0 rgba(255,255,255,.075),
+    inset 0 -1px 0 rgba(0,0,0,.22);
+  --glass-deep-shadow:
+    0 30px 80px rgba(0,0,0,.56),
+    0 4px 13px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.11),
+    inset 0 -1px 0 rgba(0,0,0,.28);
+}
+
+body,
+body.dashboard-shell {
+  background:
+    radial-gradient(circle at 78% -8%,rgba(128,91,222,.14),transparent 31rem),
+    radial-gradient(circle at 5% 72%,rgba(198,178,239,.13),transparent 28rem),
+    linear-gradient(145deg,#f7f4fb 0%,#f2eff8 48%,#f7f5fb 100%);
+  background-attachment:fixed;
+}
+html[data-theme="dark"] body,
+html[data-theme="dark"] body.dashboard-shell {
+  background:
+    radial-gradient(circle at 76% -8%,rgba(126,78,224,.2),transparent 32rem),
+    radial-gradient(circle at 3% 78%,rgba(82,47,140,.13),transparent 29rem),
+    linear-gradient(145deg,#07050d 0%,#0b0713 52%,#08060f 100%);
+  background-attachment:fixed;
+}
+
+/* Major shell glass: the clearest material and a static specular rim. */
+.sidebar,
+.topbar {
+  border-color:var(--glass-border);
+  box-shadow:var(--glass-shadow);
+  isolation:isolate;
+}
+.sidebar { background:var(--glass-sidebar-fallback); }
+.topbar {
+  background:var(--glass-topbar-fallback);
+  overflow:hidden;
+}
+.sidebar::before,
+.topbar::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:0;
+  border-radius:inherit;
+  background:
+    linear-gradient(126deg,rgba(255,255,255,.38),transparent 23%,transparent 71%,rgba(136,93,219,.07)),
+    linear-gradient(180deg,rgba(255,255,255,.17),transparent 18%,transparent 82%,rgba(75,49,121,.045));
+  box-shadow:inset 1px 0 0 rgba(255,255,255,.34),inset -1px 0 0 rgba(102,73,159,.055);
+  pointer-events:none;
+}
+html[data-theme="dark"] .sidebar::before,
+html[data-theme="dark"] .topbar::before {
+  background:
+    linear-gradient(126deg,rgba(255,255,255,.09),transparent 23%,transparent 72%,rgba(150,97,237,.08)),
+    linear-gradient(180deg,rgba(255,255,255,.045),transparent 20%,transparent 82%,rgba(0,0,0,.08));
+  box-shadow:inset 1px 0 0 rgba(255,255,255,.055),inset -1px 0 0 rgba(0,0,0,.18);
+}
+.sidebar > *,
+.topbar > * { position:relative; z-index:1; }
+
+/* A slow reflection crosses the top edge only on deliberate hover. */
+.topbar::after {
+  content:'';
+  position:absolute;
+  top:0;
+  left:0;
+  z-index:2;
+  width:34%;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.92),transparent);
+  opacity:.72;
+  transform:translateX(-140%);
+  pointer-events:none;
+}
+@media (hover:hover) and (pointer:fine) {
+  .topbar::after { transition:transform 1.15s cubic-bezier(.22,.61,.36,1); }
+  .topbar:hover::after { transform:translateX(395%); }
+}
+
+/* Navigation lenses stay local to the rail and never glow into the page. */
+.nav-item:hover {
+  background:linear-gradient(145deg,rgba(255,255,255,.42),rgba(238,228,252,.25));
+  border-color:rgba(126,91,196,.13);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.58);
+}
+.nav-item.active {
+  background:linear-gradient(145deg,rgba(139,99,226,.25),rgba(111,73,199,.13));
+  border-color:rgba(117,78,202,.27);
+  box-shadow:0 8px 20px rgba(77,48,136,.11),inset 0 1px 0 rgba(255,255,255,.58),inset 0 -1px 0 rgba(96,57,168,.11);
+}
+html[data-theme="dark"] .nav-item:hover {
+  background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(142,88,226,.055));
+  border-color:rgba(205,180,255,.1);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+}
+html[data-theme="dark"] .nav-item.active {
+  background:linear-gradient(145deg,rgba(167,139,250,.24),rgba(112,60,202,.14));
+  border-color:rgba(208,185,255,.24);
+  box-shadow:0 9px 24px rgba(0,0,0,.23),inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.18);
+}
+
+/* Ordinary cards get quieter frost. Important/profile cards are thicker. */
+.panel,
+.summary-card,
+.stat-card,
+.profile-card,
+.login-card,
+.recovery-card,
+.modal,
+body.dashboard-shell .panel,
+body.dashboard-shell .stat-card,
+body.dashboard-shell .stat-card.blue,
+body.dashboard-shell .stat-card.green,
+body.dashboard-shell .stat-card.gold,
+body.dashboard-shell .stat-card.red,
+body.dashboard-shell .stat-card.purple {
+  background:var(--glass-surface);
+  border-color:var(--glass-border);
+  box-shadow:var(--glass-card-shadow);
+}
+.stat-card,
+.profile-card,
+.modal,
+.panel:has(.profile-avatar),
+body.dashboard-shell .stat-card,
+body.dashboard-shell .stat-card.blue,
+body.dashboard-shell .stat-card.green,
+body.dashboard-shell .stat-card.gold,
+body.dashboard-shell .stat-card.red,
+body.dashboard-shell .stat-card.purple { background:var(--glass-surface-strong); }
+.panel:hover,
+.stat-card:hover,
+.profile-card:hover,
+body.dashboard-shell .panel:hover,
+body.dashboard-shell .stat-card:hover {
+  border-color:rgba(117,79,199,.27);
+  box-shadow:0 19px 46px rgba(54,37,88,.12),0 3px 10px rgba(54,37,88,.055),inset 0 1px 0 var(--glass-edge-highlight);
+}
+html[data-theme="dark"] .panel:hover,
+html[data-theme="dark"] .stat-card:hover,
+html[data-theme="dark"] .profile-card:hover,
+html[data-theme="dark"] body.dashboard-shell .panel:hover,
+html[data-theme="dark"] body.dashboard-shell .stat-card:hover {
+  border-color:rgba(194,163,252,.22);
+  box-shadow:0 21px 50px rgba(0,0,0,.37),inset 0 1px 0 rgba(255,255,255,.09);
+}
+html[data-theme="dark"] body.dashboard-shell .panel,
+html[data-theme="dark"] body.dashboard-shell .stat-card,
+html[data-theme="dark"] body.dashboard-shell .stat-card.blue,
+html[data-theme="dark"] body.dashboard-shell .stat-card.green,
+html[data-theme="dark"] body.dashboard-shell .stat-card.gold,
+html[data-theme="dark"] body.dashboard-shell .stat-card.red,
+html[data-theme="dark"] body.dashboard-shell .stat-card.purple {
+  background:var(--glass-surface);
+  border-color:var(--glass-border);
+  box-shadow:var(--glass-card-shadow);
+}
+html[data-theme="dark"] body.dashboard-shell .stat-card,
+html[data-theme="dark"] body.dashboard-shell .stat-card.blue,
+html[data-theme="dark"] body.dashboard-shell .stat-card.green,
+html[data-theme="dark"] body.dashboard-shell .stat-card.gold,
+html[data-theme="dark"] body.dashboard-shell .stat-card.red,
+html[data-theme="dark"] body.dashboard-shell .stat-card.purple { background:var(--glass-surface-strong); }
+
+.profile-avatar {
+  border:1px solid rgba(255,255,255,.62);
+  background:linear-gradient(145deg,rgba(151,113,236,.96),rgba(92,62,178,.96));
+  box-shadow:0 13px 28px rgba(82,51,151,.24),inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 0 rgba(48,27,98,.2);
+}
+.profile-info-item,
+.profile-meta,
+.profile-about,
+.profile-metric,
+.surface-box,
+.document-card,
+.mini-stat,
+.user-card,
+.readonly-note {
+  background:var(--glass-soft);
+  border-color:var(--glass-border);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.48),inset 0 -1px 0 rgba(103,73,158,.045);
+}
+html[data-theme="dark"] :is(.profile-info-item,.profile-meta,.profile-about,.profile-metric,.surface-box,.document-card,.mini-stat,.user-card,.readonly-note) {
+  background:var(--glass-soft);
+  border-color:var(--glass-border);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(0,0,0,.15);
+}
+
+/* Search/filter wells and controls retain a denser tint than cards. */
+.search-bar,
+.company-filter-panel,
+.tab-nav {
+  background:var(--glass-soft);
+  border-color:var(--glass-border);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.53),0 8px 24px rgba(54,37,88,.055);
+}
+.form-control,
+.search-input,
+html body .filter-combobox-trigger,
+html body .filter-combobox-search {
+  background-color:var(--glass-control);
+  border-color:var(--glass-border);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.58),inset 0 -1px 0 rgba(100,70,155,.045);
+}
+.form-control:focus,
+.search-input:focus,
+html body .filter-combobox-trigger:focus-visible,
+html body .filter-combobox.open .filter-combobox-trigger,
+html body .filter-combobox-search:focus { background-color:var(--glass-control-focus); }
+select.form-control {
+  appearance:none;
+  -webkit-appearance:none;
+  padding-right:42px;
+  background-image:
+    linear-gradient(45deg,transparent 50%,var(--text2) 50%),
+    linear-gradient(135deg,var(--text2) 50%,transparent 50%);
+  background-position:calc(100% - 18px) calc(50% - 2px),calc(100% - 13px) calc(50% - 2px);
+  background-repeat:no-repeat;
+  background-size:5px 5px,5px 5px;
+}
+
+/* Menus remain readable and above company cards. */
+html body .panel.company-filter-panel { position:relative; z-index:20; overflow:visible; }
+.company-directory-grid,
+.company-card { position:relative; z-index:1; }
+.filter-combobox.open { z-index:40; }
+html body .filter-combobox-menu {
+  z-index:1000;
+  background:var(--glass-menu);
+  border-color:var(--glass-border);
+  box-shadow:0 22px 54px rgba(39,22,69,.24),0 3px 9px rgba(39,22,69,.08),inset 0 1px 0 rgba(255,255,255,.83),inset 0 -1px 0 rgba(92,61,145,.08);
+}
+html[data-theme="dark"] body .filter-combobox-trigger,
+html[data-theme="dark"] body .filter-combobox-search { background-color:var(--glass-control); }
+html[data-theme="dark"] body .filter-combobox-trigger:hover,
+html[data-theme="dark"] body .filter-combobox.open .filter-combobox-trigger { background-color:var(--glass-control-focus); }
+html[data-theme="dark"] body .filter-combobox-menu {
+  background:var(--glass-menu);
+  border-color:var(--glass-border);
+  box-shadow:0 24px 58px rgba(0,0,0,.56),0 3px 10px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.1);
+}
+
+/* Existing mobile modal layout becomes the matching glass sheet. */
+.modal { box-shadow:var(--glass-deep-shadow); }
+.modal-header,
+.modal-footer {
+  background:var(--glass-surface-strong);
+  border-color:var(--glass-border);
+}
+.modal-overlay { background:rgba(24,14,39,.55); }
+html[data-theme="dark"] .modal-overlay { background:rgba(2,1,5,.68); }
+
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .sidebar {
+    background:var(--glass-sidebar);
+    -webkit-backdrop-filter:blur(var(--glass-major-blur)) saturate(var(--glass-saturation));
+    backdrop-filter:blur(var(--glass-major-blur)) saturate(var(--glass-saturation));
+  }
+  .topbar {
+    background:var(--glass-topbar);
+    -webkit-backdrop-filter:blur(21px) saturate(148%);
+    backdrop-filter:blur(21px) saturate(148%);
+  }
+  .panel,
+  .summary-card,
+  .stat-card,
+  .profile-card,
+  .login-card,
+  .recovery-card,
+  .modal,
+  body.dashboard-shell .panel,
+  body.dashboard-shell .stat-card {
+    -webkit-backdrop-filter:blur(var(--glass-panel-blur)) saturate(128%);
+    backdrop-filter:blur(var(--glass-panel-blur)) saturate(128%);
+  }
+  .search-bar,
+  .company-filter-panel,
+  .tab-nav {
+    -webkit-backdrop-filter:blur(14px) saturate(125%);
+    backdrop-filter:blur(14px) saturate(125%);
+  }
+  html body .filter-combobox-menu {
+    -webkit-backdrop-filter:blur(var(--glass-menu-blur)) saturate(142%);
+    backdrop-filter:blur(var(--glass-menu-blur)) saturate(142%);
+  }
+  .modal-header,
+  .modal-footer {
+    -webkit-backdrop-filter:blur(18px) saturate(132%);
+    backdrop-filter:blur(18px) saturate(132%);
+  }
+}
+
+/* Chromium receives the shared displacement map. All other engines keep the
+   blur-only declaration above. Refraction is disabled while scrolling. */
+@media (min-width:769px) and (pointer:fine) {
+  html.has-liquid-glass-refraction .sidebar {
+    backdrop-filter:url("#internpilih-liquid-glass-refraction") blur(var(--glass-major-blur)) saturate(var(--glass-saturation));
+  }
+  html.has-liquid-glass-refraction .topbar {
+    backdrop-filter:url("#internpilih-liquid-glass-refraction") blur(21px) saturate(148%);
+  }
+  html.has-liquid-glass-refraction.glass-scrolling .sidebar {
+    backdrop-filter:blur(var(--glass-major-blur)) saturate(var(--glass-saturation));
+  }
+  html.has-liquid-glass-refraction.glass-scrolling .topbar {
+    backdrop-filter:blur(21px) saturate(148%);
+  }
+}
+
+/* Smaller mobile radii keep Safari and Android compositing modest. */
+@media (max-width:768px) {
+  .sidebar { box-shadow:8px 0 34px rgba(30,18,52,.28),inset 0 1px 0 var(--glass-edge-highlight); }
+  @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+    .sidebar {
+      -webkit-backdrop-filter:blur(18px) saturate(128%);
+      backdrop-filter:blur(18px) saturate(128%);
+    }
+    .topbar {
+      -webkit-backdrop-filter:blur(15px) saturate(125%);
+      backdrop-filter:blur(15px) saturate(125%);
+    }
+    .panel,
+    .summary-card,
+    .stat-card,
+    .profile-card,
+    .modal,
+    body.dashboard-shell .panel,
+    body.dashboard-shell .stat-card {
+      -webkit-backdrop-filter:blur(10px) saturate(116%);
+      backdrop-filter:blur(10px) saturate(116%);
+    }
+  }
+}
+
+/* Accessibility modes favour clarity over translucency and motion. */
+@media (prefers-reduced-transparency:reduce) {
+  .sidebar,
+  .topbar,
+  .panel,
+  .summary-card,
+  .stat-card,
+  .profile-card,
+  .modal,
+  html body .filter-combobox-menu,
+  html[data-theme] body.dashboard-shell .panel,
+  html[data-theme] body.dashboard-shell .stat-card,
+  html[data-theme] body.dashboard-shell .stat-card.blue,
+  html[data-theme] body.dashboard-shell .stat-card.green,
+  html[data-theme] body.dashboard-shell .stat-card.gold,
+  html[data-theme] body.dashboard-shell .stat-card.red,
+  html[data-theme] body.dashboard-shell .stat-card.purple {
+    background:var(--bg2);
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+}
+html[data-color-vision="contrast"] :is(.sidebar,.topbar,.panel,.summary-card,.stat-card,.profile-card,.modal),
+html[data-color-vision="contrast"] body .filter-combobox-menu,
+html[data-color-vision="contrast"] body.dashboard-shell .panel,
+html[data-color-vision="contrast"] body.dashboard-shell .stat-card,
+html[data-color-vision="contrast"] body.dashboard-shell .stat-card.blue,
+html[data-color-vision="contrast"] body.dashboard-shell .stat-card.green,
+html[data-color-vision="contrast"] body.dashboard-shell .stat-card.gold,
+html[data-color-vision="contrast"] body.dashboard-shell .stat-card.red,
+html[data-color-vision="contrast"] body.dashboard-shell .stat-card.purple {
+  background:var(--bg2);
+  border-color:var(--border);
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+  box-shadow:0 0 0 1px var(--border);
+}
+@media (prefers-reduced-motion:reduce) {
+  .topbar::after { display:none; }
+}
