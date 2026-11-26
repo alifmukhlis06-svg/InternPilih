@@ -641,6 +641,8 @@ a { color:inherit; }
 .oauth-divider { display:flex; align-items:center; gap:12px; margin:16px 0; color:var(--text2); font-size:12px; }
 .oauth-divider::before, .oauth-divider::after { content:""; flex:1; border-top:1px solid var(--border); }
 .google-login-btn { width:100%; justify-content:center; }
+.student-registration-prompt:not([hidden]) { display:flex; flex-direction:column; align-items:center; gap:5px; margin-top:16px; text-align:center; }
+.student-registration-prompt p { color:var(--text2); font-size:12px; line-height:1.5; }
 
 /* Badges */
 .badge { display:inline-flex; align-items:center; gap:4px; padding:4px 9px; border:1px solid transparent; border-radius:var(--radius-small); font-size:11px; font-weight:700; white-space:nowrap; }
