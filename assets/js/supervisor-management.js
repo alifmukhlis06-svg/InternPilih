@@ -43,7 +43,7 @@
     for (const student of students.filter(s => (filter==='all' || (filter==='assigned' ? Boolean(s.academic_supervisor_id) : !s.academic_supervisor_id)) && [s.name,s.matric_id].some(v=>String(v||'').toLowerCase().includes(search)))) {
       const label=node('label','', 'student-choice'); const checkbox=document.createElement('input'); checkbox.type='checkbox'; checkbox.value=student.user_id; checkbox.checked=selected.has(String(student.user_id));
       checkbox.addEventListener('change',()=>checkbox.checked ? selected.add(checkbox.value) : selected.delete(checkbox.value));
-      const info=node('span',student.name + ' · ' + (student.matric_id || 'No Student ID'));
+      const info=node('span',student.name + ' · ' + (student.matric_id || 'No Student ID') + (student.programme_code ? ' · ' + student.programme_code : ''));
       info.append(node('small',' · '+(student.supervisor_name || 'Unassigned')));
       label.append(checkbox,info); list.append(label);
     }
@@ -51,7 +51,7 @@
   }
   async function load() {
     const data=await request('list'); supervisors=data.supervisors; students=data.students;
-    byId('supervisor-scope').textContent=`${data.scope.campus} → ${data.scope.faculty} → ${data.scope.programme}`;
+    byId('supervisor-scope').textContent=`${data.scope.campus} → ${data.scope.faculty} → ${data.scope.programme}${data.scope.programme_codes?.length ? ' · '+data.scope.programme_codes.join(', ') : ''}`;
     render();
     const history=await request('history'); const target=byId('assignment-history'); target.replaceChildren();
     for (const row of history.history) target.append(node('div',`${row.student_name}: ${row.previous_name || 'Unassigned'} → ${row.new_name || 'Unassigned'} · ${new Date(row.changed_at).toLocaleString()}${row.internship_intake ? ' · '+row.internship_intake : ''}`,'supervisor-history'));

@@ -30,6 +30,21 @@ function programmeMatchKeys(string $programme): array {
     return array_values(array_unique($keys));
 }
 
+function studentProgrammeMatchKeys(array $user): array {
+    $keys = programmeMatchKeys((string)($user['programme'] ?? ''));
+    $stmt = db()->prepare('SELECT s.programme_code,p.name,p.display_name FROM students s LEFT JOIN academic_programmes p ON p.code=s.programme_code WHERE s.user_id=?');
+    $stmt->execute([(int)$user['id']]);
+    $student = $stmt->get_result()->fetch_assoc();
+    if ($student && $student['programme_code']) {
+        $keys[] = normaliseProgrammeValue($student['programme_code']);
+        foreach ([$student['name'],$student['display_name']] as $name) if ($name) $keys = array_merge($keys,programmeMatchKeys($name));
+        $aliases = db()->prepare('SELECT alias FROM academic_programme_aliases WHERE programme_code=?');
+        $aliases->execute([$student['programme_code']]);
+        foreach ($aliases->get_result()->fetch_all() as $alias) $keys = array_merge($keys,programmeMatchKeys($alias['alias']));
+    }
+    return array_values(array_unique($keys));
+}
+
 function validatedOpportunityInput(array $input): array {
     $companyId = (int)($input['company_id'] ?? 0);
     $position = trim((string)($input['position_title'] ?? ''));
@@ -61,7 +76,8 @@ function validatedOpportunityInput(array $input): array {
     foreach ($programmes as $programme) {
         $label = trim((string)$programme);
         $matchKeys = programmeMatchKeys($label);
-        $normalised = $matchKeys ? (string)end($matchKeys) : '';
+        $normalised = preg_match('/^([A-Z]{1,4}[0-9]{2,3})\s+[—–-]/u', $label, $codeMatch)
+            ? normaliseProgrammeValue($codeMatch[1]) : ($matchKeys ? (string)end($matchKeys) : '');
         if ($label === '' || $normalised === '') continue;
         if (strlen($label) > 180) respondError('An eligible programme is too long.', 422, 'validation_failed');
         $eligible[$normalised] = $label;
@@ -123,7 +139,7 @@ if ($method === 'GET') {
     $statement->execute();
     $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
     $programmeKeys = $user['role'] === 'student'
-        ? programmeMatchKeys((string)($user['programme'] ?? ''))
+        ? studentProgrammeMatchKeys($user)
         : [];
     $today = new DateTimeImmutable('today');
     $opportunities = [];

@@ -3,6 +3,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/storage-client.php';
 require_once __DIR__ . '/mailer.php';
+require_once __DIR__ . '/academic-catalogue-data.php';
 
 function registrationIdentity(): array {
     $identity = $_SESSION['registration_identity'] ?? null;
@@ -24,54 +25,35 @@ function registrationRequestFor(array $identity, bool $lock = false): ?array {
 }
 
 function registrationOptions(): array {
-    $rows = db()->query("SELECT DISTINCT campus, faculty, programme FROM (
-        SELECT campus, faculty, programme FROM students
-        UNION ALL SELECT campus, faculty, programme FROM admins
-    ) academic WHERE nullif(btrim(campus), '') IS NOT NULL
-      AND nullif(btrim(faculty), '') IS NOT NULL
-      AND nullif(btrim(programme), '') IS NOT NULL
-    ORDER BY campus, faculty, programme");
-    return $rows instanceof DatabaseResult ? $rows->fetch_all() : [];
+    return academicCatalogueData();
 }
 
-function coordinatorForProgramme(string $campus, string $faculty, string $programme): ?int {
-    $stmt = db()->prepare("SELECT a.user_id FROM admins a JOIN users u ON u.id = a.user_id
+function canonicalAcademicSelection(string $level, string $campus, string $faculty, string $programme, string $code): array {
+    $stmt = db()->prepare('SELECT c.name AS campus,p.name AS programme,p.unit_name AS faculty,p.level
+        FROM academic_campuses c CROSS JOIN academic_programmes p
+        WHERE lower(c.name)=lower(?) AND p.code=? LIMIT 1');
+    $stmt->execute([$campus, strtoupper($code)]);
+    $row = $stmt->get_result()->fetch_assoc();
+    if (!$row || $row['faculty'] !== $faculty || $row['programme'] !== $programme || $row['level'] !== $level) {
+        respondError('Choose a study level, campus, faculty or college, and programme from the UiTM catalogue.', 422, 'invalid_academic_selection');
+    }
+    return [$row['campus'], $row['faculty'], $row['programme'], strtoupper($code)];
+}
+
+function coordinatorForProgramme(string $campus, string $faculty, string $programme, string $programmeCode = ''): ?int {
+    $stmt = db()->prepare("SELECT user_id FROM (
+      SELECT a.user_id FROM admins a JOIN users u ON u.id = a.user_id
         WHERE u.role = 'admin' AND lower(btrim(a.campus)) = lower(?)
           AND lower(btrim(a.faculty)) = lower(?) AND lower(btrim(a.programme)) = lower(?)
-        ORDER BY a.user_id LIMIT 2");
-    $stmt->execute([$campus, $faculty, $programme]);
+      UNION
+      SELECT a.user_id FROM academic_coordinator_mappings m
+        JOIN admins a ON a.user_id=m.admin_user_id JOIN users u ON u.id=a.user_id
+        WHERE u.role='admin' AND m.programme_code=? AND m.campus_name=?
+          AND a.campus=m.campus_name AND a.faculty=m.admin_faculty AND a.programme=m.admin_programme
+    ) matched ORDER BY user_id LIMIT 2");
+    $stmt->execute([$campus, $faculty, $programme, $programmeCode, $campus]);
     $rows = $stmt->get_result()->fetch_all();
     return count($rows) === 1 ? (int)$rows[0]['user_id'] : null;
-}
-
-function registrationFile(): ?array {
-    $file = $_FILES['document'] ?? null;
-    if ($file === null || (is_array($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE)) {
-        return null;
-    }
-    if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
-        || !is_uploaded_file((string)($file['tmp_name'] ?? ''))) {
-        respondError('The verification document could not be uploaded.', 422, 'document_upload');
-    }
-    $size = (int)($file['size'] ?? 0);
-    if ($size < 1 || $size > 4194304) respondError('The document must be 4 MB or smaller.', 422, 'document_size');
-    $extension = strtolower(pathinfo((string)($file['name'] ?? ''), PATHINFO_EXTENSION));
-    $types = ['pdf' => 'application/pdf', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png'];
-    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-    if (!isset($types[$extension]) || $mime !== $types[$extension]) {
-        respondError('Upload a valid PDF, JPG, or PNG document.', 422, 'document_type');
-    }
-    if ($mime === 'application/pdf') {
-        $bytes = file_get_contents($file['tmp_name']);
-        if (!is_string($bytes) || !str_starts_with($bytes, '%PDF-')
-            || !str_contains(substr($bytes, -2048), '%%EOF')
-            || preg_match('#/(?:JavaScript|JS|OpenAction|Launch)\b#i', $bytes)) {
-            respondError('The PDF could not be accepted.', 422, 'document_content');
-        }
-    } elseif (getimagesize($file['tmp_name']) === false) {
-        respondError('The image could not be accepted.', 422, 'document_content');
-    }
-    return [$file, $mime, $size, $extension];
 }
 
 function registrationCoordinator(): array {
@@ -101,7 +83,7 @@ $action = strtolower(trim((string)($_GET['action'] ?? '')));
 
 if ($method === 'GET' && $action === 'options') {
     registrationIdentity();
-    respond(['academic_options' => registrationOptions()]);
+    respond(['academic_catalogue' => registrationOptions()]);
 }
 if ($method === 'GET' && $action === 'status') {
     $identity = registrationIdentity();
@@ -118,16 +100,18 @@ if ($method === 'POST' && $action === 'submit') {
     $identity = registrationIdentity();
     $name = trim((string)($_POST['legal_name'] ?? ''));
     $phone = trim((string)($_POST['phone'] ?? ''));
+    $studyLevel = strtolower(trim((string)($_POST['study_level'] ?? '')));
     $campus = trim((string)($_POST['campus'] ?? ''));
     $faculty = trim((string)($_POST['faculty'] ?? ''));
     $programme = trim((string)($_POST['programme'] ?? ''));
+    $programmeCode = strtoupper(trim((string)($_POST['programme_code'] ?? '')));
     $semester = filter_var($_POST['semester'] ?? null, FILTER_VALIDATE_INT);
     $cgpaInput = trim((string)($_POST['cgpa'] ?? ''));
-    $cgpa = $cgpaInput === '' ? null : filter_var($cgpaInput, FILTER_VALIDATE_FLOAT);
+    $cgpa = preg_match('/^(?:[0-3](?:\.\d{1,2})?|4(?:\.0{1,2})?)$/', $cgpaInput) ? (float)$cgpaInput : null;
     if ($name === '' || mb_strlen($name) > 150 || !preg_match('/^\+?[0-9 ()-]{7,30}$/', $phone)
-        || !$semester || $semester < 1 || $semester > 12
-        || ($cgpaInput !== '' && ($cgpa === false || $cgpa < 0 || $cgpa > 4))) {
-        respondError('Check your name, phone number, semester, and CGPA.', 422, 'invalid_profile');
+        || !in_array($studyLevel, ['diploma','degree'], true) || !$semester || $semester < 1 || $semester > 12
+        || $cgpa === null) {
+        respondError('Check your name, phone number, level of study, semester, and CGPA (0.00 to 4.00, up to two decimals).', 422, 'invalid_profile');
     }
     foreach ([[$campus,100],[$faculty,100],[$programme,150]] as [$value,$limit]) {
         if (mb_strlen($value) < 2 || mb_strlen($value) > $limit
@@ -135,10 +119,8 @@ if ($method === 'POST' && $action === 'submit') {
             respondError('Enter a valid campus, faculty, and programme.',422,'invalid_academic_selection');
         }
     }
-    $document = registrationFile();
+    [$campus,$faculty,$programme,$programmeCode] = canonicalAcademicSelection($studyLevel,$campus,$faculty,$programme,$programmeCode);
     $database = db();
-    $uploadedPath = null;
-    $oldPath = null;
     try {
         $database->begin_transaction();
         $existingUser = $database->prepare('SELECT id FROM users WHERE lower(btrim(email)) = ? OR google_auth_user_id = ? OR google_subject = ? LIMIT 1 FOR UPDATE');
@@ -158,7 +140,7 @@ if ($method === 'POST' && $action === 'submit') {
             $database->rollback();
             respondError('This registration request cannot be submitted again.', 409, 'duplicate_request');
         }
-        $coordinatorId = coordinatorForProgramme($campus, $faculty, $programme);
+        $coordinatorId = coordinatorForProgramme($campus, $faculty, $programme, $programmeCode);
         if ($coordinatorId !== null) {
             $canonical = $database->prepare('SELECT campus,faculty,programme FROM admins WHERE user_id=?');
             $canonical->execute([$coordinatorId]);
@@ -174,18 +156,6 @@ if ($method === 'POST' && $action === 'submit') {
         $documentType = $existing['document_content_type'] ?? null;
         $documentBytes = $existing['document_bytes'] ?? null;
         $documentSha = $existing['document_sha256'] ?? null;
-        if ($document !== null) {
-            [$file, $mime, $size, $extension] = $document;
-            $documentSha = hash_file('sha256', $file['tmp_name']);
-            if ($documentSha === false) throw new RuntimeException('Document checksum failed.');
-            $uploadedPath = 'registration/' . bin2hex(random_bytes(16)) . '/' . bin2hex(random_bytes(12)) . '.' . $extension;
-            if (storageConfiguration()['driver'] !== 'supabase') throw new RuntimeException('Private Supabase Storage is required.');
-            uploadPrivateDocument($uploadedPath, $file['tmp_name'], $mime);
-            $documentPath = $uploadedPath;
-            $documentName = mb_substr(basename((string)$file['name']), 0, 150);
-            $documentType = $mime;
-            $documentBytes = $size;
-        }
         // The password is unknown to everyone; verified email recovery can set one later.
         $unusablePassword = password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT);
         $insertUser = $database->prepare("INSERT INTO users (name,email,phone,password,role,google_auth_user_id,google_subject)
@@ -193,51 +163,51 @@ if ($method === 'POST' && $action === 'submit') {
         $insertUser->execute([$name, $identity['email'], $phone, $unusablePassword,
             $identity['google_auth_user_id'], $identity['google_subject']]);
         $userId = (int)$insertUser->get_result()->fetch_assoc()['id'];
-        $insertStudent = $database->prepare('INSERT INTO students (user_id,matric_id,campus,faculty,programme,coordinator_id,cgpa) VALUES (?,?,?,?,?,?,?)');
-        $insertStudent->execute([$userId, $identity['matric_id'], $campus, $faculty, $programme, $coordinatorId, $cgpa]);
+        $insertStudent = $database->prepare('INSERT INTO students (user_id,matric_id,campus,faculty,programme,programme_code,study_level,coordinator_id,cgpa) VALUES (?,?,?,?,?,?,?,?,?)');
+        $insertStudent->execute([$userId, $identity['matric_id'], $campus, $faculty, $programme, $programmeCode, $studyLevel, $coordinatorId, $cgpa]);
         if ($existing) {
-            if ($uploadedPath) $oldPath = $existing['document_path'];
-            $stmt = $database->prepare("UPDATE student_registration_requests SET legal_name=?, phone=?, campus=?, faculty=?, programme=?,
-                semester=?, cgpa=?, coordinator_id=?, document_path=?, document_name=?, document_content_type=?, document_bytes=?,
+            $stmt = $database->prepare("UPDATE student_registration_requests SET legal_name=?, phone=?, campus=?, faculty=?, programme=?, programme_code=?,
+                study_level=?, semester=?, cgpa=?, coordinator_id=?, document_path=?, document_name=?, document_content_type=?, document_bytes=?,
                 document_sha256=?, status='registered', approved_user_id=?, review_reason=NULL, reviewed_at=NULL, reviewed_by=NULL,
                 submitted_at=now(), updated_at=now() WHERE id=?");
-            $stmt->execute([$name, $phone, $campus, $faculty, $programme, $semester, $cgpa, $coordinatorId,
+            $stmt->execute([$name, $phone, $campus, $faculty, $programme, $programmeCode, $studyLevel, $semester, $cgpa, $coordinatorId,
                 $documentPath, $documentName, $documentType, $documentBytes, $documentSha, $userId, $existing['id']]);
         } else {
             $stmt = $database->prepare("INSERT INTO student_registration_requests
                 (google_auth_user_id, google_subject, google_profile_name, google_picture_url, email, matric_id, legal_name, phone,
-                 campus, faculty, programme, semester, cgpa, coordinator_id, document_path, document_name,
+                 campus, faculty, programme, programme_code, study_level, semester, cgpa, coordinator_id, document_path, document_name,
                  document_content_type, document_bytes, document_sha256, status, approved_user_id)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'registered',?)");
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'registered',?)");
             $stmt->execute([$identity['google_auth_user_id'], $identity['google_subject'], $identity['name'], $identity['picture'], $identity['email'],
-                $identity['matric_id'], $name, $phone, $campus, $faculty, $programme, $semester, $cgpa,
+                $identity['matric_id'], $name, $phone, $campus, $faculty, $programme, $programmeCode, $studyLevel, $semester, $cgpa,
                 $coordinatorId, $documentPath, $documentName, $documentType, $documentBytes, $documentSha, $userId]);
         }
         $database->commit();
-        if ($oldPath) { try { deletePrivateDocument($oldPath); } catch (Throwable $ignored) {} }
         unset($_SESSION['registration_identity']);
         $user = ['id' => $userId, 'name' => $name, 'email' => $identity['email'], 'phone' => $phone,
             'role' => 'student', 'matric_id' => $identity['matric_id'], 'campus' => $campus,
-            'faculty' => $faculty, 'programme' => $programme, 'cgpa' => $cgpa,
+            'faculty' => $faculty, 'programme' => $programme, 'study_level' => $studyLevel, 'cgpa' => $cgpa,
             'coordinator_id' => $coordinatorId];
         establishAuthenticatedSession($user, 'google');
         respond(['success' => true, 'status' => 'registered', 'user' => $user, 'redirect' => '/student/dashboard.html']);
     } catch (Throwable $error) {
         if ($database->inTransaction()) $database->rollback();
-        if ($uploadedPath) { try { deletePrivateDocument($uploadedPath); } catch (Throwable $ignored) {} }
         error_log('InternPilih student registration submission failed: ' . $error->getMessage());
         respondError('Registration could not be submitted. Please try again.', 503, 'registration_unavailable');
     }
 }
 if ($method === 'GET' && $action === 'requests') {
     $coordinator = registrationCoordinator();
-    $stmt = db()->prepare("SELECT r.id, r.legal_name, r.matric_id, r.email, r.campus, r.faculty, r.programme,
+    $stmt = db()->prepare("SELECT r.id, r.legal_name, r.matric_id, r.email, r.campus, r.faculty, r.programme, r.programme_code,
         r.semester, r.cgpa, r.phone, r.document_name, r.coordinator_id, r.status, r.review_reason, r.submitted_at, r.reviewed_at
         FROM student_registration_requests r JOIN admins a ON a.user_id = ?
         WHERE (r.coordinator_id = a.user_id OR (r.coordinator_id IS NULL AND r.status IN ('pending_assignment','registered')))
           AND lower(btrim(a.campus)) = lower(btrim(r.campus))
-          AND lower(btrim(a.faculty)) = lower(btrim(r.faculty))
-          AND lower(btrim(a.programme)) = lower(btrim(r.programme))
+          AND ((lower(btrim(a.faculty)) = lower(btrim(r.faculty))
+                AND lower(btrim(a.programme)) = lower(btrim(r.programme)))
+            OR EXISTS (SELECT 1 FROM academic_coordinator_mappings m
+                WHERE m.admin_user_id=a.user_id AND m.programme_code=r.programme_code
+                  AND m.campus_name=r.campus AND m.admin_faculty=a.faculty AND m.admin_programme=a.programme))
         ORDER BY r.submitted_at DESC");
     $stmt->execute([(int)$coordinator['id']]);
     respond(['requests' => $stmt->get_result()->fetch_all()]);
@@ -252,7 +222,7 @@ if ($method === 'POST' && $action === 'claim') {
         $stmt = $database->prepare("SELECT * FROM student_registration_requests WHERE id=? AND status IN ('pending_assignment','registered') AND coordinator_id IS NULL FOR UPDATE");
         $stmt->execute([$id]);
         $request = $stmt->get_result()->fetch_assoc();
-        if (!$request || coordinatorForProgramme($request['campus'], $request['faculty'], $request['programme']) !== (int)$coordinator['id']) {
+        if (!$request || coordinatorForProgramme($request['campus'], $request['faculty'], $request['programme'], (string)($request['programme_code'] ?? '')) !== (int)$coordinator['id']) {
             $database->rollback();
             respondError('This request is outside your academic scope.', 403, 'unassigned_request');
         }
@@ -276,7 +246,7 @@ if ($method === 'POST' && $action === 'claim') {
 }
 if ($method === 'GET' && $action === 'students') {
     $coordinator = registrationCoordinator();
-    $stmt = db()->prepare("SELECT u.id, u.name, u.email, s.matric_id, s.campus, s.faculty, s.programme, s.cgpa,
+    $stmt = db()->prepare("SELECT u.id, u.name, u.email, s.matric_id, s.campus, s.faculty, s.programme, s.programme_code, s.cgpa,
         r.semester FROM students s JOIN users u ON u.id=s.user_id
         LEFT JOIN student_registration_requests r ON r.approved_user_id=u.id
         JOIN admins a ON a.user_id=?
@@ -300,7 +270,7 @@ if ($method === 'GET' && $action === 'document') {
         && hash_equals(strtolower($request['email']), $identity['email']))
         || ($user && $user['role'] === 'student' && (int)$request['approved_user_id'] === (int)$user['id'])
         || ($user && $user['role'] === 'admin' && (int)$request['coordinator_id'] === (int)$user['id']
-            && coordinatorForProgramme($request['campus'], $request['faculty'], $request['programme']) === (int)$user['id']));
+            && coordinatorForProgramme($request['campus'], $request['faculty'], $request['programme'], (string)($request['programme_code'] ?? '')) === (int)$user['id']));
     if (!$allowed || !$request['document_path']) respondError('Document not found.', 404, 'document_not_found');
     try {
         $bytes = downloadPrivateDocumentBytes($request['document_path']);
@@ -333,7 +303,7 @@ if ($method === 'POST' && $action === 'review') {
         $stmt = $database->prepare("SELECT * FROM student_registration_requests WHERE id=? AND coordinator_id=? AND status='pending' FOR UPDATE");
         $stmt->execute([$id, (int)$coordinator['id']]);
         $request = $stmt->get_result()->fetch_assoc();
-        if (!$request || coordinatorForProgramme($request['campus'], $request['faculty'], $request['programme']) !== (int)$coordinator['id']) {
+        if (!$request || coordinatorForProgramme($request['campus'], $request['faculty'], $request['programme'], (string)($request['programme_code'] ?? '')) !== (int)$coordinator['id']) {
             $database->rollback();
             respondError('This request is unavailable for your review.', 403, 'unassigned_request');
         }
@@ -353,9 +323,9 @@ if ($method === 'POST' && $action === 'review') {
                 VALUES (?,?,?,?,'student',?,?) RETURNING id");
             $insertUser->execute([$request['legal_name'], $request['email'], $request['phone'], $unusablePassword, $request['google_auth_user_id'], $request['google_subject']]);
             $approvedUserId = (int)$insertUser->get_result()->fetch_assoc()['id'];
-            $insertStudent = $database->prepare('INSERT INTO students (user_id,matric_id,campus,faculty,programme,coordinator_id,cgpa) VALUES (?,?,?,?,?,?,?)');
+            $insertStudent = $database->prepare('INSERT INTO students (user_id,matric_id,campus,faculty,programme,programme_code,study_level,coordinator_id,cgpa) VALUES (?,?,?,?,?,?,?,?,?)');
             $insertStudent->execute([$approvedUserId, $request['matric_id'], $request['campus'], $request['faculty'],
-                $request['programme'], (int)$coordinator['id'], $request['cgpa']]);
+                $request['programme'], $request['programme_code'] ?? null, $request['study_level'] ?? null, (int)$coordinator['id'], $request['cgpa']]);
         }
         $status = $decision === 'approve' ? 'approved' : ($decision === 'reject' ? 'rejected' : 'correction_required');
         $update = $database->prepare('UPDATE student_registration_requests SET status=?, review_reason=?, reviewed_at=now(), reviewed_by=?, approved_user_id=?, updated_at=now() WHERE id=?');

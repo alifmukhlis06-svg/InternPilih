@@ -12,27 +12,27 @@
   <header class="registration-header"><div class="registration-brand"><i class="fas fa-graduation-cap"></i> InternPilih</div><button type="button" class="btn btn-outline" data-registration-logout>Sign out</button></header>
   <section class="registration-card">
     <h1>Complete Your Student Profile</h1>
-    <p class="registration-intro">Confirm your details to create your student account. Search the existing campus, faculty and programme choices. If yours is missing, enter its full name. You can continue while a Programme Coordinator is assigned later.</p>
+    <p class="registration-intro">Confirm your details to create your student account. Search by campus, faculty or college, programme name, or programme code. You can continue while a Programme Coordinator is assigned later.</p>
     <div class="google-identity"><img id="google-picture" alt="Google profile picture" hidden><div><strong id="google-name">Loading Google profile</strong><span id="google-email"></span></div></div>
     <div id="correction-note" class="registration-status" hidden></div>
-    <form id="registration-form" enctype="multipart/form-data">
+    <form id="registration-form">
       <div class="registration-grid">
         <div class="registration-field"><label for="legal-name">Full legal name</label><input id="legal-name" name="legal_name" maxlength="150" autocomplete="name" required></div>
         <div class="registration-field"><label for="phone">Phone number</label><input id="phone" name="phone" type="tel" maxlength="30" autocomplete="tel" required></div>
         <div class="registration-field"><label for="email">UiTM email</label><input id="email" type="email" readonly></div>
         <div class="registration-field"><label for="student-id">Student ID</label><input id="student-id" readonly></div>
-        <div class="registration-field"><label for="campus">Campus</label><input id="campus" name="campus" list="campus-list" autocomplete="off" required><datalist id="campus-list"></datalist></div>
-        <div class="registration-field"><label for="faculty">Faculty</label><input id="faculty" name="faculty" list="faculty-list" autocomplete="off" required><datalist id="faculty-list"></datalist></div>
-        <div class="registration-field wide"><label for="programme">Programme</label><input id="programme" name="programme" list="programme-list" autocomplete="off" required><datalist id="programme-list"></datalist></div>
+        <div class="registration-field wide"><span class="registration-level-label" id="study-level-label">Level of study</span><div class="registration-level" role="group" aria-labelledby="study-level-label"><label><input type="radio" name="study_level" value="diploma" required><span>Diploma</span></label><label><input type="radio" name="study_level" value="degree" required><span>Degree</span></label></div></div>
+        <div class="registration-field"><label for="campus">Campus</label><input id="campus" name="campus" role="combobox" aria-autocomplete="list" aria-controls="campus-list" aria-expanded="false" autocomplete="off" placeholder="Choose study level first" disabled required><div id="campus-list" class="registration-options" role="listbox" hidden></div></div>
+        <div class="registration-field"><label for="faculty">Faculty or college</label><input id="faculty" name="faculty" role="combobox" aria-autocomplete="list" aria-controls="faculty-list" aria-expanded="false" autocomplete="off" placeholder="Choose campus first" disabled required><div id="faculty-list" class="registration-options" role="listbox" hidden></div></div>
+        <div class="registration-field wide"><label for="programme">Programme</label><input id="programme" role="combobox" aria-autocomplete="list" aria-controls="programme-list" aria-expanded="false" autocomplete="off" placeholder="Choose faculty or college first" disabled required><input id="programme-name" name="programme" type="hidden"><input id="programme-code" name="programme_code" type="hidden"><div id="programme-list" class="registration-options" role="listbox" hidden></div><span id="academic-note" class="registration-hint" aria-live="polite"></span></div>
         <div class="registration-field"><label for="semester">Current semester</label><select id="semester" name="semester" required><option value="">Choose semester</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select></div>
-        <div class="registration-field"><label for="cgpa">CGPA (optional)</label><input id="cgpa" name="cgpa" type="number" min="0" max="4" step="0.01" inputmode="decimal"></div>
-        <div class="registration-field wide"><label for="document">Student verification document (optional)</label><input id="document" name="document" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"><span class="registration-hint">If available, attach a Student ID card, Student Portal screenshot, or student status confirmation. PDF, JPG, or PNG; maximum 4 MB. Never provide your Student Portal password.</span></div>
+        <div class="registration-field"><label for="cgpa">CGPA</label><input id="cgpa" name="cgpa" type="number" min="0" max="4" step="0.01" inputmode="decimal" required></div>
       </div>
       <div class="registration-actions"><button id="submit-registration" type="submit" class="btn btn-primary">Create Student Account</button></div>
       <p id="registration-message" class="registration-message" role="alert"></p>
     </form>
   </section>
 </div></main>
-<script src="assets/js/google-auth.js"></script><script src="assets/js/student-registration.js?v=20261127-self-register1"></script>
+<script src="assets/js/google-auth.js"></script><script src="assets/js/student-registration.js?v=20261127-academic2"></script>
 </body>
 </html>

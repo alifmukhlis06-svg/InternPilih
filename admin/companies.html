@@ -138,7 +138,7 @@
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label" for="oIntake">Intake</label><input class="form-control" id="oIntake" maxlength="100" placeholder="e.g. March 2027"></div>
-        <div class="form-group"><label class="form-label" for="oProgrammes">Eligible Programmes (one per line)</label><textarea class="form-control" id="oProgrammes" rows="4" placeholder="Netcentric Computing&#10;Information Technology"></textarea></div>
+        <div class="form-group"><label class="form-label" for="oProgrammeSearch">Find an eligible programme</label><input class="form-control" id="oProgrammeSearch" type="search" placeholder="Search name or code"><select class="form-control" id="oProgrammeMatches" size="4" aria-label="Matching programmes"></select><button class="btn btn-outline btn-sm" type="button" id="addCatalogueProgramme">Add selected programme</button><label class="form-label" for="oProgrammes">Eligible Programmes (one per line)</label><textarea class="form-control" id="oProgrammes" rows="4" placeholder="Choose above or enter a legacy programme name"></textarea></div>
       </div>
       <div class="form-group"><label class="form-label" for="oDescription">Description</label><textarea class="form-control" id="oDescription" rows="3"></textarea></div>
     </div>
@@ -169,6 +169,7 @@ let opportunities = [];
 let editingCompanyId = null;
 let editingOpportunityId = null;
 let deleteTarget = null;
+let academicProgrammes = [];
 
 async function apiRequest(url, options = {}) {
   const response = await fetch(url, options);
@@ -186,11 +187,39 @@ async function loadManagementData() {
     populateCompanyOptions();
     renderCompanies();
     renderOpportunities();
+    loadAcademicProgrammes();
   } catch (error) {
     document.getElementById('compBody').innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--danger);">${escapeHtml(error.message)}</td></tr>`;
     document.getElementById('opportunityBody').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);">${escapeHtml(error.message)}</td></tr>`;
   }
 }
+
+async function loadAcademicProgrammes() {
+  try {
+    const data = await apiRequest('../api/academic-catalogue.php', {credentials:'same-origin',cache:'no-store'});
+    academicProgrammes = data.academic_catalogue.programmes;
+    filterAcademicProgrammes();
+  } catch (_) { academicProgrammes = []; }
+}
+function filterAcademicProgrammes() {
+  const query = document.getElementById('oProgrammeSearch').value.trim().toLocaleLowerCase();
+  const select = document.getElementById('oProgrammeMatches');
+  select.replaceChildren();
+  for (const p of academicProgrammes.filter(p => [p.code,p.name,p.display_name,...(p.aliases||[])].join(' ').toLocaleLowerCase().includes(query)).slice(0,60)) {
+    const option = document.createElement('option'); option.value = p.code; option.textContent = `${p.code} — ${p.display_name||p.name}`; select.append(option);
+  }
+}
+document.getElementById('oProgrammeSearch').addEventListener('input', filterAcademicProgrammes);
+document.getElementById('addCatalogueProgramme').addEventListener('click', () => {
+  const select = document.getElementById('oProgrammeMatches');
+  const chosen = academicProgrammes.find(p => p.code === select.value);
+  if (!chosen) return;
+  const textarea = document.getElementById('oProgrammes');
+  const lines = textarea.value.split(/\n|;/).map(value => value.trim()).filter(Boolean);
+  const label = `${chosen.code} — ${chosen.display_name||chosen.name}`;
+  if (!lines.some(line => line.startsWith(chosen.code+' '))) lines.push(label);
+  textarea.value = lines.join('\n');
+});
 
 function populateCompanyOptions() {
   document.getElementById('oCompany').innerHTML = companies.map(company =>

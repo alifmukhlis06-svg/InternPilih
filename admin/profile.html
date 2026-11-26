@@ -93,6 +93,20 @@
 function showToast(msg){const t=document.getElementById('toast');document.getElementById('toastMsg').textContent=msg;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',3000);}
 </script>
 <script src="../assets/js/app.js?v=20261121-profile-readonly1"></script>
+<script>
+Promise.resolve(window.authReady).then(async user => {
+  if (user?.role !== 'admin') return;
+  const response = await fetch('../api/academic-catalogue.php', {credentials:'same-origin',cache:'no-store'});
+  if (!response.ok) return;
+  const data = (await response.json()).academic_catalogue;
+  const mapped = data.programmes.filter(programme => data.my_coordinator_codes.includes(programme.code));
+  if (mapped.length) {
+    const value = mapped.map(programme => `${programme.code} — ${programme.display_name||programme.name}`).join(', ');
+    document.getElementById('coordinatorProgramme').textContent = value;
+    document.getElementById('coordinatorCourseSummary').textContent = `Course Coordinator · ${value}`;
+  }
+}).catch(() => {});
+</script>
 </body>
 </html>
 

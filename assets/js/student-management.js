@@ -30,7 +30,7 @@
     const panel=document.createElement('article');panel.className='panel management-card';
     const heading=document.createElement('h3');heading.textContent=row.legal_name||row.name;panel.append(heading);
     const details=document.createElement('div');details.className='management-details';
-    for(const [label,value] of [['Student ID',row.matric_id],['Email',row.email],['Campus',row.campus],['Faculty',row.faculty],['Programme',row.programme],['Semester',row.semester],['CGPA',row.cgpa],['Phone',row.phone],['Status',row.status],['Submitted',row.submitted_at?new Date(row.submitted_at).toLocaleString():null]]){
+    for(const [label,value] of [['Student ID',row.matric_id],['Email',row.email],['Campus',row.campus],['Faculty',row.faculty],['Programme',row.programme_code?row.programme_code+' — '+row.programme:row.programme],['Semester',row.semester],['CGPA',row.cgpa],['Phone',row.phone],['Status',row.status],['Submitted',row.submitted_at?new Date(row.submitted_at).toLocaleString():null]]){
       if(value!==undefined)details.append(detail(label,value));
     }
     panel.append(details);

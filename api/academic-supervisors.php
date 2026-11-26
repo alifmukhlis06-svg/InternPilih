@@ -35,6 +35,9 @@ $action = strtolower(trim((string)($_GET['action'] ?? 'list')));
 $scope = supervisorScopeParams($coordinator);
 
 if ($method === 'GET' && $action === 'list') {
+    $mapped = db()->prepare('SELECT programme_code FROM academic_coordinator_mappings WHERE admin_user_id=? AND campus_name=? ORDER BY programme_code');
+    $mapped->execute([$coordinator['id'],$coordinator['scope']['campus']]);
+    $coordinator['scope']['programme_codes'] = array_column($mapped->get_result()->fetch_all(), 'programme_code');
     $stmt = db()->prepare("SELECT v.id,v.name,v.staff_id,v.email,v.phone,v.campus,v.faculty,v.programme,
         v.email_approved_for_contact,v.created_at,v.updated_at,COUNT(s.user_id) AS student_count
         FROM academic_supervisors v LEFT JOIN students s ON s.academic_supervisor_id=v.id
@@ -42,7 +45,7 @@ if ($method === 'GET' && $action === 'list') {
         GROUP BY v.id ORDER BY v.name");
     $stmt->execute($scope);
     $supervisors = $stmt->get_result()->fetch_all();
-    $students = db()->prepare("SELECT s.user_id,u.name,u.email,s.matric_id,s.academic_supervisor_id,
+    $students = db()->prepare("SELECT s.user_id,u.name,u.email,s.matric_id,s.programme_code,s.academic_supervisor_id,
         s.academic_supervisor_assigned_at,v.name AS supervisor_name
         FROM students s JOIN users u ON u.id=s.user_id
         LEFT JOIN academic_supervisors v ON v.id=s.academic_supervisor_id
