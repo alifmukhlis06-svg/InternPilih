@@ -22,28 +22,21 @@
   function showStatus(data){
     const r=data.request;
     if(!r){location.replace(window.InternPilihGoogleAuth.appPath('/complete-student-profile.html'));return;}
-    const labels={pending:'Pending Coordinator Approval',pending_assignment:'Pending Coordinator Assignment',correction_required:'Correction Required',approved:'Approved',rejected:'Rejected'};
-    $('status-heading').textContent=labels[r.status]||'Registration Status';
-    $('status-copy').textContent=r.status==='pending'||r.status==='pending_assignment'
-      ?'Your UiTM account has been verified. Your registration request is awaiting approval from your internship coordinator.'
-      :r.status==='approved'?'Your student registration has been approved. Sign out and sign in again with UiTM Google to open your dashboard.'
-      :r.status==='correction_required'?'Your coordinator requested a correction. Review the reason and resubmit your profile.'
-      :'Your request was rejected. Contact your internship coordinator if you need help.';
-    $('status-detail').textContent=r.status==='pending_assignment'
-      ?'No matching coordinator is available for this campus, faculty, and programme. Your request remains pending assignment.'
-      :'Submitted: '+new Date(r.submitted_at).toLocaleString();
-    $('status-detail').hidden=false;
-    $('status-reason').textContent=r.review_reason||'';
-    $('status-reason').hidden=!r.review_reason;
-    $('correct-link').hidden=r.status!=='correction_required';
+    $('status-heading').textContent='Complete your student profile';
+    $('status-copy').textContent='Your UiTM Google account is verified. Review your details to finish registering.';
+    $('status-detail').hidden=true;
+    $('status-reason').hidden=true;
+    $('correct-link').textContent='Continue registration';
+    $('correct-link').hidden=false;
+    $('refresh-status').hidden=true;
   }
   async function initialize(){
     try{
       const data=await request('status');
       if(page==='status'){showStatus(data);return;}
       const r=data.request;
-      if(r&&r.status!=='correction_required'){
-        location.replace(window.InternPilihGoogleAuth.appPath('/registration-status.html'));return;
+      if(r&&r.status==='registered'){
+        location.replace(window.InternPilihGoogleAuth.appPath('/login.html'));return;
       }
       $('google-name').textContent=data.identity.name||'UiTM student';
       $('google-email').textContent=data.identity.email;
@@ -58,7 +51,6 @@
       campus.addEventListener('change',()=>refreshFaculty());campus.addEventListener('input',()=>refreshFaculty());
       faculty.addEventListener('change',()=>refreshProgramme());faculty.addEventListener('input',()=>refreshProgramme());
       if(r){
-        $('correction-note').textContent='Correction requested: '+(r.review_reason||'Please check your details.');$('correction-note').hidden=false;
         $('legal-name').value=r.legal_name;$('phone').value=r.phone;campus.value=r.campus;refreshFaculty(false);
         faculty.value=r.faculty;refreshProgramme(false);programme.value=r.programme;
         $('semester').value=String(r.semester);$('cgpa').value=r.cgpa||'';
@@ -68,9 +60,10 @@
         $('registration-message').textContent='Submitting...';
         try{
           if(!campus.value.trim()||!faculty.value.trim()||!programme.value.trim())throw Error('Enter your campus, faculty, and programme.');
-          const file=$('document').files[0];if(!file||file.size>4194304)throw Error('Choose a document no larger than 4 MB.');
-          await request('submit',{method:'POST',body:new FormData(event.currentTarget)});
-          location.replace(window.InternPilihGoogleAuth.appPath('/registration-status.html'));
+          const file=$('document').files[0];if(file&&file.size>4194304)throw Error('Choose a document no larger than 4 MB.');
+          const result=await request('submit',{method:'POST',body:new FormData(event.currentTarget)});
+          sessionStorage.setItem('user',JSON.stringify(result.user));
+          location.replace(window.InternPilihGoogleAuth.appPath(result.redirect||'/student/dashboard.html'));
         }catch(error){$('registration-message').textContent=error.message;button.disabled=false;}
       });
     }catch(error){if(page==='form')$('registration-message').textContent=error.message;else $('status-copy').textContent=error.message;}

@@ -1,5 +1,5 @@
 <?php
-// First-time student requests and coordinator review. All access is server-side.
+// Verified Google student registration and retained coordinator review endpoints.
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/storage-client.php';
 require_once __DIR__ . '/mailer.php';
@@ -44,11 +44,14 @@ function coordinatorForProgramme(string $campus, string $faculty, string $progra
     return count($rows) === 1 ? (int)$rows[0]['user_id'] : null;
 }
 
-function registrationFile(): array {
+function registrationFile(): ?array {
     $file = $_FILES['document'] ?? null;
+    if ($file === null || (is_array($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE)) {
+        return null;
+    }
     if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
         || !is_uploaded_file((string)($file['tmp_name'] ?? ''))) {
-        respondError('Upload a verification document.', 422, 'document_required');
+        respondError('The verification document could not be uploaded.', 422, 'document_upload');
     }
     $size = (int)($file['size'] ?? 0);
     if ($size < 1 || $size > 4194304) respondError('The document must be 4 MB or smaller.', 422, 'document_size');
@@ -132,7 +135,7 @@ if ($method === 'POST' && $action === 'submit') {
             respondError('Enter a valid campus, faculty, and programme.',422,'invalid_academic_selection');
         }
     }
-    [$file, $mime, $size, $extension] = registrationFile();
+    $document = registrationFile();
     $database = db();
     $uploadedPath = null;
     $oldPath = null;
@@ -151,7 +154,7 @@ if ($method === 'POST' && $action === 'submit') {
             respondError('This Student ID is already registered. Contact your coordinator.', 409, 'student_id_already_registered');
         }
         $existing = registrationRequestFor($identity, true);
-        if ($existing && $existing['status'] !== 'correction_required') {
+        if ($existing && in_array($existing['status'], ['registered', 'approved'], true)) {
             $database->rollback();
             respondError('This registration request cannot be submitted again.', 409, 'duplicate_request');
         }
@@ -166,34 +169,59 @@ if ($method === 'POST' && $action === 'submit') {
                 $programme = $academicScope['programme'];
             }
         }
-        $status = $coordinatorId === null ? 'pending_assignment' : 'pending';
-        $sha = hash_file('sha256', $file['tmp_name']);
-        if ($sha === false) throw new RuntimeException('Document checksum failed.');
-        $uploadedPath = 'registration/' . bin2hex(random_bytes(16)) . '/' . bin2hex(random_bytes(12)) . '.' . $extension;
-        if (storageConfiguration()['driver'] !== 'supabase') throw new RuntimeException('Private Supabase Storage is required.');
-        uploadPrivateDocument($uploadedPath, $file['tmp_name'], $mime);
-        $documentName = mb_substr(basename((string)$file['name']), 0, 150);
+        $documentPath = $existing['document_path'] ?? null;
+        $documentName = $existing['document_name'] ?? null;
+        $documentType = $existing['document_content_type'] ?? null;
+        $documentBytes = $existing['document_bytes'] ?? null;
+        $documentSha = $existing['document_sha256'] ?? null;
+        if ($document !== null) {
+            [$file, $mime, $size, $extension] = $document;
+            $documentSha = hash_file('sha256', $file['tmp_name']);
+            if ($documentSha === false) throw new RuntimeException('Document checksum failed.');
+            $uploadedPath = 'registration/' . bin2hex(random_bytes(16)) . '/' . bin2hex(random_bytes(12)) . '.' . $extension;
+            if (storageConfiguration()['driver'] !== 'supabase') throw new RuntimeException('Private Supabase Storage is required.');
+            uploadPrivateDocument($uploadedPath, $file['tmp_name'], $mime);
+            $documentPath = $uploadedPath;
+            $documentName = mb_substr(basename((string)$file['name']), 0, 150);
+            $documentType = $mime;
+            $documentBytes = $size;
+        }
+        // The password is unknown to everyone; verified email recovery can set one later.
+        $unusablePassword = password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT);
+        $insertUser = $database->prepare("INSERT INTO users (name,email,phone,password,role,google_auth_user_id,google_subject)
+            VALUES (?,?,?,?,'student',?,?) RETURNING id");
+        $insertUser->execute([$name, $identity['email'], $phone, $unusablePassword,
+            $identity['google_auth_user_id'], $identity['google_subject']]);
+        $userId = (int)$insertUser->get_result()->fetch_assoc()['id'];
+        $insertStudent = $database->prepare('INSERT INTO students (user_id,matric_id,campus,faculty,programme,coordinator_id,cgpa) VALUES (?,?,?,?,?,?,?)');
+        $insertStudent->execute([$userId, $identity['matric_id'], $campus, $faculty, $programme, $coordinatorId, $cgpa]);
         if ($existing) {
-            $oldPath = $existing['document_path'];
+            if ($uploadedPath) $oldPath = $existing['document_path'];
             $stmt = $database->prepare("UPDATE student_registration_requests SET legal_name=?, phone=?, campus=?, faculty=?, programme=?,
                 semester=?, cgpa=?, coordinator_id=?, document_path=?, document_name=?, document_content_type=?, document_bytes=?,
-                document_sha256=?, status=?, review_reason=NULL, reviewed_at=NULL, reviewed_by=NULL, submitted_at=now(), updated_at=now()
-                WHERE id=? AND status='correction_required'");
+                document_sha256=?, status='registered', approved_user_id=?, review_reason=NULL, reviewed_at=NULL, reviewed_by=NULL,
+                submitted_at=now(), updated_at=now() WHERE id=?");
             $stmt->execute([$name, $phone, $campus, $faculty, $programme, $semester, $cgpa, $coordinatorId,
-                $uploadedPath, $documentName, $mime, $size, $sha, $status, $existing['id']]);
+                $documentPath, $documentName, $documentType, $documentBytes, $documentSha, $userId, $existing['id']]);
         } else {
             $stmt = $database->prepare("INSERT INTO student_registration_requests
                 (google_auth_user_id, google_subject, google_profile_name, google_picture_url, email, matric_id, legal_name, phone,
                  campus, faculty, programme, semester, cgpa, coordinator_id, document_path, document_name,
-                 document_content_type, document_bytes, document_sha256, status)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                 document_content_type, document_bytes, document_sha256, status, approved_user_id)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'registered',?)");
             $stmt->execute([$identity['google_auth_user_id'], $identity['google_subject'], $identity['name'], $identity['picture'], $identity['email'],
                 $identity['matric_id'], $name, $phone, $campus, $faculty, $programme, $semester, $cgpa,
-                $coordinatorId, $uploadedPath, $documentName, $mime, $size, $sha, $status]);
+                $coordinatorId, $documentPath, $documentName, $documentType, $documentBytes, $documentSha, $userId]);
         }
         $database->commit();
         if ($oldPath) { try { deletePrivateDocument($oldPath); } catch (Throwable $ignored) {} }
-        respond(['success' => true, 'status' => $status]);
+        unset($_SESSION['registration_identity']);
+        $user = ['id' => $userId, 'name' => $name, 'email' => $identity['email'], 'phone' => $phone,
+            'role' => 'student', 'matric_id' => $identity['matric_id'], 'campus' => $campus,
+            'faculty' => $faculty, 'programme' => $programme, 'cgpa' => $cgpa,
+            'coordinator_id' => $coordinatorId];
+        establishAuthenticatedSession($user, 'google');
+        respond(['success' => true, 'status' => 'registered', 'user' => $user, 'redirect' => '/student/dashboard.html']);
     } catch (Throwable $error) {
         if ($database->inTransaction()) $database->rollback();
         if ($uploadedPath) { try { deletePrivateDocument($uploadedPath); } catch (Throwable $ignored) {} }
@@ -204,9 +232,9 @@ if ($method === 'POST' && $action === 'submit') {
 if ($method === 'GET' && $action === 'requests') {
     $coordinator = registrationCoordinator();
     $stmt = db()->prepare("SELECT r.id, r.legal_name, r.matric_id, r.email, r.campus, r.faculty, r.programme,
-        r.semester, r.cgpa, r.phone, r.document_name, r.status, r.review_reason, r.submitted_at, r.reviewed_at
+        r.semester, r.cgpa, r.phone, r.document_name, r.coordinator_id, r.status, r.review_reason, r.submitted_at, r.reviewed_at
         FROM student_registration_requests r JOIN admins a ON a.user_id = ?
-        WHERE (r.coordinator_id = a.user_id OR (r.coordinator_id IS NULL AND r.status = 'pending_assignment'))
+        WHERE (r.coordinator_id = a.user_id OR (r.coordinator_id IS NULL AND r.status IN ('pending_assignment','registered')))
           AND lower(btrim(a.campus)) = lower(btrim(r.campus))
           AND lower(btrim(a.faculty)) = lower(btrim(r.faculty))
           AND lower(btrim(a.programme)) = lower(btrim(r.programme))
@@ -221,7 +249,7 @@ if ($method === 'POST' && $action === 'claim') {
     $database = db();
     try {
         $database->begin_transaction();
-        $stmt = $database->prepare("SELECT * FROM student_registration_requests WHERE id=? AND status='pending_assignment' AND coordinator_id IS NULL FOR UPDATE");
+        $stmt = $database->prepare("SELECT * FROM student_registration_requests WHERE id=? AND status IN ('pending_assignment','registered') AND coordinator_id IS NULL FOR UPDATE");
         $stmt->execute([$id]);
         $request = $stmt->get_result()->fetch_assoc();
         if (!$request || coordinatorForProgramme($request['campus'], $request['faculty'], $request['programme']) !== (int)$coordinator['id']) {
@@ -231,10 +259,16 @@ if ($method === 'POST' && $action === 'claim') {
         $scope = $database->prepare('SELECT campus,faculty,programme FROM admins WHERE user_id=?');
         $scope->execute([(int)$coordinator['id']]);
         $academicScope = $scope->get_result()->fetch_assoc();
-        $update = $database->prepare("UPDATE student_registration_requests SET coordinator_id=?,campus=?,faculty=?,programme=?,status='pending',updated_at=now() WHERE id=?");
-        $update->execute([(int)$coordinator['id'],$academicScope['campus'],$academicScope['faculty'],$academicScope['programme'],$id]);
+        $status = $request['status'] === 'registered' ? 'registered' : 'pending';
+        if ($status === 'registered') {
+            $assignStudent = $database->prepare('UPDATE students SET coordinator_id=?,campus=?,faculty=?,programme=? WHERE user_id=? AND coordinator_id IS NULL');
+            $assignStudent->execute([(int)$coordinator['id'],$academicScope['campus'],$academicScope['faculty'],$academicScope['programme'],(int)$request['approved_user_id']]);
+            if ($assignStudent->affected_rows !== 1) throw new RuntimeException('Student assignment could not be saved.');
+        }
+        $update = $database->prepare('UPDATE student_registration_requests SET coordinator_id=?,campus=?,faculty=?,programme=?,status=?,updated_at=now() WHERE id=?');
+        $update->execute([(int)$coordinator['id'],$academicScope['campus'],$academicScope['faculty'],$academicScope['programme'],$status,$id]);
         $database->commit();
-        respond(['success' => true, 'status' => 'pending']);
+        respond(['success' => true, 'status' => $status]);
     } catch (Throwable $error) {
         if ($database->inTransaction()) $database->rollback();
         respondError('Assignment could not be saved.', 503, 'assignment_unavailable');
@@ -264,9 +298,10 @@ if ($method === 'GET' && $action === 'document') {
     $allowed = $request && (($identity && hash_equals($request['google_auth_user_id'], $identity['google_auth_user_id'])
         && hash_equals($request['google_subject'], $identity['google_subject'])
         && hash_equals(strtolower($request['email']), $identity['email']))
+        || ($user && $user['role'] === 'student' && (int)$request['approved_user_id'] === (int)$user['id'])
         || ($user && $user['role'] === 'admin' && (int)$request['coordinator_id'] === (int)$user['id']
             && coordinatorForProgramme($request['campus'], $request['faculty'], $request['programme']) === (int)$user['id']));
-    if (!$allowed) respondError('Document not found.', 404, 'document_not_found');
+    if (!$allowed || !$request['document_path']) respondError('Document not found.', 404, 'document_not_found');
     try {
         $bytes = downloadPrivateDocumentBytes($request['document_path']);
         if (strlen($bytes) !== (int)$request['document_bytes'] || hash('sha256', $bytes) !== $request['document_sha256']) {
