@@ -7,6 +7,7 @@ declare(strict_types=1);
 $endpoint = strtolower(trim((string)($_GET['endpoint'] ?? '')));
 $handlers = [
     'auth' => 'auth.php',
+    'academic-supervisors' => 'academic-supervisors.php',
     'applications' => 'applications.php',
     'companies' => 'companies.php',
     'document-file' => 'document-file.php',
@@ -26,6 +27,7 @@ $handlers = [
     'schedule' => 'schedule.php',
     'settings' => 'settings.php',
     'summary' => 'summary.php',
+    'student-registration' => 'student-registration.php',
     'telegram-status' => 'telegram-status.php',
 ];
 

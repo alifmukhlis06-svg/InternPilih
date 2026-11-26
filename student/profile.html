@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="../assets/css/style.css?v=20261121-profile-readonly1">
 <script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>#supervisorDetails[hidden],#supervisorUnassigned[hidden]{display:none}</style>
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
@@ -83,10 +84,26 @@
               <div class="profile-info-item"><dt class="profile-info-label">Programme</dt><dd class="profile-info-value" id="studentProgramme">Loading</dd></div>
               <div class="profile-info-item"><dt class="profile-info-label">Faculty</dt><dd class="profile-info-value" id="studentFaculty">Loading</dd></div>
               <div class="profile-info-item"><dt class="profile-info-label">Campus</dt><dd class="profile-info-value" id="studentCampus">Loading</dd></div>
+              <div class="profile-info-item"><dt class="profile-info-label">Current Semester</dt><dd class="profile-info-value" id="studentCurrentSemester">Loading</dd></div>
               <div class="profile-info-item"><dt class="profile-info-label">Internship Semester</dt><dd class="profile-info-value" data-schedule-label="semester">Loading</dd></div>
               <div class="profile-info-item"><dt class="profile-info-label">Coordinator</dt><dd class="profile-info-value" id="coordinatorName">Loading</dd></div>
             </dl>
           </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:24px;">
+        <div class="panel-header"><h3><i class="fas fa-chalkboard-user" style="color:var(--brand);margin-right:8px;"></i>Academic Supervisor</h3></div>
+        <div class="panel-body">
+          <p id="supervisorUnassigned" style="color:var(--text2);font-size:13px;">Loading assignment</p>
+          <dl class="profile-info-list" id="supervisorDetails" hidden>
+            <div class="profile-info-item"><dt class="profile-info-label">Name</dt><dd class="profile-info-value" id="supervisorName"></dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Staff ID</dt><dd class="profile-info-value" id="supervisorStaffId"></dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Email</dt><dd class="profile-info-value" id="supervisorEmail"></dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Phone</dt><dd class="profile-info-value" id="supervisorPhone"></dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Faculty</dt><dd class="profile-info-value" id="supervisorFaculty"></dd></div>
+            <div class="profile-info-item"><dt class="profile-info-label">Assigned</dt><dd class="profile-info-value" id="supervisorAssignedAt"></dd></div>
+          </dl>
         </div>
       </div>
 

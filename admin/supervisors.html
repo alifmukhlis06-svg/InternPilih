@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" data-protected data-required-role="admin">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Academic Supervisors - InternPilih</title>
+<script src="../assets/js/theme-init.js"></script><link rel="stylesheet" href="../assets/css/style.css"><script src="../assets/js/auth-gate.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.supervisor-grid{display:grid;grid-template-columns:minmax(280px,1fr) minmax(300px,1.5fr);gap:20px}.supervisor-stack{display:grid;gap:12px}.supervisor-form{display:grid;gap:12px}.supervisor-form label{font-size:13px;font-weight:600}.supervisor-form input:not([type=checkbox]){width:100%;margin-top:5px}.supervisor-item{padding:14px;border:1px solid var(--border);border-radius:14px}.supervisor-item h4{margin:0 0 4px}.supervisor-item p{margin:4px 0;color:var(--text2);font-size:12px;overflow-wrap:anywhere}.supervisor-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.supervisor-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:14px}.supervisor-controls label{display:grid;gap:5px;font-size:12px}.supervisor-controls input{max-width:280px}.student-choice{display:flex;align-items:center;gap:10px;padding:9px;border-bottom:1px solid var(--border);font-size:13px}.student-choice small{color:var(--text2)}.student-list{max-height:400px;overflow:auto}.supervisor-stat{color:var(--text2);font-size:13px}.supervisor-history{font-size:12px;color:var(--text2);padding:8px 0;border-bottom:1px solid var(--border)}@media(max-width:800px){.supervisor-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div><div class="sidebar" id="sidebar">
+  <div class="sidebar-brand"><div class="sidebar-logo"><div class="icon"><i class="fas fa-shield-alt"></i></div><div><div style="font-size:14px;font-weight:800;color:var(--text)">InternPilih</div><div style="font-size:10px;color:var(--text2)">Coordinator Panel</div></div></div></div>
+  <nav><div class="nav-section">Overview</div><a class="nav-item" href="dashboard.html"><span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>Dashboard</a><a class="nav-item" href="monitoring.html"><span class="nav-icon"><i class="fas fa-chart-bar"></i></span>Monitoring</a>
+  <div class="nav-section">Management</div><a class="nav-item" href="verification.html"><span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>Verification</a><a class="nav-item" href="companies.html"><span class="nav-icon"><i class="fas fa-building"></i></span>Companies</a>
+  <div class="nav-section">Student Management</div><a class="nav-item" href="students.html"><span class="nav-icon"><i class="fas fa-user-graduate"></i></span>Registered Students</a><a class="nav-item" href="registration-requests.html"><span class="nav-icon"><i class="fas fa-user-clock"></i></span>Registration Requests</a><a class="nav-item active" href="supervisors.html"><span class="nav-icon"><i class="fas fa-chalkboard-user"></i></span>Academic Supervisors</a>
+  <div class="nav-section">Reports</div><a class="nav-item" href="reports.html"><span class="nav-icon"><i class="fas fa-file-alt"></i></span>Reports</a><a class="nav-item" href="notifications.html"><span class="nav-icon"><i class="fas fa-bullhorn"></i></span>Announcements</a><div class="nav-section">Account</div><a class="nav-item" href="profile.html"><span class="nav-icon"><i class="fas fa-user-shield"></i></span>Profile</a><a class="nav-item" href="settings.html"><span class="nav-icon"><i class="fas fa-gear"></i></span>Settings</a></nav>
+  <div class="sidebar-footer"><div class="user-card"><div class="user-avatar">--</div><div class="user-info"><p>Loading coordinator</p><span>Coordinator</span></div></div><a class="logout-btn" href="../login.html"><i class="fas fa-sign-out-alt"></i> Logout</a></div>
+</div>
+<div class="main"><div class="topbar"><button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button><div><h1>Academic Supervisors</h1><p id="supervisor-scope" style="font-size:12px;color:var(--text2)">Loading academic scope</p></div></div>
+<div class="content fade-in"><p id="supervisor-message" role="status"></p><div class="supervisor-grid">
+  <div class="supervisor-stack"><section class="panel" style="padding:20px"><h3 id="form-title">Add Academic Supervisor</h3><p class="supervisor-stat">A supervisor may oversee several students. Assignment remains optional.</p>
+    <form id="supervisor-form" class="supervisor-form">
+      <label>Full name<input name="name" required maxlength="150" autocomplete="name"></label>
+      <label>Staff ID<input name="staff_id" required maxlength="50"></label>
+      <label>Email<input name="email" type="email" required maxlength="150"></label>
+      <label>Phone (optional)<input name="phone" type="tel" maxlength="30"></label>
+      <label><input name="email_approved_for_contact" type="checkbox"> Email address approved for supervisor contact</label>
+      <div class="supervisor-actions"><button class="btn btn-primary" type="submit">Save Supervisor</button><button class="btn btn-outline" id="cancel-edit" type="button" hidden>Cancel Edit</button></div>
+    </form></section>
+    <section class="panel" style="padding:20px"><h3>Supervisor Directory</h3><input id="supervisor-search" type="search" placeholder="Search name, Staff ID, email" aria-label="Search supervisors" style="width:100%;margin:10px 0"><div id="supervisor-directory" class="supervisor-stack"></div></section>
+  </div>
+  <div class="supervisor-stack"><section class="panel" style="padding:20px"><h3>Student Assignments</h3><p class="supervisor-stat">Around 4–5 students per supervisor is a planning guide, not a limit.</p><p id="supervisor-counts" class="supervisor-stat"></p>
+    <div class="supervisor-controls"><label>Search students<input id="student-search" type="search" placeholder="Name or Student ID"></label><label>Filter<select id="student-filter"><option value="all">All</option><option value="unassigned">Unassigned</option><option value="assigned">Assigned</option></select></label></div>
+    <div class="supervisor-controls"><label>Supervisor<input id="assign-supervisor" type="search" list="supervisor-options" placeholder="Search supervisor or leave blank to remove" style="min-width:260px"><datalist id="supervisor-options"></datalist></label><label>Internship intake (optional)<input id="assign-intake" maxlength="100" placeholder="e.g. October 2026"></label></div>
+    <div class="supervisor-actions"><button class="btn btn-primary" id="assign-selected" type="button">Assign Selected</button><button class="btn btn-outline" id="remove-selected" type="button">Remove Assignment</button><button class="btn btn-outline" id="select-visible" type="button">Select Visible</button></div>
+    <div id="student-list" class="student-list"></div></section>
+    <section class="panel" style="padding:20px"><h3>Recent Assignment History</h3><div id="assignment-history"></div></section>
+  </div>
+</div></div></div>
+<script src="../assets/js/app.js"></script><script src="../assets/js/supervisor-management.js"></script>
+</body></html>

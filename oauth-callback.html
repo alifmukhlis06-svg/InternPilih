@@ -38,12 +38,12 @@
     });
     const payload=await response.json().catch(()=>({}));
     if(!response.ok||payload.error){
-      if(payload.code==='registration_required'){
-        sessionStorage.setItem('internpilih:access-pending','1');
-        window.location.replace(window.InternPilihGoogleAuth.appPath('/access-pending.html'));
-        return;
-      }
       throw new Error(payload.error||'Google sign-in could not be completed. Please try again.');
+    }
+    if(payload.registration){
+      sessionStorage.removeItem('user');
+      window.location.replace(window.InternPilihGoogleAuth.appPath(payload.redirect||'/complete-student-profile.html'));
+      return;
     }
     sessionStorage.setItem('user',JSON.stringify(payload.user));
     window.location.replace(window.InternPilihGoogleAuth.appPath(payload.redirect||'/login.html'));

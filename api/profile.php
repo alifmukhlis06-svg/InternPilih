@@ -11,12 +11,20 @@ function profileForUser(int $id): ?array {
                COALESCE(s.faculty, a.faculty) AS faculty,
                COALESCE(s.campus, a.campus) AS campus,
                s.programme, s.cgpa, s.coordinator_id, coordinator.name AS coordinator_name,
+               r.semester AS current_semester,
+               s.academic_supervisor_assigned_at,
+               supervisor.name AS academic_supervisor_name, supervisor.staff_id AS academic_supervisor_staff_id,
+               CASE WHEN supervisor.email_approved_for_contact THEN supervisor.email ELSE NULL END AS academic_supervisor_email,
+               supervisor.phone AS academic_supervisor_phone,
+               supervisor.faculty AS academic_supervisor_faculty,
                a.programme AS coordinator_programme, a.staff_id, e.company_id
         FROM users u
         LEFT JOIN students s ON s.user_id = u.id
         LEFT JOIN employers e ON e.user_id = u.id
         LEFT JOIN admins a ON a.user_id = u.id
         LEFT JOIN users coordinator ON coordinator.id = s.coordinator_id
+        LEFT JOIN academic_supervisors supervisor ON supervisor.id = s.academic_supervisor_id
+        LEFT JOIN student_registration_requests r ON r.approved_user_id = u.id
         WHERE u.id = ? LIMIT 1
     ");
     $stmt->bind_param('i', $id);

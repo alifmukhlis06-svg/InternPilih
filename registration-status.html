@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Registration Status - InternPilih</title>
+<script src="assets/js/theme-init.js"></script>
+<link rel="stylesheet" href="assets/css/style.css"><link rel="stylesheet" href="assets/css/registration.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body data-registration-page="status">
+<main class="registration-shell"><div class="registration-wrap">
+  <header class="registration-header"><div class="registration-brand"><i class="fas fa-graduation-cap"></i> InternPilih</div><button type="button" class="btn btn-outline" data-registration-logout>Sign out</button></header>
+  <section class="registration-card"><h1 id="status-heading">Checking registration status</h1>
+    <p id="status-copy" class="registration-intro" role="status"></p>
+    <div id="status-detail" class="registration-status" hidden></div>
+    <div id="status-reason" class="registration-reason" hidden></div>
+    <div class="registration-actions"><a id="correct-link" class="btn btn-primary" href="complete-student-profile.html" hidden>Correct and resubmit</a><button id="refresh-status" type="button" class="btn btn-outline">Check status again</button></div>
+  </section>
+</div></main>
+<script src="assets/js/google-auth.js"></script><script src="assets/js/student-registration.js"></script>
+</body>
+</html>

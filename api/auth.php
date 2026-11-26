@@ -278,10 +278,39 @@ function fetchSupabaseGoogleIdentity(string $accessToken): ?array {
     if ($status !== 200 || !is_string($responseBody)) return null;
     $identity = json_decode($responseBody, true);
     if (!is_array($identity)) return null;
-    $providers = $identity['app_metadata']['providers'] ?? [];
-    $provider = $identity['app_metadata']['provider'] ?? '';
-    if ($provider !== 'google' && (!is_array($providers) || !in_array('google', $providers, true))) return null;
+    // A Supabase user may have several linked providers. Check the actual
+    // Google identity and its verified address, not editable user metadata.
+    $email = normalizedEmail((string)($identity['email'] ?? ''));
+    $googleSubject = '';
+    $googleProfile = [];
+    foreach (($identity['identities'] ?? []) as $linked) {
+        if (!is_array($linked) || ($linked['provider'] ?? '') !== 'google') continue;
+        $data = $linked['identity_data'] ?? [];
+        if (is_array($data)
+            && normalizedEmail((string)($data['email'] ?? '')) === $email
+            && ($data['email_verified'] ?? false) === true) {
+            $googleSubject = trim((string)($linked['provider_id'] ?? $data['sub'] ?? ''));
+            $googleProfile = $data;
+            break;
+        }
+    }
+    if ($googleSubject === '') return null;
+    $identity['_verified_google_subject'] = $googleSubject;
+    $identity['_verified_google_profile'] = $googleProfile;
     return $identity;
+}
+
+function registrationSessionIdentity(): ?array {
+    $registration = $_SESSION['registration_identity'] ?? null;
+    if (!is_array($registration) || (int)($registration['expires_at'] ?? 0) <= time()) {
+        unset($_SESSION['registration_identity']);
+        return null;
+    }
+    return $registration;
+}
+
+function studentIdFromEmail(string $email): ?string {
+    return preg_match('/^([0-9]{10})@student\.uitm\.edu\.my$/', $email, $match) ? $match[1] : null;
 }
 
 function loadInternPilihUserByEmail(string $email, bool $forUpdate = false): ?array {
@@ -328,10 +357,10 @@ if ($method === 'POST' && $action === 'google') {
     $identity = fetchSupabaseGoogleIdentity(trim((string)($data['access_token'] ?? '')));
     $email = normalizedEmail((string)($identity['email'] ?? ''));
     $googleUserId = trim((string)($identity['id'] ?? ''));
-    $emailVerified = !empty($identity['email_confirmed_at'])
-        || ($identity['user_metadata']['email_verified'] ?? false) === true;
+    $googleSubject = trim((string)($identity['_verified_google_subject'] ?? ''));
+    $emailVerified = $googleSubject !== '';
 
-    if (!$identity || $email === '' || $googleUserId === '' || !$emailVerified) {
+    if (!$identity || $email === '' || $googleUserId === '' || $googleSubject === '' || !$emailVerified) {
         recordAuthenticationAudit(null, 'login_failure', 'google');
         respondError('Google sign-in could not be completed. Please try again.', 401, 'invalid_oauth_response');
     }
@@ -345,13 +374,35 @@ if ($method === 'POST' && $action === 'google') {
     try {
         $user = loadInternPilihUserByEmail($email, true);
         if (!$user) {
+            if (studentIdFromEmail($email) === null) {
+                $database->rollback();
+                respondError('Student registration requires a verified ten-digit UiTM student email.', 403, 'student_email_required');
+            }
+            $existingIdentity = $database->prepare('SELECT id FROM users WHERE google_auth_user_id = ? OR google_subject = ? LIMIT 1');
+            $existingIdentity->execute([$googleUserId, $googleSubject]);
+            if ($existingIdentity->get_result()->fetch_assoc()) {
+                $database->rollback();
+                respondError('This Google identity is already linked to an InternPilih account.', 409, 'identity_already_linked');
+            }
             $database->rollback();
-            recordAuthenticationAudit(null, 'login_failure', 'google');
-            respondError(
-                'Your UiTM account is valid, but you are not yet registered for InternPilih. Please contact your internship coordinator.',
-                403,
-                'registration_required'
-            );
+            $googleProfile = $identity['_verified_google_profile'] ?? [];
+            $picture = trim((string)($googleProfile['avatar_url'] ?? $googleProfile['picture'] ?? ''));
+            $pictureHost = strtolower((string)(parse_url($picture, PHP_URL_HOST) ?: ''));
+            if (!str_starts_with($picture, 'https://')
+                || !($pictureHost === 'googleusercontent.com' || str_ends_with($pictureHost, '.googleusercontent.com'))) {
+                $picture = '';
+            }
+            session_regenerate_id(true);
+            $_SESSION['registration_identity'] = [
+                'google_auth_user_id' => $googleUserId,
+                'google_subject' => $googleSubject,
+                'email' => $email,
+                'matric_id' => studentIdFromEmail($email),
+                'name' => trim((string)($googleProfile['full_name'] ?? $googleProfile['name'] ?? '')),
+                'picture' => $picture,
+                'expires_at' => time() + authenticationSessionLifetime(),
+            ];
+            respond(['success' => true, 'registration' => true, 'redirect' => '/complete-student-profile.html']);
         }
 
         $redirect = dashboardForRole((string)$user['role']);
@@ -368,10 +419,21 @@ if ($method === 'POST' && $action === 'google') {
             respondError('Google sign-in could not be completed. Please contact your internship coordinator.', 403, 'account_link_mismatch');
         }
 
+        $subjectConflict = $database->prepare('SELECT id FROM users WHERE google_subject = ? AND id <> ? LIMIT 1');
+        $subjectConflict->execute([$googleSubject, (int)$user['id']]);
+        if ($subjectConflict->get_result()->fetch_assoc()) {
+            $database->rollback();
+            respondError('This Google identity is already linked to another account.', 409, 'identity_already_linked');
+        }
+
         $userId = (int)$user['id'];
-        $update = $database->prepare('UPDATE users SET google_auth_user_id = ?, last_login_at = CURRENT_TIMESTAMP WHERE id = ?');
-        $update->bind_param('si', $googleUserId, $userId);
+        $update = $database->prepare('UPDATE users SET google_auth_user_id = ?, google_subject = ?, last_login_at = CURRENT_TIMESTAMP WHERE id = ? AND (google_subject IS NULL OR google_subject = ?)');
+        $update->bind_param('ssis', $googleUserId, $googleSubject, $userId, $googleSubject);
         $update->execute();
+        if ($update->affected_rows !== 1) {
+            $database->rollback();
+            respondError('Google identity does not match this account.', 403, 'account_link_mismatch');
+        }
         $database->commit();
 
         unset($user['google_auth_user_id']);

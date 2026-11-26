@@ -1498,7 +1498,8 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       studentCgpa: u.cgpa ?? '',
       studentProgramme: u.programme || '',
       studentFaculty: u.faculty || '',
-      studentCampus: u.campus || 'Not recorded'
+      studentCampus: u.campus || 'Not recorded',
+      studentCurrentSemester: u.current_semester ? `Semester ${u.current_semester}` : ''
     };
     Object.entries(fieldValues).forEach(([id, value]) => {
       const field = document.getElementById(id);
@@ -1506,6 +1507,27 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     });
     const coordinatorInput = document.getElementById('coordinatorName');
     if (coordinatorInput) coordinatorInput.textContent = u.coordinator_name || 'Not assigned';
+    const supervisorDetails = document.getElementById('supervisorDetails');
+    const supervisorUnassigned = document.getElementById('supervisorUnassigned');
+    if (supervisorDetails && supervisorUnassigned) {
+      const assigned = Boolean(u.academic_supervisor_name);
+      supervisorDetails.hidden = !assigned;
+      supervisorUnassigned.hidden = assigned;
+      supervisorUnassigned.textContent = 'Unassigned. Your Coordinator will assign an Academic Supervisor when one is available.';
+      if (assigned) {
+        for (const [id, value] of Object.entries({
+          supervisorName: u.academic_supervisor_name,
+          supervisorStaffId: u.academic_supervisor_staff_id,
+          supervisorEmail: u.academic_supervisor_email,
+          supervisorPhone: u.academic_supervisor_phone || 'Not provided',
+          supervisorFaculty: u.academic_supervisor_faculty,
+          supervisorAssignedAt: u.academic_supervisor_assigned_at ? new Date(u.academic_supervisor_assigned_at).toLocaleString() : 'Not recorded'
+        })) {
+          const field = document.getElementById(id);
+          if (field) field.textContent = value || 'Not recorded';
+        }
+      }
+    }
     setText('#studentProfileName', u.name || 'Student');
     setText('#studentProfileMeta', `${u.matric_id || '-'} - ${u.faculty || '-'}`);
     setText('#studentProfileProgramme', u.programme || 'Programme not recorded');
