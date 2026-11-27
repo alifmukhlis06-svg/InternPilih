@@ -46,7 +46,7 @@
       "continue": true
     },
     {
-      "src": "/api/(?<endpoint>auth|academic-supervisors|applications|companies|document-file|documents|gemini|mail-status|notifications|opportunities|offer-risk-ai|offers|password-reset|placement-change-document-file|placement-change-documents|placement-changes|profile|reports|schedule|settings|student-registration|summary|telegram-status)\\.php",
+      "src": "/api/(?<endpoint>auth|academic-catalogue|academic-supervisors|applications|companies|document-file|documents|gemini|mail-status|notifications|opportunities|offer-risk-ai|offers|password-reset|placement-change-document-file|placement-change-documents|placement-changes|profile|reports|schedule|settings|student-registration|summary|telegram-status)\\.php",
       "dest": "/api/index?endpoint=$endpoint"
     },
     { "src": "/api/.*", "status": 404 },

@@ -7,6 +7,7 @@ declare(strict_types=1);
 $endpoint = strtolower(trim((string)($_GET['endpoint'] ?? '')));
 $handlers = [
     'auth' => 'auth.php',
+    'academic-catalogue' => 'academic-catalogue.php',
     'academic-supervisors' => 'academic-supervisors.php',
     'applications' => 'applications.php',
     'companies' => 'companies.php',
