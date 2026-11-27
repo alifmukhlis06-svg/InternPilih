@@ -38,149 +38,23 @@
   </div>
 
   <div class="content fade-in">
-    <div class="summary-grid">
-      <div class="summary-card green">
-        <div class="summary-value">3</div>
-        <div class="summary-label">Confirmed Interns</div>
-        <div class="summary-note">Accepted placements</div>
-      </div>
-      <div class="summary-card blue">
-        <div class="summary-value">2</div>
-        <div class="summary-label">Docs Verified</div>
-        <div class="summary-note">1 pending review</div>
-      </div>
-      <div class="summary-card purple">
-        <div class="summary-value">01 Mar</div>
-        <div class="summary-label">Internship Start Date</div>
-        <div class="summary-note">All 3 interns</div>
-      </div>
+    <div class="summary-grid" id="employer-placement-summary" aria-live="polite">
+      <div class="summary-card green"><div class="summary-value">-</div><div class="summary-label">Confirmed Interns</div><div class="summary-note">Loading placements...</div></div>
+      <div class="summary-card blue"><div class="summary-value">-</div><div class="summary-label">Placements Verified</div><div class="summary-note">Loading verification...</div></div>
+      <div class="summary-card purple"><div class="summary-value">-</div><div class="summary-label">Earliest Offer Date</div><div class="summary-note">Loading dates...</div></div>
     </div>
-
     <div class="panel">
-      <div class="panel-header">
-        <h3 class="icon-heading"><i class="fas fa-user-check"></i>Confirmed Interns</h3>
-      </div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead><tr><th>Intern Name</th><th>Matric ID</th><th>Position</th><th>University</th><th>Start Date</th><th>Duration</th><th>Docs</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr>
-              <td>
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="avatar-initial">AZ</div>
-                  <div><strong>Loading student</strong></div>
-                </div>
-              </td>
-              <td style="color:var(--text2);"></td>
-              <td>Back-end Developer</td>
-              <td>UiTM Shah Alam</td>
-              <td>01-Mar-2027</td>
-              <td>6 Months</td>
-              <td><span class="badge badge-verified">Verified</span></td>
-              <td><span class="badge badge-accepted">Active</span></td>
-            </tr>
-            <tr>
-              <td>
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="avatar-initial purple">SH</div>
-                  <div><strong>Loading student</strong></div>
-                </div>
-              </td>
-              <td style="color:var(--text2);"></td>
-              <td>UI/UX Designer</td>
-              <td>UiTM Shah Alam</td>
-              <td>01-Mar-2027</td>
-              <td>6 Months</td>
-              <td><span class="badge badge-pending">Pending</span></td>
-              <td><span class="badge badge-accepted">Active</span></td>
-            </tr>
-            <tr>
-              <td>
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="avatar-initial green">KA</div>
-                  <div><strong>Loading student</strong></div>
-                </div>
-              </td>
-              <td style="color:var(--text2);"></td>
-              <td>System Analyst</td>
-              <td>UiTM Shah Alam</td>
-              <td>01-Mar-2027</td>
-              <td>6 Months</td>
-              <td><span class="badge badge-verified">Verified</span></td>
-              <td><span class="badge badge-accepted">Active</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="panel-header"><h3 class="icon-heading"><i class="fas fa-user-check"></i>Confirmed Interns</h3></div>
+      <div class="table-wrap"><table class="data-table">
+        <thead><tr><th>Intern Name</th><th>Matric ID</th><th>Position</th><th>Campus</th><th>Start Date</th><th>Docs</th><th>Status</th></tr></thead>
+        <tbody><tr><td colspan="7" role="status">Loading placements...</td></tr></tbody>
+      </table></div>
     </div>
-
-    <div class="card-grid">
-      <div class="profile-card">
-        <div class="profile-card-head">
-          <div class="avatar-initial">AZ</div>
-          <div>
-            <h3>Loading student</h3>
-            <p class="meta-text"></p>
-            <p class="role">Back-end Developer</p>
-          </div>
-        </div>
-          <div class="actions-row">
-            <span class="badge badge-verified">Docs Verified</span>
-            <span class="badge badge-accepted">Active</span>
-          </div>
-        <div class="profile-meta">
-          <div><strong>CGPA:</strong> 3.72</div>
-          <div><strong>Programme:</strong> Bachelor of Computer Science with Honours</div>
-          <div><strong>Supervisor:</strong> Loading</div>
-          <div><strong>Start:</strong> 01-Mar-2027</div>
-        </div>
-      </div>
-
-      <div class="profile-card">
-        <div class="profile-card-head">
-          <div class="avatar-initial purple">SH</div>
-          <div>
-            <h3>Loading student</h3>
-            <p class="meta-text"></p>
-            <p class="role">UI/UX Designer</p>
-          </div>
-        </div>
-          <div class="actions-row">
-            <span class="badge badge-pending">Docs Pending</span>
-            <span class="badge badge-accepted">Active</span>
-          </div>
-        <div class="profile-meta">
-          <div><strong>CGPA:</strong> 3.55</div>
-          <div><strong>Programme:</strong> Bachelor of Computer Science with Honours</div>
-          <div><strong>Supervisor:</strong> Loading</div>
-          <div><strong>Start:</strong> 01-Mar-2027</div>
-        </div>
-      </div>
-
-      <div class="profile-card">
-        <div class="profile-card-head">
-          <div class="avatar-initial green">KA</div>
-          <div>
-            <h3>Loading student</h3>
-            <p class="meta-text"></p>
-            <p class="role">System Analyst</p>
-          </div>
-        </div>
-          <div class="actions-row">
-            <span class="badge badge-verified">Docs Verified</span>
-            <span class="badge badge-accepted">Active</span>
-          </div>
-        <div class="profile-meta">
-          <div><strong>CGPA:</strong> 3.61</div>
-          <div><strong>Programme:</strong> Bachelor of Computer Science with Honours</div>
-          <div><strong>Supervisor:</strong> Loading</div>
-          <div><strong>Start:</strong> 01-Mar-2027</div>
-        </div>
-      </div>
-    </div>
+    <h2 class="section-title">Intern Profiles</h2>
+    <div class="card-grid" id="employer-intern-profiles" aria-live="polite"><div class="panel"><div class="panel-body" role="status">Loading intern profiles...</div></div></div>
   </div>
 </div>
-<script src="../assets/js/app.js?v=20261121-profile-readonly1"></script>
+<script src="../assets/js/app.js?v=20261128-employer-regression1"></script>
 </body>
 </html>
 

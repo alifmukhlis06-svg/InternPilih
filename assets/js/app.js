@@ -1636,7 +1636,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     const pending = offers.filter(o => o.status === 'pending');
     const rejected = offers.filter(o => o.status === 'rejected');
     const responded = offers.length - pending.length;
-    const confirmedPlacements = Number(company.confirmed_placements || accepted.length || 0);
+    const confirmedPlacements = accepted.length;
     const verifiedDocs = accepted.filter(o => placementVerificationStatus(o, data.documents) === 'verified').length;
     const pendingDocs = accepted.filter(o => placementVerificationStatus(o, data.documents) !== 'verified').length;
     const companyName = company.name || displayName(data.user.name);
@@ -1741,10 +1741,11 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:20px;">No offers recorded for this company.</td></tr>';
     }
     if (page === 'placements.html') {
-      const summaryCards = document.querySelectorAll('.content > div[style*="grid-template-columns:repeat(3"] > div');
+      const summaryCards = document.querySelectorAll('#employer-placement-summary > .summary-card');
       if (summaryCards[0]) summaryCards[0].innerHTML = `<div style="font-size:36px;font-weight:800;color:var(--green);">${accepted.length}</div><div style="font-size:13px;color:var(--text2);margin-top:4px;">Confirmed Interns</div><div style="font-size:11px;color:var(--green);margin-top:4px;">Accepted placements</div>`;
       if (summaryCards[1]) summaryCards[1].innerHTML = `<div style="font-size:36px;font-weight:800;color:var(--blue3);">${verifiedDocs}</div><div style="font-size:13px;color:var(--text2);margin-top:4px;">Placements Verified</div><div style="font-size:11px;color:var(--blue3);margin-top:4px;">${pendingDocs} pending review</div>`;
-      if (summaryCards[2]) summaryCards[2].innerHTML = `<div style="font-size:24px;font-weight:800;color:var(--purple);">${accepted.length ? fmtDate(accepted[0].offer_date) : '-'}</div><div style="font-size:13px;color:var(--text2);margin-top:4px;">Earliest Offer Date</div><div style="font-size:11px;color:var(--text2);margin-top:4px;">From accepted records</div>`;
+      const offerDates = accepted.map(o => o.offer_date).filter(Boolean).sort();
+      if (summaryCards[2]) summaryCards[2].innerHTML = `<div style="font-size:24px;font-weight:800;color:var(--purple);">${offerDates.length ? fmtDate(offerDates[0]) : '-'}</div><div style="font-size:13px;color:var(--text2);margin-top:4px;">Earliest Offer Date</div><div style="font-size:11px;color:var(--text2);margin-top:4px;">From accepted records</div>`;
 
       const body = document.querySelector('.data-table tbody');
       if (body) body.innerHTML = accepted.map(o => {
@@ -1753,20 +1754,14 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
             <td><div style="display:flex;align-items:center;gap:10px;"><div class="avatar-initial">${initials(o.student_name)}</div><div><strong>${esc(displayName(o.student_name))}</strong></div></div></td>
             <td style="color:var(--text2);">${esc(o.matric_id)}</td>
             <td>${esc(o.position)}</td>
-            <td>UiTM</td>
-            <td>${fmtDate(o.offer_date)}</td>
-            <td>6 Months</td>
+            <td>${esc(o.campus || 'Not recorded')}</td>
+            <td>${fmtDate(o.internship_start_date)}</td>
             <td>${placementVerificationBadge(o, data.documents)}</td>
             <td>${badge('accepted', 'Active')}</td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:20px;">No accepted placements yet.</td></tr>';
-      const topNums = document.querySelectorAll('.content [style*="text-align:center"] > div:first-child');
-      if (topNums[0]) topNums[0].textContent = accepted.length;
-      if (topNums[1]) topNums[1].textContent = verifiedDocs;
-
-      const grids = Array.from(document.querySelectorAll('.content > div[style*="display:grid"]'));
-      const profileGrid = grids[grids.length - 1];
+      }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:20px;">No accepted placements yet.</td></tr>';
+      const profileGrid = document.getElementById('employer-intern-profiles');
       if (profileGrid && !profileGrid.querySelector('.data-table')) {
         profileGrid.innerHTML = accepted.map(o => {
           return `
@@ -1774,15 +1769,16 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
               <div style="padding:24px;text-align:center;">
                 <div style="width:64px;height:64px;background:#dbeafe;color:#1e40af;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;margin:0 auto 12px;">${initials(o.student_name)}</div>
                 <h3 style="font-size:15px;font-weight:700;">${esc(displayName(o.student_name))}</h3>
-                <p style="font-size:12px;color:var(--text2);">${esc(o.matric_id || '-')} - UiTM</p>
+                <p style="font-size:12px;color:var(--text2);">${esc(o.matric_id || '-')} - ${esc(o.campus || 'Not recorded')}</p>
                 <p style="font-size:12px;color:var(--blue3);margin-top:4px;">${esc(o.position)}</p>
                 <div style="display:flex;justify-content:center;gap:6px;margin:12px 0;">${placementVerificationBadge(o, data.documents)}${badge('accepted', 'Active')}</div>
                 <div style="text-align:left;font-size:12px;color:var(--text2);background:var(--bg3);border-radius:10px;padding:12px;margin-top:8px;display:grid;gap:6px;">
-                  <div><strong style="color:var(--text);">CGPA:</strong> ${esc(o.cgpa || '-')}</div>
+                  <div><strong style="color:var(--text);">CGPA:</strong> ${esc(o.cgpa ?? '-')}</div>
                   <div><strong style="color:var(--text);">Faculty:</strong> ${esc(o.faculty || '-')}</div>
                   <div><strong style="color:var(--text);">Programme:</strong> ${esc(o.programme || '-')}</div>
                   <div><strong style="color:var(--text);">Email:</strong> ${esc(o.student_email || '-')}</div>
                   <div><strong style="color:var(--text);">Accepted:</strong> ${fmtDate(o.response_date || o.offer_date)}</div>
+                  <div><strong style="color:var(--text);">Start:</strong> ${fmtDate(o.internship_start_date)}</div>
                 </div>
               </div>
             </div>
@@ -1791,8 +1787,13 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       }
     }
     if (page === 'profile.html') {
-      const wrap = document.querySelector('.content > div[style*="max-width"]');
+      const wrap = document.getElementById('employer-company-profile');
       if (wrap) {
+        if (!company.id) {
+          wrap.innerHTML = '<div class="panel"><div class="panel-body">No active company profile is available. Please contact your coordinator.</div></div>';
+          wrap.removeAttribute('aria-busy');
+          return;
+        }
         wrap.innerHTML = `
           <div class="panel" style="margin-bottom:24px;">
             <div class="panel-body">
@@ -1801,7 +1802,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
                 <div style="flex:1;">
                   <h2 style="font-size:22px;font-weight:800;">${esc(company.name || data.user.name)}</h2>
                   <p style="color:var(--text2);font-size:13px;">${esc(company.industry || '-')} - ${esc(company.location || '-')}</p>
-                  <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">${badge('verified', 'Verified Partner')}${badge('accepted', 'Active')}<span class="badge" style="background:rgba(16,185,129,.1);color:var(--green);">${confirmedPlacements} Confirmed Intern${confirmedPlacements === 1 ? '' : 's'}</span></div>
+                  <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">${badge('accepted', company.status || 'Active')}<span class="badge" style="background:rgba(16,185,129,.1);color:var(--green);">${confirmedPlacements} Confirmed Intern${confirmedPlacements === 1 ? '' : 's'}</span></div>
                 </div>
               </div>
             </div>
@@ -1811,7 +1812,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
               ${profileField('Company Name', company.name || '-')}
               ${profileField('Industry', company.industry || '-')}
               ${profileField('Work Mode', company.work_mode || '-')}
-              ${profileField('Monthly Allowance', money(company.allowance))}
+              ${profileField('Monthly Allowance', company.allowance == null ? 'Not recorded' : money(company.allowance))}
               ${profileField('Active Offers', String(offers.length))}
             </dl></div>
             <div class="panel"><div class="panel-header"><h3><i class="fas fa-map-marker-alt" style="color:var(--gold);margin-right:8px;"></i>Contact & Location</h3></div><dl class="panel-body profile-info-list">
@@ -1825,7 +1826,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
             <div class="responsive-quad" style="gap:16px;text-align:center;">
               ${metricBox(companyPositionList(company).length, 'Recorded Positions', 'var(--blue3)')}
               ${metricBox(confirmedPlacements, 'Confirmed Interns', 'var(--green)')}
-              ${metricBox(money(company.allowance), 'Monthly Allowance', 'var(--gold)', '18px')}
+              ${metricBox(company.allowance == null ? 'Not recorded' : money(company.allowance), 'Monthly Allowance', 'var(--gold)', '18px')}
               ${metricBox(pending.length, 'Awaiting Responses', 'var(--purple)')}
             </div>
             <div style="margin-top:16px;padding:14px;background:var(--bg3);border-radius:10px;font-size:13px;color:var(--text2);line-height:1.7;">
@@ -1837,6 +1838,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
             ${profileField('Account Role', 'Employer')}
           </dl></div>
         `;
+        wrap.removeAttribute('aria-busy');
       }
     }
     window.viewEmployerOffer = function (id) {
@@ -1983,6 +1985,20 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       if (section === 'employer') renderEmployerPages(data);
     } catch (err) {
       console.warn('Database page binding skipped:', err.message);
+      if (section === 'employer' && (page === 'profile.html' || page === 'placements.html')) {
+        const message = 'Company data could not be loaded. Please reload the page to try again.';
+        const profile = document.getElementById('employer-company-profile');
+        if (profile) {
+          profile.innerHTML = `<div class="alert alert-danger" role="alert">${message}</div>`;
+          profile.removeAttribute('aria-busy');
+        }
+        const summary = document.getElementById('employer-placement-summary');
+        if (summary) summary.innerHTML = `<div class="alert alert-danger" role="alert">${message}</div>`;
+        const profiles = document.getElementById('employer-intern-profiles');
+        if (profiles) profiles.textContent = 'Intern profiles are unavailable.';
+        const table = document.querySelector('.data-table tbody');
+        if (page === 'placements.html' && table) table.innerHTML = '<tr><td colspan="7">Placement records are unavailable.</td></tr>';
+      }
     }
   }
 

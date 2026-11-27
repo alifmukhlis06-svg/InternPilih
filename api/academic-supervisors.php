@@ -75,7 +75,9 @@ if ($method === 'POST' && $action === 'save') {
     $staffId = trim((string)($data['staff_id'] ?? ''));
     $email = strtolower(trim((string)($data['email'] ?? '')));
     $phone = trim((string)($data['phone'] ?? ''));
-    $approved = ($data['email_approved_for_contact'] ?? false) === true;
+    // PDO execute(array) stringifies false as '', which PostgreSQL rejects.
+    // Canonical boolean text works with both native and emulated prepares.
+    $approved = ($data['email_approved_for_contact'] ?? false) === true ? 'true' : 'false';
     if (mb_strlen($name) < 2 || mb_strlen($name) > 150 || $staffId === '' || mb_strlen($staffId) > 50
         || !filter_var($email,FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 150
         || ($phone !== '' && (!preg_match('/^\+?[0-9 ()-]{7,30}$/',$phone) || mb_strlen($phone) > 30))) {
@@ -94,7 +96,10 @@ if ($method === 'POST' && $action === 'save') {
         respond(['success'=>true,'id'=>$id]);
     } catch (Throwable $error) {
         error_log('InternPilih supervisor save failed: '.$error->getMessage());
-        respondError('Supervisor could not be saved. Check for duplicate Staff ID or email.',409,'supervisor_save_failed');
+        if ($error instanceof PDOException && (string)$error->getCode() === '23505') {
+            respondError('A supervisor with this Staff ID or email already exists.',409,'duplicate_supervisor');
+        }
+        respondError('Supervisor could not be saved. Please try again later.',503,'supervisor_save_failed');
     }
 }
 
@@ -142,7 +147,7 @@ if ($method === 'POST' && $action === 'assign') {
             $studentId = (int)$student['user_id'];
             $old = $student['academic_supervisor_id'] === null ? null : (int)$student['academic_supervisor_id'];
             if ($old === $supervisorId) continue;
-            $update = $database->prepare('UPDATE students SET academic_supervisor_id=?,academic_supervisor_assigned_at=CASE WHEN ? IS NULL THEN NULL ELSE now() END WHERE user_id=?');
+            $update = $database->prepare('UPDATE students SET academic_supervisor_id=?,academic_supervisor_assigned_at=CASE WHEN CAST(? AS bigint) IS NULL THEN NULL ELSE now() END WHERE user_id=?');
             $update->execute([$supervisorId,$supervisorId,$studentId]);
             $history = $database->prepare('INSERT INTO academic_supervisor_assignment_history (student_id,previous_supervisor_id,new_supervisor_id,changed_by,internship_intake) VALUES (?,?,?,?,?)');
             $history->execute([$studentId,$old,$supervisorId,$coordinator['id'],$intake ?: null]);
