@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Rejection System – InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261121-profile-readonly1">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261128-final1">
 <script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
@@ -397,7 +397,7 @@
                 <div class="ai-label">Extra context <span style="font-weight:400;text-transform:none;">(optional)</span>
                 </div>
                 <textarea class="ai-textarea" id="aiContext"
-                  placeholder="e.g. Mention I'm grateful for the two-round interview process, or that I hope to reconnect in future…"></textarea>
+                  placeholder="e.g. I cannot reliably commute by public transport, or the duties do not meet my programme credit requirements…"></textarea>
               </div>
 
               <button class="btn-ai-generate" id="generateBtn" onclick="generateWithGemini()">
@@ -654,12 +654,16 @@
       label.textContent = 'Generating\u2026';
       icon.style.display = 'none';
       document.getElementById('aiResultBox').classList.remove('visible');
+      var controller = new AbortController();
+      var timeoutId = window.setTimeout(function () { controller.abort(); }, 25000);
 
       try {
         var res = await fetch('../api/gemini.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
+            offer_id: selectedOffer.id,
             company: company,
             position: position,
             reason: reason,
@@ -670,14 +674,18 @@
         });
 
         var data = await res.json().catch(function () { return {}; });
-        if (!res.ok || data.error) throw new Error(data.error || 'Gemini request failed.');
+        if (!res.ok || data.error) throw new Error(data.error || 'AI drafting could not complete this request.');
         var text = data.text || '';
         if (!text) throw new Error('Gemini returned an empty response.');
         showGeneratedMessage(text, 'Gemini Generated Message');
 
       } catch (err) {
-        alert(err.message);
+        var message = err && err.name === 'AbortError'
+          ? 'AI drafting took too long and was stopped.'
+          : (err.message || 'AI drafting is temporarily unavailable.');
+        alert(message + '\n\nYou can still choose a manual template from the Rejection Message panel.');
       } finally {
+        window.clearTimeout(timeoutId);
         btn.disabled = !aiAvailable;
         btn.classList.remove('loading');
         label.textContent = 'Generate draft';
@@ -757,18 +765,24 @@
       try {
         var responses = await Promise.all([
           fetch('../api/offers.php'),
-          fetch('../api/profile.php'),
-          fetch('../api/gemini.php')
+          fetch('../api/profile.php')
         ]);
         var offerPayload = await responses[0].json().catch(function () { return []; });
         var profilePayload = await responses[1].json().catch(function () { return {}; });
-        var aiPayload = await responses[2].json().catch(function () { return {}; });
         if (!responses[0].ok || !Array.isArray(offerPayload)) throw new Error(offerPayload.error || 'Unable to load offers.');
         if (!responses[1].ok || !profilePayload.user) throw new Error(profilePayload.error || 'Unable to load your profile.');
         offers = offerPayload;
         currentStudent = profilePayload.user;
         templates = buildTemplates();
-        aiAvailable = responses[2].ok && aiPayload.available === true;
+        var aiPayload = {};
+        var aiResponse = null;
+        try {
+          aiResponse = await fetch('../api/gemini.php');
+          aiPayload = await aiResponse.json().catch(function () { return {}; });
+        } catch (aiError) {
+          aiPayload = { message: 'AI drafting could not be reached. Manual templates remain available.' };
+        }
+        aiAvailable = !!aiResponse && aiResponse.ok && aiPayload.available === true;
         var aiButton = document.getElementById('generateBtn');
         if (aiButton) {
           aiButton.disabled = !aiAvailable;
@@ -815,7 +829,7 @@
 
     document.addEventListener('DOMContentLoaded', loadOffers);
   </script>
-<script src="../assets/js/app.js?v=20261121-profile-readonly1"></script>
+<script src="../assets/js/app.js?v=20261128-final1"></script>
 </body>
 
 </html>

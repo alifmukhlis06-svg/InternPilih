@@ -19,10 +19,12 @@ function geminiIsConfigured(): bool {
     return trim((string)(geminiConfiguration()['api_key'] ?? '')) !== '';
 }
 
-function geminiGenerateText(string $prompt, array $generationConfig = []): array {
+function geminiGenerateText(string $prompt, array $generationConfig = [], string $systemInstruction = ''): array {
     $config = geminiConfiguration();
     $apiKey = trim((string)($config['api_key'] ?? ''));
     $model = trim((string)($config['model'] ?? 'gemini-3.1-flash-lite'));
+    $connectTimeout = max(1, min(10, (int)($config['connect_timeout_seconds'] ?? 5)));
+    $requestTimeout = max($connectTimeout, min(25, (int)($config['request_timeout_seconds'] ?? 20)));
     if ($apiKey === '') {
         throw new GeminiClientException('Gemini API key is not configured. Set GEMINI_API_KEY in the server environment.', 503);
     }
@@ -31,6 +33,11 @@ function geminiGenerateText(string $prompt, array $generationConfig = []): array
         'contents' => [['parts' => [['text' => $prompt]]]],
         'generationConfig' => $generationConfig,
     ];
+    if (trim($systemInstruction) !== '') {
+        $payload['systemInstruction'] = [
+            'parts' => [['text' => trim($systemInstruction)]],
+        ];
+    }
     $json = json_encode($payload, JSON_UNESCAPED_SLASHES);
     if ($json === false) {
         throw new GeminiClientException('Could not prepare the Gemini request.', 500);
@@ -48,14 +55,20 @@ function geminiGenerateText(string $prompt, array $generationConfig = []): array
             CURLOPT_POST => true,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_POSTFIELDS => $json,
-            CURLOPT_TIMEOUT => 30,
+            CURLOPT_CONNECTTIMEOUT => $connectTimeout,
+            CURLOPT_TIMEOUT => $requestTimeout,
         ]);
         $raw = curl_exec($ch);
         $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
+        $curlErrorNumber = curl_errno($ch);
         curl_close($ch);
         if ($raw === false) {
-            throw new GeminiClientException('Could not connect to Gemini: ' . $curlError);
+            if ($curlErrorNumber === CURLE_OPERATION_TIMEDOUT) {
+                throw new GeminiClientException('AI drafting took too long. Please try once more or use a manual template.', 504);
+            }
+            error_log('Gemini transport error: ' . $curlError);
+            throw new GeminiClientException('AI drafting is temporarily unreachable. Please use a manual template or try again later.', 502);
         }
     } else {
         $context = stream_context_create([
@@ -63,7 +76,7 @@ function geminiGenerateText(string $prompt, array $generationConfig = []): array
                 'method' => 'POST',
                 'header' => implode("\r\n", $headers) . "\r\n",
                 'content' => $json,
-                'timeout' => 30,
+                'timeout' => $requestTimeout,
                 'ignore_errors' => true,
             ],
         ]);
@@ -73,7 +86,7 @@ function geminiGenerateText(string $prompt, array $generationConfig = []): array
             $status = (int)$matches[1];
         }
         if ($raw === false) {
-            throw new GeminiClientException('Could not connect to Gemini.');
+            throw new GeminiClientException('AI drafting is temporarily unreachable. Please use a manual template or try again later.', 502);
         }
     }
 
@@ -81,9 +94,13 @@ function geminiGenerateText(string $prompt, array $generationConfig = []): array
     if ($status < 200 || $status >= 300) {
         $message = $data['error']['message'] ?? 'Gemini request failed.';
         if (stripos($message, 'quota') !== false) {
-            throw new GeminiClientException('Gemini quota exceeded. Use an API key with available quota or enable billing.', 429);
+            throw new GeminiClientException('AI drafting has reached its current usage limit. Please use a manual template and try again later.', 429);
         }
-        throw new GeminiClientException($message, ($status >= 400 && $status < 500) ? $status : 502);
+        if ($status >= 500 || $status === 0) {
+            throw new GeminiClientException('AI drafting is temporarily unavailable. Please use a manual template or try again later.', 502);
+        }
+        error_log('Gemini request rejected with HTTP ' . $status . ': ' . $message);
+        throw new GeminiClientException('AI drafting could not process this request. Please review the details or use a manual template.', 502);
     }
 
     $text = trim((string)($data['candidates'][0]['content']['parts'][0]['text'] ?? ''));
