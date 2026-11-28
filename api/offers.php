@@ -75,7 +75,7 @@ if ($method === 'POST') {
     if ($companyId < 1 || $position === '' || $offerDate === '' || $deadline === '') {
         respond(['error' => 'Company, internship position, offer date, and response deadline are required.'], 422);
     }
-    if (strlen($position) > 150) {
+    if (mb_strlen($position, 'UTF-8') > 150) {
         respond(['error' => 'Internship position must be 150 characters or fewer.'], 422);
     }
     $scheduleRows = db()->query("
@@ -310,35 +310,83 @@ if ($method === 'PUT' && $id) {
             $subject = 'Internship Offer Response - ' . $offer['position'];
         }
         $subject = substr($subject, 0, 180);
-        $emailDelivery = sendRejectionNoticeEmail($offer, $subject, $reason);
+        $conn = db();
+        $conn->begin_transaction();
+        try {
+            // Use the same student-wide lock order as acceptance. Recheck the
+            // target after acquiring locks, before any irreversible email send.
+            $lock = $conn->prepare("
+                SELECT id, status FROM offers
+                WHERE student_id = ? ORDER BY id FOR UPDATE
+            ");
+            $lock->bind_param('i', $user['id']);
+            $lock->execute();
+            $currentStatus = 'not_found';
+            foreach ($lock->get_result()->fetch_all(MYSQLI_ASSOC) as $studentOffer) {
+                if ((int)$studentOffer['id'] === $id) {
+                    $currentStatus = (string)$studentOffer['status'];
+                    break;
+                }
+            }
+            if ($currentStatus !== 'pending') {
+                $conn->rollback();
+                respondError('This offer is no longer pending.', 409, 'offer_not_pending', [
+                    'offer_id' => $id,
+                    'current_status' => $currentStatus,
+                ]);
+            }
 
-        if (!$emailDelivery['sent']) {
-            logActivity((int)$user['id'], 'offer.rejection_email_failed', 'offer', $id, [
-                'email_to' => $offer['hr_email'],
+            $emailDelivery = sendRejectionNoticeEmail($offer, $subject, $reason);
+            if (!$emailDelivery['sent']) {
+                $conn->rollback();
+                logActivity((int)$user['id'], 'offer.rejection_email_failed', 'offer', $id, [
+                    'email_to' => $offer['hr_email'],
+                    'recipient_overridden' => $recipientOverridden,
+                    'error' => substr((string)($emailDelivery['error'] ?? 'Unknown email error'), 0, 255),
+                ]);
+                respondError(
+                    'The rejection email could not be sent. The offer is still pending. Please try again.',
+                    502,
+                    'rejection_email_failed'
+                );
+            }
+
+            $stmt = $conn->prepare("
+                UPDATE offers SET status = ?, response_date = ?, reject_reason = ?
+                WHERE id = ? AND student_id = ? AND status = 'pending'
+            ");
+            $stmt->bind_param('sssii', $status, $today, $reason, $id, $user['id']);
+            $stmt->execute();
+            if ($stmt->affected_rows !== 1) {
+                throw new RuntimeException('Pending rejection target changed before update.');
+            }
+            $placement = recalculatePlacementVerification($id, (int)$user['id']);
+            logActivity((int)$user['id'], 'offer.rejected', 'offer', $id, [
+                'reject_reason' => $reason,
+                'email_sent' => (bool)$emailDelivery['sent'],
+                'email_simulated' => (bool)($emailDelivery['simulated'] ?? false),
+                'email_to' => $emailDelivery['email'] ?? null,
                 'recipient_overridden' => $recipientOverridden,
-                'error' => substr((string)($emailDelivery['error'] ?? 'Unknown email error'), 0, 255),
+                'placement_verification_status' => $placement['status'],
             ]);
-            respond([
-                'error' => 'The rejection email could not be sent. The offer is still pending. Please try again.',
-            ], 502);
+            $conn->commit();
+        } catch (Throwable $error) {
+            if ($conn->inTransaction()) $conn->rollback();
+            $emailSent = (bool)($emailDelivery['sent'] ?? false);
+            error_log('InternPilih offer rejection failed; request=' . INTERNPILIH_REQUEST_ID
+                . '; student=' . (int)$user['id'] . '; offer=' . $id
+                . '; email_sent=' . ($emailSent ? 'yes' : 'no') . '; error=' . $error->getMessage());
+            respondError(
+                $emailSent
+                    ? 'The email was sent, but the offer update could not be confirmed. Do not resend; contact your coordinator with the request reference.'
+                    : 'Unable to reject the offer. No email send was confirmed. Please try again later.',
+                500,
+                'offer_rejection_failed',
+                ['offer_id' => $id, 'email_sent' => $emailSent, 'retryable' => !$emailSent]
+            );
         }
     }
 
-    $stmt = db()->prepare("
-        UPDATE offers SET status = ?, response_date = ?, reject_reason = ?
-        WHERE id = ? AND student_id = ?
-    ");
-    $stmt->bind_param('sssii', $status, $today, $reason, $id, $user['id']);
-    $stmt->execute();
-    $placement = recalculatePlacementVerification($id, (int)$user['id']);
-    logActivity((int)$user['id'], 'offer.' . $status, 'offer', $id, [
-        'reject_reason' => $reason,
-        'email_sent' => (bool)($emailDelivery['sent'] ?? false),
-        'email_simulated' => (bool)($emailDelivery['simulated'] ?? false),
-        'email_to' => $emailDelivery['email'] ?? null,
-        'recipient_overridden' => $recipientOverridden ?? false,
-        'placement_verification_status' => $placement['status'],
-    ]);
     respond([
         'success' => true,
         'email_sent' => (bool)($emailDelivery['sent'] ?? false),

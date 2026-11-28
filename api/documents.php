@@ -172,8 +172,27 @@ if ($method === 'POST') {
     $fileName = 'doc_' . bin2hex(random_bytes(16)) . '.' . $ext;
     $database = db();
     $uploadedObjectPath = null;
+    $uploadedLocalPath = null;
     $database->begin_transaction();
     try {
+        if ($offerId !== null) {
+            // Serialize document changes/derived verification on the placement,
+            // not only on individual documents. Revalidate after acquiring it.
+            $placementLock = $database->prepare("SELECT id, student_id, status FROM offers WHERE id = ? FOR UPDATE");
+            $placementLock->bind_param('i', $offerId);
+            $placementLock->execute();
+            $lockedPlacement = $placementLock->get_result()->fetch_assoc();
+            if (!$lockedPlacement
+                || (int)$lockedPlacement['student_id'] !== (int)$user['id']
+                || $lockedPlacement['status'] !== 'accepted') {
+                $database->rollback();
+                respondError(
+                    'Your placement changed before this upload completed. Refresh the page and try again.',
+                    409,
+                    'placement_changed'
+                );
+            }
+        }
         if ($storage['driver'] === 'supabase') {
             $sha256 = hash_file('sha256', $file['tmp_name']);
             if ($sha256 === false) throw new RuntimeException('Could not checksum the uploaded file.');
@@ -211,6 +230,7 @@ if ($method === 'POST') {
             if (!move_uploaded_file($file['tmp_name'], $uploadDir . $fileName)) {
                 throw new RuntimeException('Unable to store uploaded file');
             }
+            $uploadedLocalPath = $uploadDir . $fileName;
             $stmt = $database->prepare("
                 INSERT INTO documents (student_id, offer_id, doc_type, file_name)
                 VALUES (?, ?, ?, ?)
@@ -240,6 +260,11 @@ if ($method === 'POST') {
         $database->commit();
     } catch (Throwable $error) {
         if ($database->inTransaction()) $database->rollback();
+        if ($uploadedLocalPath !== null && is_file($uploadedLocalPath)) {
+            if (!@unlink($uploadedLocalPath)) {
+                error_log('InternPilih failed to clean up an uncommitted local document.');
+            }
+        }
         if ($uploadedObjectPath !== null) {
             try {
                 deletePrivateDocument($uploadedObjectPath);
@@ -300,6 +325,13 @@ if ($method === 'PUT' && $id) {
     $placement = ['changed' => false, 'status' => null, 'previous_status' => null];
     db()->begin_transaction();
     try {
+        if (!empty($doc['offer_id'])) {
+            // The last two approvals may otherwise each see the other file as
+            // pending and leave an all-approved placement incorrectly pending.
+            $placementLock = db()->prepare("SELECT id FROM offers WHERE id = ? FOR UPDATE");
+            $placementLock->bind_param('i', $doc['offer_id']);
+            $placementLock->execute();
+        }
         $reviewedBy = (int)$user['id'];
         $stmt = db()->prepare("
             UPDATE documents

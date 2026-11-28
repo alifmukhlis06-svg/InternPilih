@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Rejection System – InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261128-final1">
-<script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
+<link rel="stylesheet" href="../assets/css/style.css?v=70663730cc6e">
+<script src="../assets/js/auth-gate.js?v=f0abc8d73d10"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     .ai-panel {
@@ -475,12 +475,12 @@
                   <div style="font-size:11px;color:var(--text2);">Acceptances</div>
                 </div>
                 <div class="mini-stat">
-                  <div style="font-size:24px;font-weight:800;color:var(--blue3);">100%</div>
+                  <div style="font-size:24px;font-weight:800;color:var(--blue3);" id="statResponseRate" title="Recorded offers with an accepted, rejected or withdrawn decision">—</div>
                   <div style="font-size:11px;color:var(--text2);">Response Rate</div>
                 </div>
                 <div class="mini-stat">
-                  <div style="font-size:22px;color:var(--green);"><i class="fas fa-circle-check"></i></div>
-                  <div style="font-size:11px;color:var(--text2);">Good Standing</div>
+                  <div style="font-size:24px;font-weight:800;color:var(--green);" id="statPending">—</div>
+                  <div style="font-size:11px;color:var(--text2);">Pending Offers</div>
                 </div>
               </div>
             </div>
@@ -559,6 +559,10 @@
     let selectedTone = 'Professional & Formal';
     let currentStudent = null;
     let aiAvailable = false;
+    let rejectionInFlight = false;
+    let rejectionDeliveryHolds = {};
+    let aiGenerationInFlight = false;
+    let generatedSelection = null;
 
     let templates = {};
 
@@ -569,14 +573,21 @@
     }
 
     function buildTemplates() {
-      const signature = studentSignature();
-      return {
-        1: 'Dear Hiring Manager,\n\nThank you sincerely for offering me the internship position at your organization. After careful consideration, I have decided to accept another offer that more closely aligns with my current academic focus and career goals.\n\nI truly appreciate the time and effort your team invested in the selection process. I hold your company in high regard and hope our paths may cross again in the future.\n\nThank you once again for this opportunity.\n\n' + signature,
-        2: 'Dear Hiring Manager,\n\nThank you for extending an internship offer to me. After careful deliberation, I must respectfully decline due to location and relocation constraints that make it unfeasible for me to commit to this position at this time.\n\nI appreciate your understanding and hope to remain connected for potential future opportunities.\n\n' + signature,
-        3: 'Dear Hiring Manager,\n\nThank you for offering me the internship opportunity at your organization. After reflection, I have decided to pursue a different career direction that better aligns with my evolving academic interests.\n\nThis was not an easy decision, and I genuinely appreciate the opportunity you extended to me. I wish your team continued success.\n\n' + signature,
-        4: 'Dear Hiring Manager,\n\nThank you for the internship offer. Due to personal and family commitments that have recently arisen, I am unable to accept this position at this time.\n\nI sincerely regret any inconvenience this may cause and appreciate your understanding.\n\n' + signature,
-        5: 'Dear Hiring Manager,\n\nThank you for the internship offer. Unfortunately, due to a scheduling conflict with my academic commitments, I am unable to begin at the proposed start date.\n\nI hope you will consider me for future opportunities and I apologize for any inconvenience caused.\n\n' + signature
-      };
+      if (!selectedOffer || !currentStudent) return {};
+      const language = document.getElementById('aiLanguage').value;
+      const malay = language === 'Malay (Bahasa Malaysia)';
+      const reasons = malay
+        ? ['saya telah menerima tawaran lain yang lebih sesuai dengan matlamat saya', 'kekangan lokasi atau perpindahan', 'perubahan hala tuju kerjaya saya', 'komitmen peribadi', 'konflik masa']
+        : ['I have accepted another offer that better fits my goals', 'location or relocation constraints', 'a change in my career direction', 'personal commitments', 'a timing conflict'];
+      const intro = malay
+        ? 'Tuan/Puan,\n\nTerima kasih atas tawaran jawatan ' + selectedOffer.position + ' di ' + selectedOffer.company_name + '.'
+        : (language === 'formal English with a Malay opening greeting' ? 'Salam sejahtera,\n\n' : 'Dear Hiring Manager,\n\n') + 'Thank you for offering me the ' + selectedOffer.position + ' position at ' + selectedOffer.company_name + '.';
+      const signature = malay
+        ? 'Yang benar,\n' + currentStudent.name + '\nNo. Pelajar: ' + currentStudent.matric_id + '\nUniversiti Teknologi MARA (UiTM)'
+        : studentSignature();
+      return Object.fromEntries(reasons.map((reason, index) => [index + 1, intro + '\n\n'
+        + (malay ? 'Saya dengan hormatnya terpaksa menolak tawaran ini kerana ' + reason + '.' : 'I must respectfully decline this offer ' + (index === 0 ? 'because ' : 'because of ') + reason + '.')
+        + '\n\n' + (malay ? 'Terima kasih atas pertimbangan dan pemahaman pihak tuan/puan.' : 'Thank you for your consideration and understanding.') + '\n\n' + signature]));
     }
 
     document.querySelectorAll('.tone-chip').forEach(function (chip) {
@@ -590,15 +601,26 @@
     function buildOfferCard(o) {
       var card = document.createElement('div');
       card.className = 'offer-select-card';
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
+      card.setAttribute('aria-pressed', 'false');
       card.id = 'offerCard' + o.id;
       card.style.cssText = 'padding:14px;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:.2s;';
-      card.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;"><div><p style="font-weight:600;font-size:13px;">' + o.company_name + '</p><p style="font-size:12px;color:var(--text2);">' + o.position + ' \u00b7 ' + (o.hr_email || 'No email') + '</p></div><span class="badge badge-pending">Pending</span></div>';
+      card.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;"><div><p style="font-weight:600;font-size:13px;"></p><p style="font-size:12px;color:var(--text2);"></p></div><span class="badge badge-pending">Pending</span></div>';
+      const lines = card.querySelectorAll('p');
+      lines[0].textContent = o.company_name;
+      lines[1].textContent = o.position + ' \u00b7 ' + (o.hr_email || 'No email');
       card.addEventListener('click', function () { selectOffer(o); });
+      card.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectOffer(o); }
+      });
       return card;
     }
 
     function selectOffer(o) {
+      if (rejectionInFlight) return;
       document.querySelectorAll('.offer-select-card').forEach(function (c) {
+        c.setAttribute('aria-pressed', String(c.id === 'offerCard' + o.id));
         c.style.borderColor = 'var(--border)'; c.style.background = 'transparent';
       });
       var el = document.getElementById('offerCard' + o.id);
@@ -610,6 +632,17 @@
           + currentStudent.name + ' (' + currentStudent.matric_id + ')';
       }
       document.getElementById('aiResultBox').classList.remove('visible');
+      document.getElementById('aiResultBox').dataset.message = '';
+      generatedSelection = null;
+      updateRejectionButtons();
+      if (rejectionDeliveryHolds[o.id]) showToast(rejectionDeliveryHolds[o.id].message, 'warning');
+    }
+
+    function updateRejectionButtons() {
+      const held = selectedOffer && rejectionDeliveryHolds[selectedOffer.id];
+      document.querySelectorAll('[onclick="sendRejection()"]').forEach(function (button) {
+        button.disabled = rejectionInFlight || !!held;
+      });
     }
 
     function useTemplate() {
@@ -619,6 +652,8 @@
         alert('Your student profile is still loading. Please try again.');
         return;
       }
+      if (!selectedOffer) { alert('Please select an offer first.'); return; }
+      templates = buildTemplates();
       document.getElementById('emailBody').value = templates[val];
       document.getElementById('aiTagBadge').style.display = 'none';
       document.getElementById('templateSelect').value = '';
@@ -635,7 +670,18 @@
       textEl.classList.remove('ai-typing');
     }
 
+    function aiSelectionSnapshot() {
+      return JSON.stringify({
+        offerId: selectedOffer && selectedOffer.id,
+        reason: document.getElementById('aiReason').value,
+        tone: selectedTone,
+        language: document.getElementById('aiLanguage').value,
+        context: document.getElementById('aiContext').value.trim()
+      });
+    }
+
     async function generateWithGemini() {
+      if (aiGenerationInFlight) return;
       var btn = document.getElementById('generateBtn');
       var label = document.getElementById('generateLabel');
       var icon = document.getElementById('generateIcon');
@@ -648,6 +694,9 @@
       }
       var company = selectedOffer.company_name || 'the company';
       var position = selectedOffer.position || '';
+      const selection = aiSelectionSnapshot();
+      aiGenerationInFlight = true;
+      generatedSelection = null;
 
       btn.disabled = true;
       btn.classList.add('loading');
@@ -675,8 +724,14 @@
 
         var data = await res.json().catch(function () { return {}; });
         if (!res.ok || data.error) throw new Error(data.error || 'AI drafting could not complete this request.');
+        if (selection !== aiSelectionSnapshot()) {
+          document.getElementById('aiResultBox').dataset.message = '';
+          showToast('Your offer or drafting options changed. The previous response was discarded; generate a new draft for the current selection.', 'info');
+          return;
+        }
         var text = data.text || '';
         if (!text) throw new Error('Gemini returned an empty response.');
+        generatedSelection = selection;
         showGeneratedMessage(text, 'Gemini Generated Message');
 
       } catch (err) {
@@ -686,6 +741,7 @@
         alert(message + '\n\nYou can still choose a manual template from the Rejection Message panel.');
       } finally {
         window.clearTimeout(timeoutId);
+        aiGenerationInFlight = false;
         btn.disabled = !aiAvailable;
         btn.classList.remove('loading');
         label.textContent = 'Generate draft';
@@ -694,6 +750,12 @@
     }
 
     function useAiMessage() {
+      if (!generatedSelection || generatedSelection !== aiSelectionSnapshot()) {
+        document.getElementById('aiResultBox').classList.remove('visible');
+        document.getElementById('aiResultBox').dataset.message = '';
+        showToast('Draft selection changed. Generate a new draft or choose a manual template.', 'warning');
+        return;
+      }
       var msg = document.getElementById('aiResultBox').dataset.message || '';
       if (!msg) return;
       document.getElementById('emailBody').value = msg;
@@ -709,6 +771,11 @@
     }
 
     async function sendRejection() {
+      if (rejectionInFlight) return;
+      if (selectedOffer && rejectionDeliveryHolds[selectedOffer.id]) {
+        alert(rejectionDeliveryHolds[selectedOffer.id].message);
+        return;
+      }
       var message = document.getElementById('emailBody').value.trim();
       var subject = document.getElementById('emailSubject').value.trim();
       var recipientEmail = document.getElementById('toEmail').value.trim();
@@ -725,11 +792,12 @@
         confirmedRecipient = recipientEmail;
       }
 
-      var sendButtons = Array.from(document.querySelectorAll('[onclick="sendRejection()"]'));
-      sendButtons.forEach(function (button) { button.disabled = true; });
+      const sendingOfferId = selectedOffer.id;
+      rejectionInFlight = true;
+      updateRejectionButtons();
 
       try {
-        var res = await fetch('../api/offers.php?id=' + encodeURIComponent(selectedOffer.id), {
+        var res = await fetch('../api/offers.php?id=' + encodeURIComponent(sendingOfferId), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -741,7 +809,18 @@
           })
         });
         var data = await res.json().catch(function () { return {}; });
-        if (!res.ok || data.error) throw new Error(data.error || 'Failed to send rejection notice.');
+        if (!res.ok || data.error) {
+          const reference = data.request_id ? ' Reference: ' + data.request_id + '.' : '';
+          const failure = (data.error || 'Failed to send rejection notice.') + reference;
+          if (data.email_sent === true && data.retryable === false) {
+            rejectionDeliveryHolds[sendingOfferId] = { message: failure };
+            // A tab-local safety warning, not a durable delivery ledger. SMTP
+            // and database commits cannot form one atomic transaction.
+            try { await window.internPilihDraft.save('rejection-delivery', rejectionDeliveryHolds); }
+            catch (_) { showToast('Keep this page open: the delivery warning could not be saved in this tab. Do not resend; contact your coordinator.', 'warning'); }
+          }
+          throw new Error(failure);
+        }
 
         var sentMessage = document.getElementById('sentMessage');
         if (sentMessage && data.email_to) {
@@ -756,7 +835,8 @@
       } catch (err) {
         alert(err.message);
       } finally {
-        sendButtons.forEach(function (button) { button.disabled = false; });
+        rejectionInFlight = false;
+        updateRejectionButtons();
       }
     }
 
@@ -773,6 +853,8 @@
         if (!responses[1].ok || !profilePayload.user) throw new Error(profilePayload.error || 'Unable to load your profile.');
         offers = offerPayload;
         currentStudent = profilePayload.user;
+        try { rejectionDeliveryHolds = await window.internPilihDraft.read('rejection-delivery') || rejectionDeliveryHolds; }
+        catch (_) { /* Retain any in-memory warning when tab storage is unavailable. */ }
         templates = buildTemplates();
         var aiPayload = {};
         var aiResponse = null;
@@ -792,6 +874,13 @@
         if (aiLabel && !aiAvailable) aiLabel.textContent = 'AI unavailable - use template';
       } catch (e) {
         document.documentElement.setAttribute('data-load-error', '');
+        selectedOffer = null;
+        const list = document.getElementById('offerList');
+        list.replaceChildren();
+        const error = document.createElement('div'); error.className = 'alert alert-danger'; error.setAttribute('role', 'alert');
+        error.textContent = e.message || 'Offers could not be loaded. Please try again.';
+        const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'btn btn-outline btn-sm'; retry.textContent = 'Try again'; retry.addEventListener('click', loadOffers);
+        list.append(error, retry);
         return;
       }
 
@@ -801,6 +890,9 @@
 
       document.getElementById('statRejected').textContent = rejected.length;
       document.getElementById('statAccepted').textContent = accepted.length;
+      const decided = offers.filter(function (o) { return ['accepted', 'rejected', 'withdrawn'].includes(o.status); }).length;
+      document.getElementById('statResponseRate').textContent = offers.length ? Math.round(decided / offers.length * 100) + '%' : '—';
+      document.getElementById('statPending').textContent = pending.length;
 
       var list = document.getElementById('offerList');
       if (pending.length === 0) {
@@ -822,14 +914,16 @@
           var isAcc = o.status === 'accepted';
           var date = o.response_date || o.offer_date || '';
           var fmtDate = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
-          return '<div class="notif-item"><div class="notif-dot-icon" style="background:rgba(' + (isAcc ? '16,185,129' : '239,68,68') + ',.1);color:var(--' + (isAcc ? 'green' : 'red') + ');font-size:14px;"><i class="fas fa-' + (isAcc ? 'check' : 'times') + '"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;">' + (isAcc ? 'Acceptance Sent' : 'Rejection Sent') + '</p><p style="font-size:12px;color:var(--text2);">' + o.company_name + ' \u2013 ' + o.position + '</p><p style="font-size:11px;color:var(--text2);margin-top:2px;">' + fmtDate + '</p></div></div>';
+          const details = document.createElement('span');
+          details.textContent = String(o.company_name || '') + ' \u2013 ' + String(o.position || '');
+          return '<div class="notif-item"><div class="notif-dot-icon" style="background:rgba(' + (isAcc ? '16,185,129' : '239,68,68') + ',.1);color:var(--' + (isAcc ? 'green' : 'red') + ');font-size:14px;"><i class="fas fa-' + (isAcc ? 'check' : 'times') + '"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;">' + (isAcc ? 'Acceptance Sent' : 'Rejection Sent') + '</p><p style="font-size:12px;color:var(--text2);">' + details.innerHTML + '</p><p style="font-size:11px;color:var(--text2);margin-top:2px;">' + fmtDate + '</p></div></div>';
         }).join('');
       }
     }
 
     document.addEventListener('DOMContentLoaded', loadOffers);
   </script>
-<script src="../assets/js/app.js?v=20261128-final1"></script>
+<script src="../assets/js/app.js?v=7b07030fc88f"></script>
 </body>
 
 </html>

@@ -4,8 +4,8 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Upload Documents - InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261128-final1">
-<script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
+<link rel="stylesheet" href="../assets/css/style.css?v=70663730cc6e">
+<script src="../assets/js/auth-gate.js?v=f0abc8d73d10"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -42,6 +42,7 @@
   </div>
 
   <div class="content fade-in">
+    <div class="alert alert-info" id="documentLoadStatus" role="status" style="flex-wrap:wrap;overflow-wrap:anywhere;"><span id="documentLoadMessage">Loading placement documents...</span><button class="btn btn-outline btn-sm" id="retryDocuments" type="button" onclick="loadPage()" hidden>Try again</button></div>
     <div class="alert alert-warning" id="alert-bar" style="display:none;"><i class="fas fa-exclamation-triangle"></i><span id="alert-text"></span></div>
 
     <div class="responsive-document" style="gap:24px;align-items:start;">
@@ -54,13 +55,14 @@
               <!-- Dynamically populated document rows -->
             </div>
 
-            <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;">
-              <button class="btn btn-primary" onclick="submitDocs()"><i class="fas fa-check"></i> Finish Submission</button>
+            <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-primary" id="finishDocuments" onclick="submitDocs()" disabled><i class="fas fa-check"></i> Finish Submission</button>
+              <span id="documentCompletionHint" role="status" style="flex-basis:100%;font-size:12px;color:var(--text2);"></span>
             </div>
           </div>
         </div>
 
-        <div class="panel" id="no-placement-panel" style="display:block;padding:30px;text-align:center;">
+        <div class="panel" id="no-placement-panel" style="display:none;padding:30px;text-align:center;">
           <div style="font-size:48px;margin-bottom:16px;color:var(--gold);"><i class="fas fa-circle-exclamation"></i></div>
           <h3>No Accepted Placement</h3>
           <p style="color:var(--text2);margin-top:8px;">You need to accept an internship offer before you can upload placement confirmation documents.</p>
@@ -113,8 +115,8 @@
   <div class="modal" style="max-width:400px;">
     <div class="modal-body" style="text-align:center;padding:40px;">
       <div style="font-size:48px;margin-bottom:16px;color:var(--blue3);"><i class="fas fa-clipboard-check"></i></div>
-      <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Documents Submitted!</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:24px;">Your documents have been submitted for coordinator verification. You will be notified once reviewed.</p>
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;" id="documentReceiptTitle">Required Files Uploaded</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:24px;" id="documentReceiptMessage">Uploads are saved individually. Coordinator review may still be pending.</p>
       <button class="btn btn-primary" onclick="document.getElementById('submitModal').classList.remove('open')">OK</button>
     </div>
   </div>
@@ -124,6 +126,8 @@
 let acceptedOffer = null;
 let uploadedDocs = [];
 let pageLoadGeneration = 0;
+let documentsLoading = true;
+let documentUploads = 0;
 
 const docTypes = [
   { key: 'offer_letter', name: 'Offer Letter / Acceptance Confirmation', required: true, icon: 'fa-file-contract', color: 'var(--blue3)' },
@@ -133,7 +137,14 @@ const docTypes = [
 ];
 
 async function loadPage(retryCount = 0) {
+  if (documentUploads > 0) return;
   const generation = ++pageLoadGeneration;
+  documentsLoading = true;
+  updateDocumentCompletion();
+  const status = document.getElementById('documentLoadStatus');
+  status.style.display = 'flex'; status.className = 'alert alert-info'; status.setAttribute('role', 'status');
+  document.getElementById('documentLoadMessage').textContent = 'Loading placement documents...';
+  document.getElementById('retryDocuments').hidden = true;
   try {
     const resOffers = await fetch('../api/offers.php');
     const offersPayload = await resOffers.json().catch(() => ({}));
@@ -152,6 +163,7 @@ async function loadPage(retryCount = 0) {
       document.getElementById('upload-panel').style.display = 'none';
       document.getElementById('sidebar-placement-panel').style.display = 'none';
       document.getElementById('sidebar-status-panel').style.display = 'none';
+      status.style.display = 'none';
       return;
     }
 
@@ -181,11 +193,25 @@ async function loadPage(retryCount = 0) {
       throw new Error('The active placement changed while documents were loading.');
     }
     uploadedDocs = documentsPayload;
-
+    status.style.display = 'none';
     renderDocs();
   } catch (err) {
+    if (generation !== pageLoadGeneration) return;
+    acceptedOffer = null; uploadedDocs = [];
     document.documentElement.setAttribute('data-load-error', '');
+    ['no-placement-panel','upload-panel','sidebar-placement-panel','sidebar-status-panel','alert-bar'].forEach(id => { document.getElementById(id).style.display = 'none'; });
+    status.style.display = 'flex'; status.className = 'alert alert-danger'; status.setAttribute('role', 'alert');
+    document.getElementById('documentLoadMessage').textContent = err.message || 'Placement documents could not be loaded. Please try again.';
+    document.getElementById('retryDocuments').hidden = false;
+  } finally {
+    if (generation === pageLoadGeneration) { documentsLoading = false; updateDocumentCompletion(); }
   }
+}
+
+function updateDocumentCompletion() {
+  const missing = docTypes.filter(type => type.required && !['pending','approved'].includes(uploadedDocs.find(doc => doc.doc_type === type.key)?.status));
+  document.getElementById('finishDocuments').disabled = documentsLoading || documentUploads > 0 || !acceptedOffer || missing.length > 0;
+  document.getElementById('documentCompletionHint').textContent = missing.length ? 'Upload or replace all required files before finishing.' : '';
 }
 
 function renderDocs() {
@@ -292,6 +318,8 @@ function renderDocs() {
     sidebarStatus.appendChild(sideDiv);
   });
 
+  updateDocumentCompletion();
+
   // Calculate completion percentage based on required verified files
   const pct = requiredCount > 0 ? Math.round((verifiedCount / requiredCount) * 100) : 0;
   document.getElementById('completion-text').textContent = `${pct}%`;
@@ -320,6 +348,7 @@ function triggerUpload(id) {
 
 async function uploadFile(input, docType) {
   if (input.files.length === 0) return;
+  if (documentsLoading || documentUploads > 0) { input.value = ''; return; }
   const file = input.files[0];
   const fd = new FormData();
   fd.append('file', file);
@@ -328,7 +357,8 @@ async function uploadFile(input, docType) {
     fd.append('offer_id', acceptedOffer.id);
   }
 
-  const submitBtn = document.querySelector('.btn-primary');
+  documentUploads++;
+  const submitBtn = document.getElementById('finishDocuments');
   submitBtn.disabled = true;
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
 
@@ -342,14 +372,15 @@ async function uploadFile(input, docType) {
     });
 
     showToast('Document uploaded successfully!', 'success');
-    await loadPage();
   } catch (err) {
     const reference = err.requestId ? ` (reference ${err.requestId})` : '';
     alert((err.message || 'The document could not be uploaded.') + reference);
     renderDocs();
   } finally {
-    submitBtn.disabled = false;
+    documentUploads--;
     submitBtn.innerHTML = '<i class="fas fa-check"></i> Finish Submission';
+    await loadPage();
+    updateDocumentCompletion();
   }
 }
 
@@ -388,6 +419,11 @@ function uploadDocumentWithProgress(formData, onProgress) {
 }
 
 function submitDocs() {
+  updateDocumentCompletion();
+  if (document.getElementById('finishDocuments').disabled) return;
+  const verified = docTypes.filter(type => type.required).every(type => uploadedDocs.find(doc => doc.doc_type === type.key)?.status === 'approved');
+  document.getElementById('documentReceiptTitle').textContent = verified ? 'Required Files Approved' : 'Required Files Uploaded';
+  document.getElementById('documentReceiptMessage').textContent = verified ? 'All required uploaded files are approved. See the placement verification status for your placement.' : 'All required files are saved. Coordinator review is still pending; this is not placement verification.';
   document.getElementById('submitModal').classList.add('open');
 }
 
@@ -408,7 +444,7 @@ window.addEventListener('storage', function (event) {
   if (event.key === 'internpilih:offers-updated' || event.key === 'internpilih:placement-changed') loadPage();
 });
 </script>
-<script src="../assets/js/app.js?v=20261128-final1"></script>
+<script src="../assets/js/app.js?v=7b07030fc88f"></script>
 </body>
 </html>
 

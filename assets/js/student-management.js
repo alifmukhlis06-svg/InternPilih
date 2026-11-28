@@ -3,31 +3,43 @@
   const list=document.getElementById('management-list');
   const message=document.getElementById('management-message');
   const api=window.appUrl('/api/student-registration.php');
+  const pendingActions=new Set();
+  function setPending(id,pending){
+    if(pending)pendingActions.add(id);else pendingActions.delete(id);
+    list.querySelectorAll('[data-request-id="'+Number(id)+'"]').forEach(panel=>{
+      panel.setAttribute('aria-busy',String(pending));
+      panel.querySelectorAll('button').forEach(button=>{button.disabled=pending;});
+    });
+  }
   function detail(label,value){const item=document.createElement('div');const heading=document.createElement('span');heading.textContent=label;item.append(heading,document.createTextNode(value==null||value===''?'—':String(value)));return item;}
   async function get(action){const response=await fetch(api+'?action='+action,{credentials:'same-origin',cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Could not load students.');return data;}
   async function review(id,decision){
+    if(pendingActions.has(id))return;
     let reason='';
     if(decision!=='approve'){
       reason=window.prompt(decision==='reject'?'Reason for rejection:':'Correction needed:')||'';
       if(!reason.trim())return;
     }else if(!window.confirm('Approve this student registration?'))return;
-    message.textContent='Saving review...';
+    setPending(id,true);message.textContent='Saving review...';
     try{
       const response=await fetch(api+'?action=review',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({id,decision,reason})});
       const data=await response.json();if(!response.ok)throw Error(data.error||'Could not save review.');
       message.textContent='Review saved.';await load();
     }catch(error){message.textContent=error.message;}
+    finally{setPending(id,false);}
   }
   async function claim(id){
-    message.textContent='Assigning request...';
+    if(pendingActions.has(id))return;
+    setPending(id,true);message.textContent='Assigning request...';
     try{
       const response=await fetch(api+'?action=claim',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({id})});
       const data=await response.json();if(!response.ok)throw Error(data.error||'Could not assign request.');
       message.textContent='Request assigned to you.';await load();
     }catch(error){message.textContent=error.message;}
+    finally{setPending(id,false);}
   }
   function card(row){
-    const panel=document.createElement('article');panel.className='panel management-card';
+    const panel=document.createElement('article');panel.className='panel management-card';panel.dataset.requestId=String(row.id);
     const heading=document.createElement('h3');heading.textContent=row.legal_name||row.name;panel.append(heading);
     const details=document.createElement('div');details.className='management-details';
     for(const [label,value] of [['Student ID',row.matric_id],['Email',row.email],['Campus',row.campus],['Faculty',row.faculty],['Programme',row.programme_code?row.programme_code+' — '+row.programme:row.programme],['Semester',row.semester],['CGPA',row.cgpa],['Phone',row.phone],['Status',row.status],['Submitted',row.submitted_at?new Date(row.submitted_at).toLocaleString():null]]){
@@ -54,6 +66,8 @@
       button.textContent='Assign to me';button.addEventListener('click',()=>claim(row.id));
       actions.append(button);panel.append(actions);
     }
+    const pending=pendingActions.has(row.id);panel.setAttribute('aria-busy',String(pending));
+    if(pending)panel.querySelectorAll('button').forEach(button=>{button.disabled=true;});
     return panel;
   }
   async function load(){try{

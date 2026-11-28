@@ -195,6 +195,13 @@ window.internPilihDisplayName = window.internPilihDisplayName || function (name)
   });
 
   if (!protectedPage) return;
+  window.addEventListener('storage', function (event) {
+    if (event.key !== 'internpilih:logout' || !event.newValue) return;
+    // Another same-origin tab confirmed server logout. Clear cached drafts and
+    // rendered account data immediately, without another automatic DELETE.
+    window.internPilihDraft?.clearAll();
+    redirectToLogin();
+  });
   revalidateAuthentication();
   window.addEventListener('pagehide', function () {
     // Store only the hidden state in browser history/BFCache. A restored page

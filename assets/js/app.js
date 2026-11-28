@@ -315,21 +315,61 @@ async function loadGoogleAuthHelper() {
   return window.InternPilihGoogleAuth;
 }
 
+let logoutInFlight = false;
 async function doLogout() {
+  if (logoutInFlight) return;
+  logoutInFlight = true;
+  window.internPilihDraft?.clearAll();
   if (typeof window.__internPilihClearProtectedState === 'function') {
     window.__internPilihClearProtectedState(true);
   } else {
     sessionStorage.removeItem('user');
     sessionStorage.removeItem('internpilih:access-pending');
   }
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 12000);
   try {
-    const googleAuth = await loadGoogleAuthHelper();
-    await googleAuth.signOut();
+    // Confirm our server session is revoked before reporting sign-out. Google
+    // cleanup is best effort and must not delay/retry this request indefinitely.
+    const response = await fetch(window.appUrl('/api/auth.php'), {
+      method: 'DELETE', credentials: 'same-origin', signal: controller.signal
+    });
+    if (!response.ok) throw new Error('Server sign-out was not confirmed.');
+    const payload = await response.json().catch(() => ({}));
+    if (!payload.success) throw new Error('Server sign-out was not confirmed.');
+    try { localStorage.setItem('internpilih:logout', String(Date.now()) + ':' + Math.random()); } catch (_) {}
+    let cleanupTimeout;
+    try {
+      await Promise.race([
+        loadGoogleAuthHelper().then(helper => helper.signOut()),
+        new Promise(resolve => { cleanupTimeout = window.setTimeout(resolve, 2500); })
+      ]);
+    } catch (_) { /* Server session is already revoked. */ }
+    finally { window.clearTimeout(cleanupTimeout); }
+    window.location.replace(window.appUrl('/login.html'));
   } catch (_) {
-    // Continue clearing the InternPilih session if Supabase is unavailable.
+    // Render only safe recovery content: do not restore scrubbed account data
+    // or silently imply that an unreachable server revoked the session.
+    const panel = document.createElement('main');
+    panel.id = 'internpilih-logout-error';
+    panel.className = 'panel';
+    panel.style.cssText = 'max-width:480px;margin:64px auto;padding:24px;';
+    const message = document.createElement('p');
+    message.setAttribute('role', 'alert');
+    message.textContent = 'Sign out could not be confirmed. Your server session may still be active. Reconnect and retry; do not leave this browser unattended.';
+    const retry = document.createElement('button');
+    retry.id = 'internpilih-logout-retry'; retry.type = 'button';
+    retry.className = 'btn btn-primary'; retry.textContent = 'Retry sign out';
+    retry.addEventListener('click', doLogout);
+    panel.append(message, retry);
+    document.body.replaceChildren(panel);
+    document.documentElement.removeAttribute('data-auth-checking');
+    document.documentElement.setAttribute('data-auth-ready', '');
+    retry.focus();
+  } finally {
+    window.clearTimeout(timeout);
+    logoutInFlight = false;
   }
-  await fetch('/api/auth.php', { method: 'DELETE' }).catch(() => {});
-  window.location.replace(window.appUrl('/login.html'));
 }
 
 // Download an authenticated coordinator report and surface API errors instead
@@ -372,7 +412,7 @@ window.downloadAdminReport = async function (format, report) {
     }
   } catch (error) {
     if (typeof window.showToast === 'function') {
-      window.showToast(error.message);
+      window.showToast(error.message, 'error');
     } else {
       window.alert(error.message);
     }
@@ -470,7 +510,10 @@ function showToast(msg, type) {
   var toast = document.createElement('div');
   toast.className = 'toast';
   toast.style.background = colors[type] || colors.success;
-  toast.innerHTML = '<span>' + (labels[type] || 'Done') + '</span> ' + msg;
+  toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  const label = document.createElement('span');
+  label.textContent = labels[type] || 'Info';
+  toast.append(label, document.createTextNode(' ' + String(msg)));
   document.body.appendChild(toast);
 
   requestAnimationFrame(function () {
@@ -485,6 +528,74 @@ function showToast(msg, type) {
 
 
 // Modal helpers
+(function installReadErrorFeedback() {
+  window.clearInternPilihReadError = function () {
+    document.getElementById('pageDataError')?.remove();
+    document.querySelector('.content')?.removeAttribute('data-read-error');
+  };
+  window.showInternPilihReadError = function (message, retry, preserveForm = false) {
+    const content = document.querySelector('.content');
+    if (!content) return;
+    document.getElementById('pageDataError')?.remove();
+    if (!preserveForm) content.setAttribute('data-read-error', '');
+    const alert = document.createElement('div');
+    alert.id = 'pageDataError'; alert.className = 'alert alert-danger'; alert.setAttribute('role', 'alert');
+    alert.style.flexWrap = 'wrap'; alert.style.overflowWrap = 'anywhere';
+    const text = document.createElement('span');
+    text.textContent = 'Live data could not be loaded. ' + String(message || 'Please try again.');
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'btn btn-outline btn-sm'; button.textContent = 'Try again';
+    button.addEventListener('click', async () => {
+      if (button.disabled) return;
+      button.disabled = true; button.textContent = 'Loading...';
+      try { await retry(); } catch (_) { text.textContent = 'Live data is still unavailable. Please try again.'; }
+      finally { button.disabled = false; button.textContent = 'Try again'; }
+    });
+    alert.append(text, button); content.prepend(alert);
+  };
+})();
+
+(function installSessionDrafts() {
+  const prefix = 'internpilih:draft:';
+  async function key(kind) {
+    const user = await window.authReady;
+    const role = { 'record-offer':'student', announcement:'admin', 'rejection-delivery':'student' }[kind];
+    if (!user?.id || !role || user.role !== role) throw new Error('Your authenticated profile is required to use this draft.');
+    return prefix + user.role + ':' + user.id + ':' + kind;
+  }
+  window.internPilihDraft = {
+    async read(kind) { const raw = sessionStorage.getItem(await key(kind)); return raw ? JSON.parse(raw) : null; },
+    async save(kind, data) { sessionStorage.setItem(await key(kind), JSON.stringify(data)); },
+    async clear(kind) { sessionStorage.removeItem(await key(kind)); },
+    clearAll() {
+      try { Object.keys(sessionStorage).filter(k => k.startsWith(prefix)).forEach(k => sessionStorage.removeItem(k)); } catch (_) { /* Unavailable storage cannot expose a readable draft. */ }
+    }
+  };
+})();
+
+(function enableCustomControlKeyboard() {
+  const selector = '.upload-area[onclick], .role-btn[onclick], .chip[onclick]';
+  const native = 'button,a,input,select,textarea';
+  function upgrade(root) {
+    const controls = [...(root.querySelectorAll?.(selector) || [])];
+    if (root.matches?.(selector)) controls.push(root);
+    controls.forEach(control => {
+      if (control.matches(native)) return;
+      control.setAttribute('role', 'button');
+      control.tabIndex = 0;
+    });
+  }
+  upgrade(document);
+  new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(upgrade)))
+    .observe(document.body, {childList:true, subtree:true});
+  document.addEventListener('keydown', event => {
+    const control = event.target;
+    if (!control.matches?.(selector) || control.matches(native) || !['Enter',' '].includes(event.key)) return;
+    event.preventDefault();
+    if (control.getAttribute('aria-disabled') !== 'true') control.click();
+  });
+})();
+
 function openModal(id) {
   var m = document.getElementById(id);
   if (m) m.classList.add('open');
@@ -1171,9 +1282,31 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
     }
   };
 
+  let reminderStudentId = null;
+  let sendingReminder = false;
+  window.sendReminder = async function () {
+    if (sendingReminder) return;
+    const student = monitoringData?.students.find(s => Number(s.id) === reminderStudentId);
+    if (!student) { showToast('Open an assigned student before sending a reminder.', 'error'); return; }
+    const button = document.querySelector('#studentModal [onclick^="sendReminder"]');
+    const original = button?.innerHTML;
+    sendingReminder = true;
+    if (button) { button.disabled = true; button.textContent = 'Sending...'; }
+    try {
+      const result = await apiSend('/api/notifications.php', 'POST', {
+        type:'reminder', recipient_group:'individual', recipient_user_ids:[Number(student.id)],
+        title:'Internship placement reminder',
+        body:'Please review your internship offers and required documents in InternPilih. Contact your coordinator if you need help.',
+        link_url:'offers.html'
+      });
+      showToast('Reminder saved for ' + result.recipient_count + ' student. Email sent: ' + result.email_sent_count + '; failed: ' + result.email_failed_count + '.', Number(result.email_failed_count) > 0 ? 'warning' : 'success');
+    } catch (error) { showToast(error.message || 'Reminder could not be sent. Please try again.', 'error'); }
+    finally { sendingReminder = false; if (button) { button.disabled = false; button.innerHTML = original; } }
+  };
   window.viewStudentFromDb = function (id) {
     const s = monitoringData?.students.find(item => Number(item.id) === Number(id));
     if (!s) return;
+    reminderStudentId = Number(s.id);
     const offers = monitoringData.offers.filter(o => Number(o.student_id) === Number(id));
     const st = statusForStudent(s);
     const aiButton = document.getElementById('aiRiskButton');
@@ -1450,7 +1583,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
               ${d.offer_id ? `<div style="font-size:11px;color:var(--text2);">Placement ${placementVerificationBadge({ id: d.offer_id, placement_verification_status: d.placement_verification_status }, docsForVerification)}</div>` : ''}
               <div style="display:flex;gap:6px;">
                 <button class="btn btn-outline btn-sm" onclick="previewDocFromDb(${Number(d.id)})"><i class="fas fa-eye"></i> Preview</button>
-                ${d.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveDocFromDb(${d.id})"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="openRejectFromDb(${d.id})"><i class="fas fa-times"></i> Reject</button>` : ''}
+                ${d.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveDocFromDb(${d.id}, this)"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="openRejectFromDb(${d.id})"><i class="fas fa-times"></i> Reject</button>` : ''}
               </div>
             </div>
           </div>
@@ -1462,10 +1595,23 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
   window.previewDocFromDb = function (id) {
     window.open('/api/document-file.php?id=' + encodeURIComponent(id), '_blank', 'noopener,noreferrer');
   };
-  window.approveDocFromDb = async function (id) {
-    const result = await apiSend('/api/documents.php?id=' + id, 'PUT', { status: 'approved' });
-    renderVerification(await getSummary());
-    showToast(result.placement_verification_status === 'verified' ? 'Document approved. Placement is now verified.' : 'Document approved. Placement verification updated.', 'success');
+  const pendingDocumentActions = new Set();
+  window.approveDocFromDb = async function (id, button) {
+    if (pendingDocumentActions.has(id)) return;
+    pendingDocumentActions.add(id);
+    if (button) button.disabled = true;
+    let saved = false;
+    try {
+      const result = await apiSend('/api/documents.php?id=' + id, 'PUT', { status: 'approved' });
+      saved = true;
+      renderVerification(await getSummary());
+      showToast(result.placement_verification_status === 'verified' ? 'Document approved. Placement is now verified.' : 'Document approved. Placement verification updated.', 'success');
+    } catch (error) {
+      showToast(saved ? 'Document approved, but the list could not refresh. Reload to see its status.' : (error.message || 'Document could not be approved. Please try again.'), 'error');
+    } finally {
+      pendingDocumentActions.delete(id);
+      if (button) button.disabled = false;
+    }
   };
   window.openRejectFromDb = function (id) {
     activeDocId = id;
@@ -1473,11 +1619,25 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
   };
   function hookVerification() {
     window.confirmReject = async function () {
+      const id = activeDocId;
+      if (!id || pendingDocumentActions.has(id)) return;
+      const button = document.querySelector('#rejectModal [onclick="confirmReject()"]');
       const reason = [document.getElementById('rejectReason')?.value, document.getElementById('rejectNote')?.value].filter(Boolean).join(' - ');
-      const result = await apiSend('/api/documents.php?id=' + activeDocId, 'PUT', { status: 'rejected', reject_reason: reason });
-      document.getElementById('rejectModal')?.classList.remove('open');
-      renderVerification(await getSummary());
-      showToast(result.placement_verification_status === 'rejected' ? 'Document rejected. Placement verification was rejected.' : 'Document rejected. Student notified.', 'success');
+      pendingDocumentActions.add(id);
+      if (button) button.disabled = true;
+      let saved = false;
+      try {
+        const result = await apiSend('/api/documents.php?id=' + id, 'PUT', { status: 'rejected', reject_reason: reason });
+        saved = true;
+        document.getElementById('rejectModal')?.classList.remove('open');
+        renderVerification(await getSummary());
+        showToast(result.placement_verification_status === 'rejected' ? 'Document rejected. Placement verification was rejected.' : 'Document rejected. Student notified.', 'success');
+      } catch (error) {
+        showToast(saved ? 'Document rejected, but the list could not refresh. Reload to see its status.' : (error.message || 'Document could not be rejected. Please try again.'), 'error');
+      } finally {
+        pendingDocumentActions.delete(id);
+        if (button) button.disabled = false;
+      }
     };
   }
 
@@ -1630,7 +1790,10 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
   }
 
   async function renderStudentProfile() {
-    applyStudentProfile(await apiGet('/api/profile.php'));
+    try {
+      applyStudentProfile(await apiGet('/api/profile.php'));
+      window.clearInternPilihReadError();
+    } catch (error) { window.showInternPilihReadError(error.message, renderStudentProfile); }
   }
 
   window.requestPasswordChange = async function () {
@@ -2016,6 +2179,10 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
       if (section === 'student' && page === 'acceptance.html') {
         return;
       }
+      // These pages own their data loaders and error/fallback UI. Do not issue
+      // an unrelated shared summary request or replace their page controllers.
+      if (section === 'student' && ['dashboard.html','offers.html','record-offer.html','companies.html','documents.html'].includes(page)) return;
+      if (section === 'admin' && page === 'notifications.html') return;
       if (section === 'student' && page === 'profile.html') {
         await renderStudentProfile();
         window.addEventListener('storage', function (event) {
@@ -2054,6 +2221,9 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
         }
         return;
       }
+      // This page owns both company and opportunity CRUD. The legacy company-
+      // only bindings must not replace its selected-target confirmDelete handler.
+      if (section === 'admin' && page === 'companies.html' && document.getElementById('opportunityBody')) return;
       const data = await getSummary();
       if (section === 'admin' && page === 'dashboard.html') renderAdminDashboard(data);
       if (section === 'admin' && page === 'monitoring.html') await renderMonitoring(data);
@@ -2068,8 +2238,10 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
         renderVerification(data);
       }
       if (section === 'employer') renderEmployerPages(data);
+      window.clearInternPilihReadError();
     } catch (err) {
       console.warn('Database page binding skipped:', err.message);
+      window.showInternPilihReadError(err.message, initDatabaseBindings);
       if (section === 'employer' && (page === 'profile.html' || page === 'placements.html')) {
         const message = 'Company data could not be loaded. Please reload the page to try again.';
         const profile = document.getElementById('employer-company-profile');

@@ -4,8 +4,8 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Company Database – InternPilih Admin</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261128-final1">
-<script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
+<link rel="stylesheet" href="../assets/css/style.css?v=70663730cc6e">
+<script src="../assets/js/auth-gate.js?v=f0abc8d73d10"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -52,15 +52,10 @@
         <i class="fas fa-search"></i>
         <input class="search-input" placeholder="Search company name, location or industry..." id="compSearch" oninput="searchCompanies()">
       </div>
-      <select class="form-control" style="width:180px;">
-        <option>All Industries</option>
-        <option>IT / Software</option>
-        <option>Finance</option>
-        <option>Telco</option>
-        <option>GLC</option>
-        <option>Healthcare</option>
+      <select class="form-control" id="companyIndustryFilter" aria-label="Filter companies by industry" style="width:180px;" onchange="searchCompanies()">
+        <option value="">All Industries</option>
       </select>
-      <button class="btn btn-outline btn-sm"><i class="fas fa-download"></i> Export</button>
+      <button class="btn btn-outline btn-sm" id="exportCompanies" onclick="exportCompaniesCsv()" disabled><i class="fas fa-download"></i> Export</button>
     </div>
 
     <div class="panel">
@@ -169,6 +164,7 @@ let opportunities = [];
 let editingCompanyId = null;
 let editingOpportunityId = null;
 let deleteTarget = null;
+let deletingTarget = false;
 let academicProgrammes = [];
 
 async function apiRequest(url, options = {}) {
@@ -185,8 +181,10 @@ async function loadManagementData() {
       apiRequest('../api/opportunities.php')
     ]);
     populateCompanyOptions();
+    populateIndustryOptions();
     renderCompanies();
     renderOpportunities();
+    document.getElementById('exportCompanies').disabled = false;
     loadAcademicProgrammes();
   } catch (error) {
     document.getElementById('compBody').innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--danger);">${escapeHtml(error.message)}</td></tr>`;
@@ -230,7 +228,7 @@ function populateCompanyOptions() {
 function renderCompanies() {
   document.getElementById('companyTotal').textContent = `· ${companies.length} total`;
   document.getElementById('compBody').innerHTML = companies.length ? companies.map(company => `
-    <tr>
+    <tr data-company-id="${escapeAttribute(company.id)}">
       <td><strong>${escapeHtml(company.name)}</strong></td><td>${escapeHtml(company.industry)}</td><td>${escapeHtml(company.location)}</td>
       <td>${escapeHtml(company.hr_email || 'Not specified')}</td><td>RM ${escapeHtml(company.allowance || '0')}</td>
       <td>${escapeHtml(formatPositions(company.positions))}</td><td>${escapeHtml(company.confirmed_placements || '0')}</td>
@@ -254,8 +252,48 @@ function renderOpportunities() {
 }
 
 function searchCompanies() {
-  const query = document.getElementById('compSearch').value.toLowerCase();
-  document.querySelectorAll('#compBody tr').forEach(row => { row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none'; });
+  const query = document.getElementById('compSearch').value.trim().toLowerCase();
+  const industry = document.getElementById('companyIndustryFilter').value.trim().toLowerCase();
+  const rows = [...document.querySelectorAll('#compBody tr[data-company-id]')];
+  let visible = 0;
+  document.getElementById('companyNoMatches')?.remove();
+  rows.forEach(row => {
+    const matches = row.textContent.toLowerCase().includes(query) && (!industry || row.cells[1].textContent.trim().toLowerCase() === industry);
+    row.style.display = matches ? '' : 'none';
+    if (matches) visible++;
+  });
+  document.getElementById('companyTotal').textContent = `\u00b7 ${visible} of ${companies.length} companies`;
+  if (rows.length && !visible) {
+    const row = document.createElement('tr'); row.id = 'companyNoMatches';
+    const cell = row.insertCell(); cell.colSpan = 9; cell.textContent = 'No companies match these filters.';
+    row.append(cell); document.getElementById('compBody').append(row);
+  }
+}
+
+function populateIndustryOptions() {
+  const select = document.getElementById('companyIndustryFilter'),previous = select.value;
+  select.replaceChildren(new Option('All Industries',''));
+  [...new Set(companies.map(company => String(company.industry || '').trim()).filter(Boolean))].sort().forEach(industry => select.add(new Option(industry,industry)));
+  select.value = [...select.options].some(option => option.value === previous) ? previous : '';
+}
+
+function exportCompaniesCsv() {
+  const rows = [...document.querySelectorAll('#compBody tr')].filter(row => row.style.display !== 'none');
+  const field = value => {
+    let text = String(value ?? '');
+    // Spreadsheet formula injection must not turn directory data into code.
+    if (/^\s*[=+\-@]|^[\t\r]/.test(text)) text = "'" + text;
+    return '"' + text.replaceAll('"', '""') + '"';
+  };
+  const header = ['Company','Industry','Location','Contact','Allowance','Positions','Confirmed','Status'];
+  const records = rows.filter(row => row.cells.length === 9).map(row => [...row.cells].slice(0,8).map(cell => cell.textContent.trim()));
+  const csv = '\uFEFF' + [header,...records].map(row => row.map(field).join(',')).join('\r\n') + '\r\n';
+  const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+  const link = document.createElement('a');
+  link.href = url; link.download = 'internpilih-companies.csv';
+  document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast('Company directory downloaded.');
 }
 
 function openAddCompany() {
@@ -294,7 +332,7 @@ async function saveCompany() {
       method: editingCompanyId ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)
     });
     closeCompModal(); showToast('Company saved successfully.'); await loadManagementData();
-  } catch (error) { showToast(error.message); }
+  } catch (error) { showToast(error.message, 'error'); }
 }
 
 function openAddOpportunity() {
@@ -338,7 +376,7 @@ async function saveOpportunity() {
       method: editingOpportunityId ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)
     });
     closeOpportunityModal(); showToast('Opportunity saved successfully.'); await loadManagementData();
-  } catch (error) { showToast(error.message); }
+  } catch (error) { showToast(error.message, 'error'); }
 }
 
 function requestDelete(type, id) {
@@ -351,14 +389,19 @@ function requestDelete(type, id) {
 }
 
 async function confirmDelete() {
-  if (!deleteTarget) return;
-  const endpoint = deleteTarget.type === 'company' ? 'companies' : 'opportunities';
+  if (!deleteTarget || deletingTarget) return;
+  const target = {...deleteTarget};
+  const endpoint = target.type === 'company' ? 'companies' : 'opportunities';
+  const buttons = [...document.querySelectorAll('#deleteModal button')];
+  deletingTarget = true;
+  buttons.forEach(button => { button.disabled = true; });
   try {
-    await apiRequest(`../api/${endpoint}.php?id=${deleteTarget.id}`, {method:'DELETE'});
+    await apiRequest(`../api/${endpoint}.php?id=${target.id}`, {method:'DELETE'});
     document.getElementById('deleteModal').classList.remove('open');
-    showToast(deleteTarget.type === 'company' ? 'Company made inactive.' : 'Opportunity closed.');
+    showToast(target.type === 'company' ? 'Company made inactive.' : 'Opportunity closed.');
     deleteTarget = null; await loadManagementData();
-  } catch (error) { showToast(error.message); }
+  } catch (error) { showToast(error.message, 'error'); }
+  finally { deletingTarget = false; buttons.forEach(button => { button.disabled = false; }); }
 }
 
 function formatPositions(value) { const values = String(value || '').split('||').filter(Boolean); return values.join(', ') || 'None recorded'; }
@@ -368,7 +411,7 @@ function showToast(message) { const toast = document.getElementById('toast'); do
 
 document.addEventListener('DOMContentLoaded', loadManagementData);
 </script>
-<script src="../assets/js/app.js?v=20261128-final1"></script>
+<script src="../assets/js/app.js?v=7b07030fc88f"></script>
 </body>
 </html>
 

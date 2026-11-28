@@ -4,8 +4,8 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Announcements – InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261128-final1">
-<script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
+<link rel="stylesheet" href="../assets/css/style.css?v=70663730cc6e">
+<script src="../assets/js/auth-gate.js?v=f0abc8d73d10"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -82,18 +82,19 @@
             </div>
             <div class="form-group">
               <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                <input type="checkbox" id="scheduleToggle" onchange="toggleSchedule()" style="width:16px;height:16px;">
-                Schedule announcement
+                <input type="checkbox" id="scheduleToggle" onchange="toggleSchedule()" style="width:16px;height:16px;" disabled>
+                Scheduling unavailable — announcements send immediately
               </label>
               <div class="form-row" id="scheduleFields" style="display:none;margin-top:10px;">
-                <input type="date" class="form-control" id="schedDate">
-                <input type="time" class="form-control" id="schedTime" value="09:00">
+                <input type="date" class="form-control" id="schedDate" disabled>
+                <input type="time" class="form-control" id="schedTime" value="09:00" disabled>
               </div>
             </div>
             <div class="form-actions">
               <button class="btn btn-outline" onclick="saveDraft()"><i class="fas fa-save"></i> Save Draft</button>
               <button class="btn btn-primary" onclick="sendAnn()"><i class="fas fa-paper-plane"></i> Send Now</button>
             </div>
+            <p style="font-size:12px;color:var(--text2);margin-top:12px;">Drafts remain in this browser tab until you sign out or close it. Saving a draft does not notify students.</p>
           </div>
         </div>
       </div>
@@ -169,6 +170,7 @@ let coordinatorProfile=null;
 window.authReady.then(user=>{coordinatorProfile=user;});
 let currentType='general',currentRecipient='all',recipientCounts={all:0,pending:0,risk:0};
 let availableStudents=[],selectedStudents=new Map();
+let notificationMetaReady=false;
 function escText(value){
   return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
 }
@@ -233,13 +235,19 @@ function loadTemplate(key){
 function toggleSchedule(){
   const fields=document.getElementById('scheduleFields');
   const toggle=document.getElementById('scheduleToggle');
-  if(fields&&toggle) fields.style.display=toggle.checked?'flex':'none';
+  if(fields&&toggle) fields.style.display='none';
 }
+let announcementSending=false;
 async function sendAnn(){
+  if(announcementSending) return;
+  if(!notificationMetaReady){alert('Student recipients are not loaded. Try loading them again before sending.');return;}
+  if(document.getElementById('scheduleToggle').checked){alert('Scheduling is not supported. Nothing was sent. Clear the scheduling option to send immediately.');return;}
   const subj=document.getElementById('annSubject').value.trim();
   const msg=document.getElementById('annMessage').value.trim();
   if(!subj||!msg){alert('Please fill in Subject and Message.');return;}
   if(currentRecipient==='individual'&&selectedStudents.size===0){alert('Please select at least one student recipient.');return;}
+  const button=document.querySelector('[onclick="sendAnn()"]'),original=button.innerHTML;
+  announcementSending=true;button.disabled=true;button.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';
   try{
     const res=await fetch('../api/notifications.php',{
       method:'POST',
@@ -253,6 +261,7 @@ async function sendAnn(){
     document.getElementById('sentModal').classList.add('open');
     document.getElementById('annSubject').value='';
     document.getElementById('annMessage').value='';
+    try{await window.internPilihDraft.clear('announcement');}catch(_){showToast('Announcement saved, but its local draft could not be cleared. Do not send it again.','warning');}
     if(currentRecipient==='individual'){
       selectedStudents.clear();
       renderSelectedStudents();
@@ -261,9 +270,29 @@ async function sendAnn(){
     loadNotificationMeta();
   }catch(err){
     alert(err.message);
+  }finally{
+    announcementSending=false;button.disabled=!notificationMetaReady;button.innerHTML=original;
   }
 }
-function saveDraft(){alert('Draft saved!');}
+async function saveDraft(){
+  try{
+    await window.internPilihDraft.save('announcement',{type:currentType,recipient:currentRecipient,selected:Array.from(selectedStudents.keys()),subject:document.getElementById('annSubject').value,message:document.getElementById('annMessage').value});
+    showToast('Draft saved in this browser tab. No announcement was sent.');
+  }catch(_){showToast('Draft could not be saved in this browser. Keep this page open or copy the message.','error');}
+}
+async function restoreAnnouncementDraft(){
+  try{
+    const draft=await window.internPilihDraft.read('announcement');
+    if(!draft||typeof draft!=='object'||Array.isArray(draft))return;
+    if(['general','reminder','urgent'].includes(draft.type))setType(draft.type);
+    if(['all','pending','risk','individual'].includes(draft.recipient))setRecipient(draft.recipient);
+    document.getElementById('annSubject').value=typeof draft.subject==='string'?draft.subject:'';
+    document.getElementById('annMessage').value=typeof draft.message==='string'?draft.message:'';
+    selectedStudents.clear();
+    for(const id of Array.isArray(draft.selected)?draft.selected:[]){const student=availableStudents.find(s=>Number(s.id)===Number(id));if(student)selectedStudents.set(Number(student.id),student);}
+    renderSelectedStudents();showToast('Draft restored. Review recipients before sending.','info');
+  }catch(_){showToast('The browser draft could not be restored. No announcement was sent.','error');}
+}
 function statusForStudent(student,offers){
   const mine=offers.filter(o=>Number(o.student_id)===Number(student.id));
   const pending=mine.filter(o=>o.status==='pending').length;
@@ -274,6 +303,7 @@ async function loadNotificationMeta(){
   try{
     const res=await fetch('../api/summary.php');
     const data=await res.json();
+    if(!res.ok||data.error)throw new Error(data.error||'Student recipients could not be loaded.');
     const students=data.students||[];
     availableStudents=students.slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
     const offers=data.offers||[];
@@ -283,7 +313,14 @@ async function loadNotificationMeta(){
     document.getElementById('toAll').innerHTML=`<i class="fas fa-users"></i> All Students (${recipientCounts.all})`;
     document.getElementById('toPending').innerHTML=`<i class="fas fa-hourglass-half"></i> Pending Only (${recipientCounts.pending})`;
     document.getElementById('toRisk').innerHTML=`<i class="fas fa-exclamation-triangle"></i> Flagged Students (${recipientCounts.risk})`;
-  }catch(err){}
+    notificationMetaReady=true;
+    document.querySelector('[onclick="sendAnn()"]').disabled=announcementSending;
+    window.clearInternPilihReadError();
+  }catch(err){
+    notificationMetaReady=false;
+    document.querySelector('[onclick="sendAnn()"]').disabled=true;
+    window.showInternPilihReadError(err.message,loadNotificationMeta,true);
+  }
 }
 function notificationIcon(type){
   if(type==='urgent') return ['fa-exclamation-triangle','var(--red)'];
@@ -321,12 +358,13 @@ async function loadSentHistory(){
     body.innerHTML='<div style="padding:24px 0;text-align:center;color:var(--red);font-size:13px;">Unable to load sent history.</div>';
   }
 }
-document.getElementById('schedDate').valueAsDate=new Date();
+const scheduleToday=new Date();
+document.getElementById('schedDate').value=[scheduleToday.getFullYear(),String(scheduleToday.getMonth()+1).padStart(2,'0'),String(scheduleToday.getDate()).padStart(2,'0')].join('-');
 toggleSchedule();
-loadNotificationMeta();
+loadNotificationMeta().then(restoreAnnouncementDraft);
 loadSentHistory();
 </script>
-<script src="../assets/js/app.js?v=20261128-final1"></script>
+<script src="../assets/js/app.js?v=7b07030fc88f"></script>
 </body>
 </html>
 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>InternPilih - UiTM Internship Post-Offer System</title>
 <script src="assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="assets/css/style.css?v=20261128-final1">
+<link rel="stylesheet" href="assets/css/style.css?v=70663730cc6e">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -44,9 +44,7 @@
       </div>
     </div>
     <div class="form-options">
-      <label class="check-label">
-        <input type="checkbox" checked> Remember me
-      </label>
+      <span class="check-label">Browser-session sign-in</span>
       <a href="forgot-password.html" class="login-link">Forgot password?</a>
     </div>
     <button class="btn btn-primary login-submit" onclick="doLogin()">
@@ -140,10 +138,11 @@ function togglePwd(){
   else{inp.type='password';icon.className='fas fa-eye';}
 }
 async function doLogin(){
+  const btn = document.querySelector('.login-submit.btn-primary');
+  if (btn.disabled) return;
   clearLoginErrors();
   const identifier = document.getElementById('identifier').value.trim();
   const password = document.getElementById('password').value;
-  const btn      = document.querySelector('.btn-primary');
 
   const identifierLabel=currentRole==='student'?'Student ID':currentRole==='admin'?'Staff ID':'email';
   if (!identifier || !password) { showErr(`Please enter ${identifierLabel} and password.`, !identifier ? 'identifier' : 'password'); return; }
@@ -229,7 +228,7 @@ document.addEventListener('keydown', e => {
 });
 loadDemoAccounts();
 </script>
-<script src="assets/js/app.js?v=20261128-final1"></script>
+<script src="assets/js/app.js?v=7b07030fc88f"></script>
 </body>
 </html>
 

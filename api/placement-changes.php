@@ -114,7 +114,7 @@ if ($method === 'POST') {
     $reason = trim((string)($d['reason'] ?? ''));
     if ($requestedOfferId <= 0) respond(['error' => 'Choose the offer you want to change to.'], 422);
     if ($reason === '') respond(['error' => 'Please write a short reason for the coordinator.'], 422);
-    if (strlen($reason) > 1000) respond(['error' => 'Reason is too long. Keep it under 1000 characters.'], 422);
+    if (mb_strlen($reason, 'UTF-8') > 1000) respond(['error' => 'Reason is too long. Use 1000 characters or fewer.'], 422);
 
     $conn = db();
     $conn->begin_transaction();

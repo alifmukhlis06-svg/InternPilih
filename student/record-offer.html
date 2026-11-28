@@ -4,8 +4,8 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Record Offer - InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261128-final1">
-<script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
+<link rel="stylesheet" href="../assets/css/style.css?v=70663730cc6e">
+<script src="../assets/js/auth-gate.js?v=f0abc8d73d10"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -128,7 +128,7 @@
               <input type="text" class="form-control" id="workMode" readonly>
             </div>
             <div class="form-group">
-              <label class="form-label" for="offerSource">Offer Source</label>
+              <label class="form-label" for="offerSource">Offer Source (draft only)</label>
               <select class="form-control" id="offerSource">
                 <option>Direct Application</option>
                 <option>University Portal</option>
@@ -139,7 +139,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="notes">Offer Description / Notes</label>
+            <label class="form-label" for="notes">Personal Draft Notes (not submitted)</label>
             <textarea class="form-control" id="notes" placeholder="Additional details about this offer..."></textarea>
           </div>
         </div>
@@ -148,12 +148,12 @@
       <div class="panel">
         <div class="panel-header"><h3><i class="fas fa-paperclip" style="color:var(--purple);margin-right:8px;"></i>Attachment (Optional)</h3></div>
         <div class="panel-body">
-          <div class="upload-area" onclick="document.getElementById('offerFile').click()">
+          <div class="upload-area">
             <i class="fas fa-cloud-upload-alt"></i>
             <p>Click to upload offer letter or related document</p>
             <p><span>Browse files</span> or drag and drop here</p>
-            <p style="font-size:11px;margin-top:8px;">PDF, DOC, JPG - Max 5MB</p>
-            <input type="file" id="offerFile" style="display:none" onchange="showFile(this)">
+            <p style="font-size:11px;margin-top:8px;">Attachments are uploaded from <a href="documents.html">Upload Docs</a> after you accept a placement. No attachment is submitted with this offer record.</p>
+            <input type="file" id="offerFile" style="display:none" disabled>
           </div>
           <div id="filePreview" class="surface-box" style="display:none;margin-top:12px;align-items:center;gap:10px;font-size:13px;">
             <i class="fas fa-file-pdf" style="color:var(--red);font-size:20px;"></i>
@@ -168,6 +168,7 @@
         <button class="btn btn-outline" onclick="saveDraft()"><i class="fas fa-save"></i> Save Draft</button>
         <button class="btn btn-primary" onclick="submitOffer()"><i class="fas fa-paper-plane"></i> Submit Offer Record</button>
       </div>
+      <p style="font-size:12px;color:var(--text2);margin-top:12px;">Save Draft keeps your form, source and personal notes in this browser tab only, until you sign out or close the tab. Source and notes are not saved with the submitted offer.</p>
     </div>
   </div>
 </div>
@@ -181,7 +182,7 @@
       <p style="font-size:13px;color:var(--text2);margin-bottom:24px;">Your internship offer has been successfully recorded and submitted to your coordinator for review.</p>
       <div style="display:flex;gap:10px;justify-content:center;">
         <a href="offers.html" class="btn btn-primary">View My Offers</a>
-        <button class="btn btn-outline" onclick="document.getElementById('successModal').classList.remove('open')">Add Another</button>
+        <button class="btn btn-outline" onclick="startAnotherOffer()">Add Another</button>
       </div>
     </div>
   </div>
@@ -279,32 +280,63 @@ async function submitOffer() {
   }
 }
 
-function saveDraft() {
-  const btn = event.target;
-  btn.innerHTML = '<i class="fas fa-check"></i> Draft Saved!';
-  btn.classList.add('btn-success');
-  setTimeout(() => {
-    btn.innerHTML = '<i class="fas fa-save"></i> Save Draft';
-    btn.classList.remove('btn-success');
-  }, 2000);
+const offerDraftFields = ['companyId','manualCompanyName','position','offerDate','deadline','offerSource','notes'];
+async function saveDraft() {
+  try {
+    const fields = Object.fromEntries(offerDraftFields.map(id => [id, document.getElementById(id).value]));
+    if (fields.companyId === '__manual__') fields.manual = Object.fromEntries(['industry','companyEmail','companyLocation','allowance','workMode'].map(id => [id,document.getElementById(id).value]));
+    await window.internPilihDraft.save('record-offer', fields);
+    showToast('Draft saved in this browser tab. It is not an offer submission.');
+  } catch (_) { showToast('Draft could not be saved in this browser. Keep this page open or copy your notes.', 'error'); }
+}
+async function restoreOfferDraft() {
+  try {
+    const draft = await window.internPilihDraft.read('record-offer');
+    if (!draft || typeof draft !== 'object' || Array.isArray(draft)) return;
+    const company = document.getElementById('companyId');
+    company.value = [...company.options].some(option => option.value === draft.companyId) ? draft.companyId : '';
+    autoFillCompany();
+    offerDraftFields.filter(id => id !== 'companyId').forEach(id => { if (typeof draft[id] === 'string') document.getElementById(id).value = draft[id]; });
+    if (company.value === '__manual__' && draft.manual) ['industry','companyEmail','companyLocation','allowance','workMode'].forEach(id => { if (typeof draft.manual[id] === 'string') document.getElementById(id).value = draft.manual[id]; });
+    showToast('Draft restored. Review company details and dates before submitting.', 'info');
+  } catch (_) { showToast('This browser draft could not be restored. No offer was submitted.', 'error'); }
+}
+function localDateValue(date) {
+  return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
+}
+function startAnotherOffer() {
+  document.getElementById('successModal').classList.remove('open');
+  ['position','notes','manualCompanyName'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('companyId').value = ''; autoFillCompany();
+  document.getElementById('offerSource').selectedIndex = 0;
+  document.getElementById('offerDate').value = localDateValue(new Date());
+  const deadline = new Date(); deadline.setDate(deadline.getDate() + 14);
+  document.getElementById('deadline').value = localDateValue(deadline);
+  clearFile();
+  document.getElementById('companyId').focus();
 }
 
 // Initialise defaults
-document.getElementById('offerDate').valueAsDate = new Date();
+document.getElementById('offerDate').value = localDateValue(new Date());
 const deadlineDate = new Date();
 deadlineDate.setDate(deadlineDate.getDate() + 14);
-document.getElementById('deadline').valueAsDate = deadlineDate;
+document.getElementById('deadline').value = localDateValue(deadlineDate);
 
 // The final loader below keeps the manual option and fallback companies intact.
 </script>
-<script src="../assets/js/app.js?v=20261128-final1"></script>
+<script src="../assets/js/app.js?v=7b07030fc88f"></script>
 <script>
-document.addEventListener('DOMContentLoaded', async function () {
+async function loadRecordCompanies() {
+  const selected = document.getElementById('companyId').value;
   try {
     const res = await fetch('../api/companies.php');
-    companiesList = res.ok ? await res.json() : [];
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok || !Array.isArray(payload)) throw new Error(payload.error || 'Company directory unavailable; you can still enter a company manually.');
+    companiesList = payload;
+    window.clearInternPilihReadError();
   } catch (err) {
     companiesList = [];
+    window.showInternPilihReadError(err.message, loadRecordCompanies, true);
   }
   const select = document.getElementById('companyId');
   select.innerHTML = '<option value="">Select company...</option><option value="__manual__">Company not listed - enter manually</option>';
@@ -314,7 +346,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     opt.textContent = c.name;
     select.appendChild(opt);
   });
-});
+  if ([...select.options].some(option => option.value === selected)) select.value = selected;
+}
+document.addEventListener('DOMContentLoaded', async function () { await loadRecordCompanies(); await restoreOfferDraft(); });
 
 function setCompanyFieldsEditable(editable) {
   ['industry', 'companyEmail', 'companyLocation', 'allowance', 'workMode'].forEach(id => {
@@ -394,7 +428,9 @@ async function ensureCompanyId() {
   return Number(data.id);
 }
 
+let offerSubmissionPending = false;
 window.submitOffer = async function () {
+  if (offerSubmissionPending) return;
   const position = document.getElementById('position').value.trim();
   const offerDate = document.getElementById('offerDate').value;
   const deadline = document.getElementById('deadline').value;
@@ -405,6 +441,11 @@ window.submitOffer = async function () {
     return;
   }
 
+  offerSubmissionPending = true;
+  const button = document.querySelector('[onclick="submitOffer()"]');
+  const originalLabel = button.innerHTML;
+  button.disabled = true;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Recording...';
   let cid;
   try {
     cid = await ensureCompanyId();
@@ -424,8 +465,13 @@ window.submitOffer = async function () {
   } catch (err) {
     alert(err.message);
     return;
+  } finally {
+    offerSubmissionPending = false;
+    button.disabled = false;
+    button.innerHTML = originalLabel;
   }
 
+  try { await window.internPilihDraft.clear('record-offer'); } catch (_) { showToast('Offer recorded, but the local draft could not be cleared. Do not submit it again.', 'warning'); }
   document.getElementById('successModal').classList.add('open');
 };
 </script>
