@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Monitoring – InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261121-profile-readonly1">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261128-final1">
 <script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -63,6 +63,7 @@
         <i class="fas fa-search"></i>
         <input class="search-input" id="monSearch" placeholder="Search student, matric ID or faculty..." oninput="filterStudents()">
       </div>
+      <div class="filter-control"><label class="form-label" for="statusFilter">Decision status</label>
       <select class="form-control" id="statusFilter" style="width:180px;" onchange="filterStudents()">
         <option value="">All Statuses</option>
         <option value="confirmed">Confirmed</option>
@@ -70,9 +71,11 @@
         <option value="risk">Flagged</option>
         <option value="none">No Offer</option>
       </select>
+      </div><div class="filter-control"><label class="form-label" for="facultyFilter">Faculty</label>
       <select class="form-control" id="facultyFilter" style="width:240px;" onchange="filterStudents()">
         <option value="">All Faculties</option>
       </select>
+      </div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap;">
         <label for="responsePeriodDays" style="font-size:12px;color:var(--text2);white-space:nowrap;">Response period</label>
         <input class="form-control" id="responsePeriodDays" type="number" min="1" max="90" style="width:86px;" aria-label="Offer response period in days">
@@ -208,7 +211,7 @@ function viewStudent(name,id,status){
   document.getElementById('studentModal').classList.add('open');
 }
 </script>
-<script src="../assets/js/app.js?v=20261121-profile-readonly1"></script>
+<script src="../assets/js/app.js?v=20261128-final1"></script>
 </body>
 </html>
 

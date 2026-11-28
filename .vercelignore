@@ -49,3 +49,9 @@ _fix_nurul_demo.php
 AI_SETUP.md
 DATABASE_README.md
 SETUP_GUIDE.md
+
+# Local academic evidence and fixture harnesses are never public app assets.
+*_Evidence/
+*.zip
+InternPilih_*.csv
+resume_concurrency_test*.mjs

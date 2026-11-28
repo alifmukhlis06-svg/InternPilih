@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>InternPilih - UiTM Internship Post-Offer System</title>
 <script src="assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="assets/css/style.css?v=20261127-student-register1">
+<link rel="stylesheet" href="assets/css/style.css?v=20261128-final1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -37,7 +37,7 @@
       <input type="text" class="form-control" id="identifier" placeholder="Enter your Student ID" autocomplete="username">
     </div>
     <div class="form-group">
-      <label class="form-label">Password</label>
+      <label class="form-label" for="password">Password</label>
       <div class="password-wrap">
         <input type="password" class="form-control" id="password" placeholder="Enter your password" autocomplete="current-password">
         <button class="password-toggle" onclick="togglePwd()" aria-label="Show or hide password"><i class="fas fa-eye" id="eye-icon"></i></button>
@@ -140,12 +140,13 @@ function togglePwd(){
   else{inp.type='password';icon.className='fas fa-eye';}
 }
 async function doLogin(){
+  clearLoginErrors();
   const identifier = document.getElementById('identifier').value.trim();
   const password = document.getElementById('password').value;
   const btn      = document.querySelector('.btn-primary');
 
   const identifierLabel=currentRole==='student'?'Student ID':currentRole==='admin'?'Staff ID':'email';
-  if (!identifier || !password) { showErr(`Please enter ${identifierLabel} and password.`); return; }
+  if (!identifier || !password) { showErr(`Please enter ${identifierLabel} and password.`, !identifier ? 'identifier' : 'password'); return; }
 
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
@@ -193,16 +194,34 @@ async function startGoogleLogin(){
   }
 }
 
-function showErr(msg) {
+function clearLoginErrors() {
+  const el = document.getElementById('login-error');
+  if (el) el.textContent = '';
+  ['identifier','password'].forEach(id => {
+    const input = document.getElementById(id);
+    input.removeAttribute('aria-invalid');
+    input.removeAttribute('aria-describedby');
+  });
+}
+function showErr(msg, field = 'identifier') {
   let el = document.getElementById('login-error');
   if (!el) {
     el = document.createElement('div');
     el.id = 'login-error';
     el.className = 'login-error';
+    el.setAttribute('role', 'alert');
+    el.setAttribute('aria-live', 'assertive');
     document.querySelector('.btn-primary').before(el);
   }
   el.textContent = msg;
+  ['identifier','password'].forEach(id => {
+    const input = document.getElementById(id);
+    input.setAttribute('aria-invalid', 'true');
+    input.setAttribute('aria-describedby', 'login-error');
+  });
+  document.getElementById(field).focus();
 }
+['identifier','password'].forEach(id => document.getElementById(id).addEventListener('input', clearLoginErrors));
 
 // Allow Enter key to submit
 document.addEventListener('keydown', e => {
@@ -210,7 +229,7 @@ document.addEventListener('keydown', e => {
 });
 loadDemoAccounts();
 </script>
-<script src="assets/js/app.js?v=20261121-security1"></script>
+<script src="assets/js/app.js?v=20261128-final1"></script>
 </body>
 </html>
 

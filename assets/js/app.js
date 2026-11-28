@@ -77,6 +77,10 @@ window.internPilihDisplayName = window.internPilihDisplayName || function (name)
   }
 
   const notificationsLink = document.querySelector('.sidebar nav a[href="notifications.html"]');
+  topbarActions.querySelectorAll('.notif-btn').forEach(link => {
+    link.setAttribute('aria-label', 'Open notifications');
+    link.querySelectorAll('i').forEach(icon => icon.setAttribute('aria-hidden', 'true'));
+  });
   if (notificationsLink && !topbarActions.querySelector('.notif-btn')) {
     const notifications = document.createElement('a');
     notifications.className = 'notif-btn';
@@ -498,14 +502,95 @@ document.addEventListener('click', function (e) {
   }
 });
 
-// Close modal on Escape key
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-overlay.open').forEach(function (m) {
-      m.classList.remove('open');
-    });
+// Existing pages also toggle .open directly. Observe that shared contract so
+// all dialogs receive the same focus and inert-state behavior.
+(function manageDialogs() {
+  const triggers = new Map();
+  const background = new Map();
+  let active = null;
+  let lastTrigger = null;
+  let headingCounter = 0;
+  const selector = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  function focusable(overlay) {
+    return [...overlay.querySelectorAll(selector)].filter(el => el.tabIndex >= 0
+      && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden'
+      && !el.closest('[inert],[hidden]'));
   }
-});
+  function focusFirst() {
+    if (!active) return;
+    (focusable(active)[0] || active.querySelector('.modal')).focus({preventScroll:true});
+  }
+  document.addEventListener('click', event => {
+    const target = event.target.closest('button,a,[tabindex]');
+    if (target && !target.closest('.modal-overlay.open')) lastTrigger = target;
+  }, true);
+  function sync() {
+    document.querySelector('.main, .login-page')?.setAttribute('role', 'main');
+    document.querySelector('.sidebar')?.setAttribute('role', 'complementary');
+    document.querySelectorAll('.sidebar nav').forEach(nav => nav.setAttribute('aria-label', 'Main navigation'));
+    document.querySelectorAll('.panel-header h3, .panel > h3').forEach(heading => heading.setAttribute('aria-level', '2'));
+    for (const [el, inert] of background) el.inert = inert;
+    background.clear();
+    const overlays = [...document.querySelectorAll('.modal-overlay')];
+    const opened = overlays.filter(el => el.classList.contains('open'));
+    const previous = active;
+    let newlyOpened = null;
+    let returnTarget = previous && triggers.get(previous);
+    for (const overlay of overlays) {
+      const open = opened.includes(overlay), dialog = overlay.querySelector('.modal');
+      if (!dialog) continue;
+      if (open && !triggers.has(overlay)) {
+        newlyOpened = overlay;
+        let trigger = lastTrigger || document.activeElement;
+        if (trigger?.closest('.modal-overlay') && !trigger.closest('.modal-overlay.open')) trigger = returnTarget;
+        triggers.set(overlay, trigger);
+      }
+      overlay.hidden = !open;
+      overlay.inert = !open;
+      overlay.setAttribute('aria-hidden', String(!open));
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.tabIndex = -1;
+      const heading = dialog.querySelector('h1,h2,h3,h4,h5,h6');
+      if (heading && !dialog.hasAttribute('aria-label')) {
+        if (!heading.id) heading.id = 'internpilih-dialog-title-' + (++headingCounter);
+        dialog.setAttribute('aria-labelledby', heading.id);
+      }
+      if (!open && overlay !== previous) triggers.delete(overlay);
+    }
+    active = newlyOpened || (opened.includes(previous) ? previous : opened.at(-1) || null);
+    if (active) {
+      for (const child of document.body.children) {
+        if (child === active || child.contains(active) || ['SCRIPT','STYLE','LINK'].includes(child.tagName)) continue;
+        background.set(child, child.inert);
+        child.inert = true;
+      }
+      // Other open dialogs can remain in a stack but not receive background focus.
+      opened.filter(el => el !== active).forEach(el => { el.inert = true; });
+      if (active !== previous || !active.contains(document.activeElement)) focusFirst();
+    } else if (previous) {
+      if (returnTarget?.isConnected && !returnTarget.closest('[inert],[hidden]')) returnTarget.focus({preventScroll:true});
+      triggers.delete(previous);
+    }
+  }
+  document.addEventListener('keydown', event => {
+    if (!active) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      active.classList.remove('open');
+    } else if (event.key === 'Tab') {
+      const elements = focusable(active), first = elements[0], last = elements.at(-1);
+      if (!first) { event.preventDefault();focusFirst(); }
+      else if (event.shiftKey && (document.activeElement === first || !elements.includes(document.activeElement))) { event.preventDefault();last.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !elements.includes(document.activeElement))) { event.preventDefault();first.focus(); }
+    }
+  }, true);
+  document.addEventListener('focusin', event => {
+    if (active && !active.contains(event.target)) focusFirst();
+  });
+  new MutationObserver(sync).observe(document.body, {subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  sync();
+})();
 
 
 // Active nav state
@@ -1689,7 +1774,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
           <td>${esc(o.position)}</td>
           <td>${badge(o.status, o.status)}</td>
           <td style="color:var(--text2);">${fmtDate(o.response_date || o.offer_date)}</td>
-          <td><button class="btn btn-outline btn-sm" onclick="viewEmployerOffer(${o.id})"><i class="fas fa-eye"></i></button></td>
+          <td><button class="btn btn-outline btn-sm" aria-label="View offer details" onclick="viewEmployerOffer(${o.id})"><i class="fas fa-eye" aria-hidden="true"></i></button></td>
         </tr>
       `).join('');
 
@@ -1736,7 +1821,7 @@ function initTabs(tabsSelector, itemsSelector, dataAttr) {
           <td>${fmtDate(o.offer_date)}</td>
           <td>${badge(o.status, o.status)}</td>
           <td>${fmtDate(o.response_date)}</td>
-          <td><button class="btn btn-outline btn-sm" onclick="viewEmployerOffer(${o.id})"><i class="fas fa-eye"></i></button></td>
+          <td><button class="btn btn-outline btn-sm" aria-label="View offer details" onclick="viewEmployerOffer(${o.id})"><i class="fas fa-eye" aria-hidden="true"></i></button></td>
         </tr>
       `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:20px;">No offers recorded for this company.</td></tr>';
     }

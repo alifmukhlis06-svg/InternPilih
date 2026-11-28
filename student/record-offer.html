@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Record Offer - InternPilih</title>
 <script src="../assets/js/theme-init.js?v=20261121-ui-size1"></script>
-<link rel="stylesheet" href="../assets/css/style.css?v=20261121-profile-readonly1">
+<link rel="stylesheet" href="../assets/css/style.css?v=20261128-final1">
 <script src="../assets/js/auth-gate.js?v=20261121-security1"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -50,31 +50,31 @@
         <div class="panel-body">
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Company Name *</label>
+              <label class="form-label" id="recordCompanyLabel" for="companyId">Company Name *</label>
               <select class="form-control" id="companyId" onchange="autoFillCompany()">
                 <option value="">Select company...</option>
                 <option value="6">KPJ Healthcare IT</option>
                 <option value="__manual__">Company not listed - enter manually</option>
               </select>
-              <input type="text" class="form-control" id="manualCompanyName" placeholder="Enter company name" style="display:none;margin-top:10px;">
+              <input type="text" class="form-control" id="manualCompanyName" aria-labelledby="recordCompanyLabel" placeholder="Enter company name" style="display:none;margin-top:10px;">
             </div>
             <div class="form-group">
-              <label class="form-label">Industry *</label>
+              <label class="form-label" for="industry">Industry *</label>
               <input type="text" class="form-control" id="industry" readonly>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Company Email *</label>
+              <label class="form-label" for="companyEmail">Company Email *</label>
               <input type="email" class="form-control" id="companyEmail" readonly>
             </div>
             <div class="form-group">
-              <label class="form-label">Company Phone</label>
+              <label class="form-label" for="companyPhone">Company Phone</label>
               <input type="text" class="form-control" id="companyPhone" readonly>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Location / Address *</label>
+            <label class="form-label" for="companyLocation">Location / Address *</label>
             <input type="text" class="form-control" id="companyLocation" readonly>
           </div>
         </div>
@@ -85,7 +85,7 @@
         <div class="panel-body">
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Position / Role *</label>
+              <label class="form-label" for="position">Position / Role *</label>
               <input type="text" class="form-control" placeholder="e.g. Cybersecurity Intern" id="position" list="positionSuggestions" maxlength="150" autocomplete="off">
               <datalist id="positionSuggestions">
                 <option value="Cybersecurity Intern">
@@ -98,37 +98,37 @@
               </datalist>
             </div>
             <div class="form-group">
-              <label class="form-label">Monthly Allowance (RM)</label>
+              <label class="form-label" for="allowance">Monthly Allowance (RM)</label>
               <input type="number" class="form-control" id="allowance" readonly>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Offer Date Received *</label>
+              <label class="form-label" for="offerDate">Offer Date Received *</label>
               <input type="date" class="form-control" id="offerDate" data-schedule-value="internship_application_open">
             </div>
             <div class="form-group">
-              <label class="form-label">Response Deadline *</label>
+              <label class="form-label" for="deadline">Response Deadline *</label>
               <input type="date" class="form-control" id="deadline" data-schedule-value="main_offer_deadline">
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Internship Start Date</label>
+              <label class="form-label" for="startDate">Internship Start Date</label>
               <input type="date" class="form-control" id="startDate" data-schedule-value="internship_start_date" readonly>
             </div>
             <div class="form-group">
-              <label class="form-label">Duration</label>
+              <label class="form-label" for="duration">Duration</label>
               <input type="text" class="form-control" id="duration" readonly>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Work Mode</label>
+              <label class="form-label" for="workMode">Work Mode</label>
               <input type="text" class="form-control" id="workMode" readonly>
             </div>
             <div class="form-group">
-              <label class="form-label">Offer Source</label>
+              <label class="form-label" for="offerSource">Offer Source</label>
               <select class="form-control" id="offerSource">
                 <option>Direct Application</option>
                 <option>University Portal</option>
@@ -139,7 +139,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Offer Description / Notes</label>
+            <label class="form-label" for="notes">Offer Description / Notes</label>
             <textarea class="form-control" id="notes" placeholder="Additional details about this offer..."></textarea>
           </div>
         </div>
@@ -158,7 +158,7 @@
           <div id="filePreview" class="surface-box" style="display:none;margin-top:12px;align-items:center;gap:10px;font-size:13px;">
             <i class="fas fa-file-pdf" style="color:var(--red);font-size:20px;"></i>
             <span id="fileName"></span>
-            <button onclick="clearFile()" style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;"><i class="fas fa-times"></i></button>
+            <button aria-label="Remove selected attachment" onclick="clearFile()" style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;"><i class="fas fa-times" aria-hidden="true"></i></button>
           </div>
         </div>
       </div>
@@ -297,7 +297,7 @@ document.getElementById('deadline').valueAsDate = deadlineDate;
 
 // The final loader below keeps the manual option and fallback companies intact.
 </script>
-<script src="../assets/js/app.js?v=20261121-profile-readonly1"></script>
+<script src="../assets/js/app.js?v=20261128-final1"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function () {
   try {
