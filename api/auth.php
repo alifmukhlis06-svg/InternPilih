@@ -451,6 +451,11 @@ if ($method === 'POST' && $action === 'google') {
 if ($method === 'POST') {
     resetApplicationSessionForAuthentication();
     $data  = body();
+    foreach (['role', 'identifier', 'password'] as $field) {
+        if (array_key_exists($field, $data) && !is_string($data[$field])) {
+            respondError('Authentication fields must be text values.', 422, 'invalid_auth_input');
+        }
+    }
     $role = strtolower(trim((string)($data['role'] ?? 'student')));
     $identifier = trim((string)($data['identifier'] ?? ''));
     $pass  = $data['password'] ?? '';

@@ -37,6 +37,12 @@ if ($role === 'admin') {
     $studentParameters = [$userId];
 }
 
+// Every aggregate must use the same company boundary as the employer's offer
+// list. A relationship to one offer must not reveal a competing placement.
+$studentOfferJoin = $role === 'employer' ? 'AND o.company_id = ?' : '';
+$studentQueryParameters = $role === 'employer'
+    ? array_merge([$companyId], $studentParameters)
+    : $studentParameters;
 $students = summaryRows("
     SELECT
         u.id, u.name, u.email, sp.matric_id, sp.campus, sp.faculty, sp.programme,
@@ -56,12 +62,12 @@ $students = summaryRows("
     FROM users u
     JOIN students sp ON sp.user_id = u.id
     LEFT JOIN users coordinator ON coordinator.id = sp.coordinator_id
-    LEFT JOIN offers o ON o.student_id = u.id
+    LEFT JOIN offers o ON o.student_id = u.id {$studentOfferJoin}
     LEFT JOIN companies c ON c.id = o.company_id
     WHERE u.role = 'student' AND {$studentScope}
     GROUP BY u.id, sp.user_id, coordinator.id
     ORDER BY u.name
-", $studentParameters);
+", $studentQueryParameters);
 
 if ($role === 'admin') {
     $offerScope = 'sp.coordinator_id = ?';
