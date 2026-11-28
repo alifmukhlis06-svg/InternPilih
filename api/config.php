@@ -1,11 +1,6 @@
 <?php
+require_once __DIR__ . '/error-handler.php';
 require_once __DIR__ . '/../config/db.php';
-
-$requestId = trim((string)($_SERVER['HTTP_X_REQUEST_ID'] ?? ''));
-if ($requestId === '' || !preg_match('/^[a-zA-Z0-9._-]{6,80}$/', $requestId)) {
-    $requestId = bin2hex(random_bytes(8));
-}
-define('INTERNPILIH_REQUEST_ID', $requestId);
 
 // JSON response helper
 function respond(mixed $data, int $code = 200): never {
@@ -84,7 +79,11 @@ if (in_array($requestMethod, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
 
 // Get JSON request body
 function body(): array {
-    return json_decode(file_get_contents('php://input'), true) ?? [];
+    $decoded = json_decode(file_get_contents('php://input'), true);
+    if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+        respondError('Provide a valid JSON object.', 422, 'invalid_json');
+    }
+    return $decoded;
 }
 
 // Simple session-based auth check.
