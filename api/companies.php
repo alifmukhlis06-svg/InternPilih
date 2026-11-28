@@ -7,6 +7,33 @@ $user   = requireAuth();
 $method = $_SERVER['REQUEST_METHOD'];
 $id     = (int)($_GET['id'] ?? 0);
 
+function validatedCompanyInput(array $input): array {
+    foreach (['name' => 150, 'industry' => 100, 'location' => 150, 'hr_email' => 150] as $field => $limit) {
+        $value = $input[$field] ?? '';
+        if (!is_string($value)) respondError('Company fields must be text values.', 422, 'invalid_company_input');
+        $input[$field] = trim($value);
+        if (($field !== 'hr_email' && $input[$field] === '') || mb_strlen($input[$field], 'UTF-8') > $limit) {
+            respondError(ucfirst(str_replace('_', ' ', $field)) . ' is required or exceeds its maximum length.', 422, 'invalid_company_input');
+        }
+    }
+    $allowance = $input['allowance'] ?? 0;
+    if ((!is_int($allowance) && !is_float($allowance) && !is_string($allowance))
+        || !is_numeric($allowance) || !is_finite((float)$allowance)
+        || (float)$allowance < 0 || (float)$allowance > 999999.99
+        || abs((float)$allowance * 100 - round((float)$allowance * 100)) > 0.00001) {
+        respondError('Allowance must be between RM 0.00 and RM 999999.99, with at most two decimal places.', 422, 'invalid_allowance');
+    }
+    $input['allowance'] = (float)$allowance;
+    $input['work_mode'] = $input['work_mode'] ?? 'On-site';
+    if (!in_array($input['work_mode'], ['On-site', 'Hybrid', 'Remote'], true)) {
+        respondError('Choose a valid work mode.', 422, 'invalid_work_mode');
+    }
+    if ($input['hr_email'] !== '' && !filter_var($input['hr_email'], FILTER_VALIDATE_EMAIL)) {
+        respondError('Enter a valid HR email or leave it blank.', 422, 'invalid_hr_email');
+    }
+    return $input;
+}
+
 // ── GET — list all companies ──────────────────────────────────
 if ($method === 'GET') {
     $search = trim((string)($_GET['search'] ?? ''));
@@ -40,20 +67,10 @@ if ($method === 'GET') {
 // ── POST — add company (admin only) ──────────────────────────
 if ($method === 'POST') {
     if ($user['role'] !== 'admin') respond(['error' => 'Admins only'], 403);
-    $d = body();
-
-    foreach (['name', 'industry', 'location'] as $field) {
-        if (empty(trim((string)($d[$field] ?? '')))) {
-            respond(['error' => ucfirst($field) . ' is required'], 422);
-        }
-    }
-
-    $allowance = (float)($d['allowance'] ?? 0);
-    $workMode = $d['work_mode'] ?? 'On-site';
-    if (!in_array($workMode, ['On-site', 'Hybrid', 'Remote'], true)) {
-        $workMode = 'On-site';
-    }
-    $hrEmail = $d['hr_email'] ?? '';
+    $d = validatedCompanyInput(body());
+    $allowance = $d['allowance'];
+    $workMode = $d['work_mode'];
+    $hrEmail = $d['hr_email'];
 
     $stmt = db()->prepare("
         INSERT INTO companies (name, industry, location, allowance, work_mode, hr_email)
@@ -72,7 +89,7 @@ if ($method === 'POST') {
 // ── PUT — update company (admin only) ────────────────────────
 if ($method === 'PUT' && $id) {
     if ($user['role'] !== 'admin') respond(['error' => 'Admins only'], 403);
-    $d = body();
+    $d = validatedCompanyInput(body());
 
     $stmt = db()->prepare("
         UPDATE companies SET name=?, industry=?, location=?, allowance=?, work_mode=?, hr_email=?

@@ -24,6 +24,31 @@ function placementChangeDocumentRecord(int $id): ?array {
     return $stmt->get_result()->fetch_assoc();
 }
 
+// Request transitions lock the parent before its documents. Upload/review must
+// use the same order: a joined FOR UPDATE alone can lock the child first and
+// deadlock with completion, which holds the parent while checking the children.
+function lockPlacementChangeDocument($conn, int $id): ?array {
+    $parent = $conn->prepare('SELECT request_id FROM placement_change_documents WHERE id = ?');
+    $parent->bind_param('i', $id);
+    $parent->execute();
+    $reference = $parent->get_result()->fetch_assoc();
+    if (!$reference) return null;
+    $requestId = (int)$reference['request_id'];
+    $lock = $conn->prepare('SELECT id FROM placement_change_requests WHERE id = ? FOR UPDATE');
+    $lock->bind_param('i', $requestId);
+    $lock->execute();
+    if (!$lock->get_result()->fetch_assoc()) return null;
+    $document = $conn->prepare("
+        SELECT pcd.*, pcr.student_id, pcr.status AS request_status, pcr.revision_deadline
+        FROM placement_change_documents pcd
+        JOIN placement_change_requests pcr ON pcr.id = pcd.request_id
+        WHERE pcd.id = ? AND pcd.request_id = ? FOR UPDATE
+    ");
+    $document->bind_param('ii', $id, $requestId);
+    $document->execute();
+    return $document->get_result()->fetch_assoc();
+}
+
 if ($method === 'POST') {
     if ($user['role'] !== 'student') respondError('Students only', 403, 'student_role_required');
     $requestId = (int)($_POST['request_id'] ?? 0);
@@ -98,16 +123,8 @@ if ($method === 'POST') {
 
         $conn = db();
         $conn->begin_transaction();
-        $lock = $conn->prepare("
-            SELECT pcd.*, pcr.student_id, pcr.status AS request_status, pcr.revision_deadline
-            FROM placement_change_documents pcd
-            JOIN placement_change_requests pcr ON pcr.id = pcd.request_id
-            WHERE pcd.id = ? FOR UPDATE
-        ");
         $documentId = (int)$document['id'];
-        $lock->bind_param('i', $documentId);
-        $lock->execute();
-        $locked = $lock->get_result()->fetch_assoc();
+        $locked = lockPlacementChangeDocument($conn, $documentId);
         $stillAllowed = $locked && (int)$locked['student_id'] === (int)$user['id']
             && ($locked['request_status'] === 'approved_documents_required'
                 || ($locked['request_status'] === 'revision_required' && $locked['status'] === 'rejected'));
@@ -186,15 +203,7 @@ if ($method === 'PUT' && $id) {
     $conn = db();
     $conn->begin_transaction();
     try {
-        $lock = $conn->prepare("
-            SELECT pcd.*, pcr.student_id, pcr.status AS request_status, pcr.revision_deadline
-            FROM placement_change_documents pcd
-            JOIN placement_change_requests pcr ON pcr.id = pcd.request_id
-            WHERE pcd.id = ? FOR UPDATE
-        ");
-        $lock->bind_param('i', $id);
-        $lock->execute();
-        $document = $lock->get_result()->fetch_assoc();
+        $document = lockPlacementChangeDocument($conn, $id);
         if (!$document) {
             $conn->rollback();
             respond(['error' => 'Document not found.'], 404);
